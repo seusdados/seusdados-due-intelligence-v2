@@ -94,7 +94,7 @@ export async function runReviewAlertCheck(): Promise<{
     // NOTA: Tabela usa snake_case no MySQL, mas Drizzle mapeia para camelCase
     const configResults = await db.execute(sql`
       SELECT id, "organizationId", "reviewPeriodDays", "alertDaysBefore", "sendEmailAlerts", "defaultReviewerId", "isActive"
-      FROM mapeamento_review_config WHERE "isActive" = 1
+      FROM mapeamento_review_config WHERE "isActive" = true
     `);
     const configs = (configResults as any[])[0] as any[];
 
