@@ -1,0 +1,2 @@
+ALTER TABLE `contract_analyses` MODIFY COLUMN `contractAnalysisStatus` enum('pending','analyzing','completed','reviewed','approved','rejected','error') NOT NULL DEFAULT 'pending';--> statement-breakpoint
+ALTER TABLE `contract_analysis_history` MODIFY COLUMN `historyActionType` enum('created','analysis_started','analysis_completed','analysis_error','refinement_requested','refinement_completed','reviewed','approved','rejected','exported') NOT NULL;

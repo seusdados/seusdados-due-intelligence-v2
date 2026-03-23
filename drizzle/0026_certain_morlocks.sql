@@ -1,0 +1,2 @@
+ALTER TABLE `compliance_assignments` DROP INDEX `compliance_assignments_unique`;--> statement-breakpoint
+ALTER TABLE `compliance_assignments` ADD CONSTRAINT `compliance_assignments_domain_unique` UNIQUE(`assessmentId`,`domainId`);

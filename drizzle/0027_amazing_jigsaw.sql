@@ -1,0 +1,2 @@
+ALTER TABLE `ua_assignments` ADD CONSTRAINT `ua_assign_assessment_domain_unique` UNIQUE(`assessmentId`,`domainId`);--> statement-breakpoint
+ALTER TABLE `ua_responses` ADD CONSTRAINT `ua_resp_assessment_question_unique` UNIQUE(`assessmentId`,`questionId`);

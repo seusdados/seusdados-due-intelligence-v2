@@ -1,0 +1,1 @@
+ALTER TABLE `compliance_responses` ADD `respondedById` int;

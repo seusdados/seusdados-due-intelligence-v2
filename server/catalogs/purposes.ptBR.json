@@ -1,0 +1,15 @@
+{
+  "version": "FIN-v1",
+  "purposes": [
+    { "code": "FIN-01", "label": "Cadastro e identificação", "examples": ["criar conta", "identificar titular", "atualizar cadastro"] },
+    { "code": "FIN-02", "label": "Execução do contrato / prestação do serviço", "examples": ["entrega", "prestação", "suporte contratado"] },
+    { "code": "FIN-03", "label": "Cobrança e recuperação", "examples": ["cobrança", "inadimplência", "negativação"] },
+    { "code": "FIN-04", "label": "Obrigações fiscais/contábeis/regulatórias", "examples": ["NF-e", "SPED", "contabilidade", "regulatório"] },
+    { "code": "FIN-05", "label": "Segurança / antifraude / prevenção", "examples": ["antifraude", "segurança", "controle de acesso"] },
+    { "code": "FIN-06", "label": "Marketing e comunicação", "examples": ["campanha", "newsletter", "remarketing"] },
+    { "code": "FIN-07", "label": "Saúde ocupacional / medicina do trabalho", "examples": ["ASO", "PCMSO", "exame ocupacional"] },
+    { "code": "FIN-08", "label": "Atendimento e suporte", "examples": ["SAC", "helpdesk", "ouvidoria"] },
+    { "code": "FIN-09", "label": "Gestão de pessoas (RH)", "examples": ["folha", "benefícios", "admissão"] },
+    { "code": "FIN-10", "label": "Pesquisa e melhoria", "examples": ["pesquisa satisfação", "qualidade"] }
+  ]
+}

@@ -1,0 +1,3822 @@
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, int, bigint, varchar, mysqlEnum, timestamp, text, json, decimal, primaryKey, unique, tinyint, index, date, longtext } from "drizzle-orm/mysql-core"
+import { sql } from "drizzle-orm"
+
+export const accessLinks = mysqlTable("access_links", {
+	id: int().autoincrement().notNull(),
+	token: varchar({ length: 64 }).notNull(),
+	thirdPartyId: int().notNull(),
+	organizationId: int().notNull(),
+	assessmentId: int(),
+	type: mysqlEnum(['due_diligence','conformidade']).default('due_diligence').notNull(),
+	expiresAt: timestamp({ mode: 'string' }).notNull(),
+	usedAt: timestamp({ mode: 'string' }),
+	isActive: tinyint().default(1).notNull(),
+	createdById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	sentAt: timestamp({ mode: 'string' }),
+	viewedAt: timestamp({ mode: 'string' }),
+	completedAt: timestamp({ mode: 'string' }),
+},
+(table) => [
+	index("access_links_token_unique").on(table.token),
+]);
+
+export const thirdPartyLinkResponses = mysqlTable("third_party_link_responses", {
+	id: int().autoincrement().notNull(),
+	accessLinkId: int().notNull(),
+	assessmentId: int().notNull(),
+	questionId: int().notNull(),
+	selectedLevel: int().notNull(),
+	impactScore: int().notNull(),
+	probabilityScore: int().notNull(),
+	riskScore: int().notNull(),
+	notes: text(),
+	evidenceUrls: json(),
+	responderName: varchar({ length: 120 }),
+	responderEmail: varchar({ length: 255 }),
+	responderRole: varchar({ length: 80 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	unique("tplr_accessLinkId_question_unique").on(table.accessLinkId, table.questionId),
+	index("tplr_assessmentId_idx").on(table.assessmentId),
+	index("tplr_accessLinkId_idx").on(table.accessLinkId),
+]);
+
+
+export const actionPlanEvidence = mysqlTable("action_plan_evidence", {
+	id: int().autoincrement().notNull(),
+	actionPlanId: int().notNull(),
+	documentId: int().notNull(),
+	description: text(),
+	addedById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	index("action_plan_evidence_actionPlanId_idx").on(table.actionPlanId),
+]);
+
+export const actionPlans = mysqlTable("action_plans", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	assessmentType: mysqlEnum(['compliance','third_party','contract_analysis']).notNull(),
+	assessmentId: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	priority: mysqlEnum(['baixa','media','alta','critica']).default('media').notNull(),
+	status: mysqlEnum(['pendente','em_andamento','concluida_cliente','pendente_validacao_dpo','concluida','cancelada','recusada_cliente']).default('pendente').notNull(),
+	responsibleId: int(),
+	dueDate: timestamp({ mode: 'string' }),
+	completedAt: timestamp({ mode: 'string' }),
+	clientCompletedAt: timestamp({ mode: 'string' }),
+	clientCompletedById: int(),
+	dpoValidatedAt: timestamp({ mode: 'string' }),
+	dpoValidatedById: int(),
+	clientRejectionReason: text(),
+	dpoValidationTicketId: int(),
+	notes: text(),
+	// Novos campos para integração com cláusulas e categorização
+	actionCategory: mysqlEnum(['contratual','operacional']).default('contratual'),
+	linkedClauseId: varchar({ length: 50 }),
+	outputType: mysqlEnum(['clausula_contrato','clausula_aditivo','acordo_tratamento_dados','tarefa_operacional']),
+	convertedToTicketId: int(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const aiChatMessages = mysqlTable("ai_chat_messages", {
+	id: int().autoincrement().notNull(),
+	sessionId: int().notNull(),
+	role: mysqlEnum(['system','user','assistant']).notNull(),
+	content: text().notNull(),
+	tokensUsed: int().default(0),
+	isRefinement: tinyint().default(0).notNull(),
+	parentMessageId: int(),
+	metadata: json(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const aiChatSessions = mysqlTable("ai_chat_sessions", {
+	id: int().autoincrement().notNull(),
+	userId: int().notNull(),
+	organizationId: int(),
+	module: mysqlEnum(['compliance','due_diligence','action_plans','general']).default('general').notNull(),
+	entityType: varchar({ length: 50 }),
+	entityId: int(),
+	title: varchar({ length: 255 }),
+	provider: mysqlEnum(['openai','gemini','claude','perplexity']).notNull(),
+	model: varchar({ length: 100 }),
+	status: mysqlEnum(['active','archived','deleted']).default('active').notNull(),
+	totalTokensUsed: int().default(0),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const aiGeneratedResults = mysqlTable("ai_generated_results", {
+	id: int().autoincrement().notNull(),
+	sessionId: int(),
+	organizationId: int(),
+	module: mysqlEnum(['compliance','due_diligence','action_plans','general']).notNull(),
+	entityType: varchar({ length: 50 }),
+	entityId: int(),
+	resultType: mysqlEnum(['analysis','recommendations','action_plan','summary','risk_assessment']).notNull(),
+	title: varchar({ length: 255 }),
+	content: text().notNull(),
+	structuredData: json(),
+	status: mysqlEnum(['draft','approved','rejected','applied']).default('draft').notNull(),
+	approvedById: int(),
+	approvedAt: timestamp({ mode: 'string' }),
+	appliedAt: timestamp({ mode: 'string' }),
+	createdById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const aiOrganizationInstructions = mysqlTable("ai_organization_instructions", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	module: mysqlEnum(['compliance','due_diligence','action_plans','general']).default('general').notNull(),
+	systemPrompt: text(),
+	contextInstructions: text(),
+	responseStyle: mysqlEnum(['formal','tecnico','executivo','simplificado']).default('formal').notNull(),
+	language: varchar({ length: 10 }).default('pt-BR'),
+	includeRecommendations: tinyint().default(1).notNull(),
+	includeRiskAnalysis: tinyint().default(1).notNull(),
+	includeActionPlan: tinyint().default(1).notNull(),
+	customFields: json(),
+	createdById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const aiPromptTemplates = mysqlTable("ai_prompt_templates", {
+	id: int().autoincrement().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	module: mysqlEnum(['compliance','due_diligence','action_plans','general']).default('general').notNull(),
+	category: varchar({ length: 100 }),
+	promptTemplate: text().notNull(),
+	variables: json(),
+	isSystem: tinyint().default(0).notNull(),
+	isActive: tinyint().default(1).notNull(),
+	createdById: int(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const aiProviderConfigs = mysqlTable("ai_provider_configs", {
+	id: int().autoincrement().notNull(),
+	provider: mysqlEnum(['openai','gemini','claude','perplexity']).notNull(),
+	apiKey: text(),
+	model: varchar({ length: 100 }),
+	isEnabled: tinyint().default(0).notNull(),
+	isDefault: tinyint().default(0).notNull(),
+	maxTokens: int().default(4096),
+	temperature: int().default(70),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const assessmentDocuments = mysqlTable("assessment_documents", {
+	id: int().autoincrement().notNull(),
+	assessmentType: mysqlEnum(['conformidade','due_diligence']).notNull(),
+	assessmentId: int().notNull(),
+	documentId: int().notNull(),
+	category: mysqlEnum(['evidencia_conformidade','documento_suporte','relatorio_auditoria','politica_procedimento','contrato','termo_responsabilidade','outro']).default('documento_suporte').notNull(),
+	description: text(),
+	linkedById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const auditLogs = mysqlTable("audit_logs", {
+	id: int().autoincrement().notNull(),
+	userId: int(),
+	organizationId: int(),
+	action: varchar({ length: 100 }).notNull(),
+	entityType: varchar({ length: 50 }).notNull(),
+	entityId: int(),
+	details: json(),
+	ipAddress: varchar({ length: 45 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const clauseAuditLog = mysqlTable("clause_audit_log", {
+	id: int().autoincrement().notNull(),
+	analysisId: int().notNull(),
+	clauseId: varchar({ length: 50 }).notNull(),
+	clauseAuditActionType: mysqlEnum(['generated','accepted','rejected','refined','edited','downloaded','copied']).notNull(),
+	previousContent: text(),
+	newContent: text(),
+	refinementInstructions: text(),
+	userId: int().notNull(),
+	userName: varchar({ length: 255 }),
+	metadata: json(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	index("clause_audit_log_analysisId_idx").on(table.analysisId),
+	index("clause_audit_log_userId_idx").on(table.userId),
+]);
+
+export const complianceAssessments = mysqlTable("compliance_assessments", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	createdById: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	framework: mysqlEnum(['misto','sgd','ico','cnil','seusdados']).default('misto').notNull(),
+	status: mysqlEnum(['rascunho','em_andamento','concluida','arquivada']).default('rascunho').notNull(),
+	overallScore: int(),
+	maturityLevel: int(),
+	riskScore: int(),
+	totalQuestions: int().default(0),
+	answeredQuestions: int().default(0),
+	completedAt: timestamp({ mode: 'string' }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const complianceResponses = mysqlTable("compliance_responses", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	domainId: int().notNull(),
+	questionId: varchar({ length: 20 }).notNull(),
+	selectedLevel: int().notNull(),
+	riskScore: int(),
+	notes: text(),
+	evidenceUrls: json(),
+	attachments: json().$type<{ fileName: string; fileUrl: string; fileSize: number; fileType: string; uploadedAt: string }[]>().default([]).notNull(),
+	respondedById: int(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const contractAnalyses = mysqlTable("contract_analyses", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	documentId: int().notNull(),
+	thirdPartyId: int(),
+	contractName: varchar({ length: 500 }).notNull(),
+	// Status padronizado: 'queued' (aguardando fila), 'analyzing' (em processamento), 'completed', 'error', 'reviewed', 'approved', 'rejected', 'canceled'
+	// Nota: 'pending' mantido por compatibilidade mas NÃO deve ser usado no código — usar 'queued'
+	contractAnalysisStatus: mysqlEnum(['queued','pending','analyzing','completed','reviewed','approved','rejected','error','canceled']).default('queued').notNull(),
+	// Pipeline stage: queued → extraction → analysis → mapping → risks → clauses → action_plan → reports → completed
+	stage: varchar({ length: 50 }).default('queued').notNull(),
+	stageProgress: int().default(0).notNull(),
+	reportUrl: text('reportUrl'),
+	progress: int().default(0).notNull(),
+	executiveSummary: text(),
+	complianceScore: int(),
+	criticalRisks: int().default(0).notNull(),
+	highRisks: int().default(0).notNull(),
+	mediumRisks: int().default(0).notNull(),
+	lowRisks: int().default(0).notNull(),
+	veryLowRisks: int().default(0).notNull(),
+	extractedText: text(),
+	aiResponse: json(),
+	aiModel: varchar({ length: 100 }),
+	createdById: int().notNull(),
+	reviewedById: int(),
+	reviewedAt: timestamp({ mode: 'string' }),
+	reviewNotes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	completedAt: timestamp({ mode: 'string' }),
+	status: varchar({ length: 50 }),
+	linkedRipdId: int(),
+	lockedByRipd: tinyint().default(0),
+	startedAt: timestamp({ mode: 'string' }),
+	finishedAt: timestamp({ mode: 'string' }),
+	attempts: int().default(0).notNull(),
+	maxAttempts: int().default(3).notNull(),
+	lastHeartbeatAt: timestamp({ mode: 'string' }),
+	errorCode: varchar({ length: 50 }),
+	errorMessage: text(),
+	canceledAt: timestamp({ mode: 'string' }),
+	resultVersion: int().default(1).notNull(),
+});
+
+export const contractAnalysisClauses = mysqlTable("contract_analysis_clauses", {
+	id: int().autoincrement().notNull(),
+	analysisId: int().notNull(),
+	clauseId: varchar({ length: 50 }).notNull(),
+	sequenceNumber: int().notNull(),
+	title: varchar({ length: 500 }).notNull(),
+	content: text().notNull(),
+	originalContent: text().notNull(),
+	isAccepted: tinyint().default(1).notNull(),
+	isApplicable: tinyint().default(1).notNull(),
+	version: int().default(1).notNull(),
+	// Campos para versão final editada
+	finalContent: text(),
+	finalTitle: varchar({ length: 500 }),
+	isFinalApproved: tinyint().default(0).notNull(),
+	includeHeader: tinyint().default(1).notNull(),
+	includeContractReference: tinyint().default(1).notNull(),
+	editedById: int(),
+	editedAt: timestamp({ mode: 'string' }),
+	approvedById: int(),
+	approvedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("contract_analysis_clauses_analysisId_idx").on(table.analysisId),
+]);
+
+export const contractAnalysisHistory = mysqlTable("contract_analysis_history", {
+	id: int().autoincrement().notNull(),
+	analysisId: int().notNull(),
+	historyActionType: mysqlEnum(['created','analysis_started','analysis_completed','analysis_error','refinement_requested','refinement_completed','reviewed','approved','rejected','exported','xai_analyzed','xai_clauses_generated','xai_action_plan_generated','xai_report_exported','xai_alert_contested','map_updated','clauses_exported','integrated_report_generated','share_link_generated','approval_requested','dpa_approved','dpa_rejected','dpa_sent_email','mapeamento_generated','mapeamento_edited','mapeamento_refined','mapeamento_approved','mapeamento_regenerated']).notNull(),
+	description: text(),
+	previousData: json(),
+	newData: json(),
+	userId: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const contractAnalysisMaps = mysqlTable("contract_analysis_maps", {
+	id: int().autoincrement().notNull(),
+	analysisId: int().notNull(),
+	partnerName: varchar({ length: 500 }),
+	contractType: varchar({ length: 255 }),
+	contractingParty: varchar({ length: 500 }),
+	contractedParty: varchar({ length: 500 }),
+	lgpdAgentType: mysqlEnum(['controlador','operador','controlador_conjunto','suboperador']),
+	agentTypeJustification: text(),
+	contractObject: text(),
+	startDate: varchar({ length: 50 }),
+	endDate: varchar({ length: 50 }),
+	commonData: text(),
+	commonDataLargeScale: tinyint().default(0),
+	sensitiveData: text(),
+	sensitiveDataLargeScale: tinyint().default(0),
+	hasElderlyData: tinyint().default(0),
+	elderlyDataDetails: text(),
+	hasMinorData: tinyint().default(0),
+	minorDataDetails: text(),
+	titularRightsDetails: text(),
+	dataEliminationDetails: text(),
+	legalRisks: text(),
+	securityRisks: text(),
+	protectionClauseDetails: text(),
+	suggestedClause: text(),
+	actionStatus: mysqlEnum(['adequado','ajustar']).default('ajustar'),
+	actionPlan: text(),
+	suggestedDeadline: varchar({ length: 50 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	titularRightsStatus: mysqlEnum(['sim','nao','parcial']),
+	dataEliminationStatus: mysqlEnum(['sim','nao','parcial']),
+	hasProtectionClause: mysqlEnum(['sim','nao','parcial']),
+});
+
+export const contractClauseVersions = mysqlTable("contract_clause_versions", {
+	id: int().autoincrement().notNull(),
+	clauseId: int().notNull(),
+	analysisId: int().notNull(),
+	versionNumber: int().notNull(),
+	title: varchar({ length: 500 }).notNull(),
+	content: text().notNull(),
+	includeHeader: tinyint().default(1).notNull(),
+	includeContractReference: tinyint().default(1).notNull(),
+	changeDescription: text(),
+	createdById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	isActive: tinyint().default(1).notNull(),
+},
+(table) => [
+	index("contract_clause_versions_clauseId_idx").on(table.clauseId),
+	index("contract_clause_versions_analysisId_idx").on(table.analysisId),
+]);
+
+export const contractChecklistItems = mysqlTable("contract_checklist_items", {
+	id: int().autoincrement().notNull(),
+	analysisId: int().notNull(),
+	itemNumber: int().notNull(),
+	question: text().notNull(),
+	checklistStatus: mysqlEnum(['sim','nao','parcial']).notNull(),
+	observations: text(),
+	contractExcerpt: text(),
+	responsibleId: int(),
+	responsibleName: varchar({ length: 255 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const contractRiskItems = mysqlTable("contract_risk_items", {
+	id: int().autoincrement().notNull(),
+	analysisId: int().notNull(),
+	contractArea: varchar({ length: 255 }),
+	analysisBlock: int(),
+	riskDescription: text().notNull(),
+	riskLevel: mysqlEnum(['1','2','3','4','5']).notNull(),
+	potentialImpact: text(),
+	requiredAction: text().notNull(),
+	suggestedDeadline: varchar({ length: 50 }),
+	legalReference: text(),
+	riskActionStatus: mysqlEnum(['pendente','em_andamento','concluido']).default('pendente'),
+	actionPlanId: int(),
+	responsibleId: int(),
+	responsibleName: varchar({ length: 255 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+
+export const contractAnalysisOutputsManifest = mysqlTable("contract_analysis_outputs_manifest", {
+  analysisId: bigint({ mode: "number" }).primaryKey(),
+  organizationId: bigint({ mode: "number" }).notNull(),
+
+  mapCount: int().default(0).notNull(),
+  checklistCount: int().default(0).notNull(),
+  riskCount: int().default(0).notNull(),
+  clauseCount: int().default(0).notNull(),
+  actionPlanCount: int().default(0).notNull(),
+
+  reportUrl: text(),
+  generatedAt: timestamp({ mode: "string" }).defaultNow().notNull(),
+  integrityHash: varchar({ length: 64 }),
+}, (table) => ({
+  idxOrg: index("contract_analysis_outputs_manifest_org_idx").on(table.organizationId),
+}));
+
+
+export const documents = mysqlTable("documents", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	uploadedById: int().notNull(),
+	entityType: mysqlEnum(['organization','third_party','compliance_assessment','third_party_assessment','action_plan']).notNull(),
+	entityId: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	fileUrl: text().notNull(),
+	fileKey: varchar({ length: 500 }).notNull(),
+	mimeType: varchar({ length: 100 }),
+	fileSize: int(),
+	description: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const evidences = mysqlTable("evidences", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	assessmentType: mysqlEnum(['compliance','third_party','contract_analysis']).notNull(),
+	assessmentId: int().notNull(),
+	questionId: varchar({ length: 50 }),
+	fileName: varchar({ length: 255 }).notNull(),
+	fileKey: varchar({ length: 500 }).notNull(),
+	fileUrl: text().notNull(),
+	fileSize: int(),
+	mimeType: varchar({ length: 100 }),
+	description: text(),
+	uploadedById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const gedAccessLogs = mysqlTable("ged_access_logs", {
+	id: int().autoincrement().notNull(),
+	resourceType: mysqlEnum(['folder','document']).notNull(),
+	resourceId: int().notNull(),
+	userId: int().notNull(),
+	action: mysqlEnum(['view','download','upload','edit','delete','share','move','rename']).notNull(),
+	details: json(),
+	ipAddress: varchar({ length: 45 }),
+	userAgent: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const gedDocuments = mysqlTable("ged_documents", {
+	id: int().autoincrement().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	spaceType: mysqlEnum(['organization','seusdados']).notNull(),
+	organizationId: int(),
+	folderId: int().notNull(),
+	fileName: varchar({ length: 255 }).notNull(),
+	fileKey: varchar({ length: 500 }).notNull(),
+	fileUrl: text().notNull(),
+	fileSize: int().notNull(),
+	mimeType: varchar({ length: 100 }).notNull(),
+	fileExtension: varchar({ length: 20 }),
+	version: int().default(1).notNull(),
+	previousVersionId: int(),
+	isLatestVersion: tinyint().default(1).notNull(),
+	status: mysqlEnum(['draft','active','archived','deleted']).default('active').notNull(),
+	isSharedWithClient: tinyint().default(0).notNull(),
+	sharedAt: timestamp({ mode: 'string' }),
+	sharedById: int(),
+	tags: json(),
+	metadata: json(),
+	linkedEntityType: varchar({ length: 50 }),
+	linkedEntityId: int(),
+	createdById: int().notNull(),
+	lastModifiedById: int(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+	deletedAt: timestamp({ mode: 'string' }),
+});
+
+export const gedFolderTemplates = mysqlTable("ged_folder_templates", {
+	id: int().autoincrement().notNull(),
+	spaceType: mysqlEnum(['organization','seusdados']).notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	relativePath: varchar({ length: 500 }).notNull(),
+	icon: varchar({ length: 50 }),
+	color: varchar({ length: 7 }),
+	sortOrder: int().default(0).notNull(),
+	isActive: tinyint().default(1).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const gedFolders = mysqlTable("ged_folders", {
+	id: int().autoincrement().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	spaceType: mysqlEnum(['organization','seusdados']).notNull(),
+	organizationId: int(),
+	parentFolderId: int(),
+	path: varchar({ length: 1000 }).notNull(),
+	depth: int().default(0).notNull(),
+	isSystemFolder: tinyint().default(0).notNull(),
+	icon: varchar({ length: 50 }),
+	color: varchar({ length: 7 }),
+	sortOrder: int().default(0).notNull(),
+	createdById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const gedPermissions = mysqlTable("ged_permissions", {
+	id: int().autoincrement().notNull(),
+	resourceType: mysqlEnum(['folder','document']).notNull(),
+	resourceId: int().notNull(),
+	permissionType: mysqlEnum(['user','role']).notNull(),
+	userId: int(),
+	role: mysqlEnum(['admin_global','consultor','cliente']),
+	accessLevel: mysqlEnum(['view','download','edit','delete','admin']).default('view').notNull(),
+	inheritFromParent: tinyint().default(1).notNull(),
+	grantedById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	expiresAt: timestamp({ mode: 'string' }),
+});
+
+export const governancaActionItems = mysqlTable("governanca_action_items", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	meetingId: int(),
+	agendaItemId: int(),
+	createdById: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	assignedToUserId: int(),
+	assignedToName: varchar({ length: 255 }),
+	dueDate: timestamp({ mode: 'string' }),
+	priority: mysqlEnum(['baixa','media','alta','critica']).default('media').notNull(),
+	status: mysqlEnum(['aberta','em_andamento','concluida','cancelada']).default('aberta').notNull(),
+	completedAt: timestamp({ mode: 'string' }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaAgendaItems = mysqlTable("governanca_agenda_items", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	meetingId: int().notNull(),
+	createdById: int().notNull(),
+	order: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	referenceDocuments: json(),
+	status: mysqlEnum(['nao_iniciado','em_discussao','encerrado']).default('nao_iniciado').notNull(),
+	decisionSummary: text(),
+	llmSummary: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaAtividadeOrganizacao = mysqlTable("governanca_atividade_organizacao", {
+	id: int().autoincrement().notNull(),
+	mesOrganizacaoId: int().notNull(),
+	organizationId: int().notNull(),
+	order: int().notNull(),
+	description: text().notNull(),
+	status: mysqlEnum(['pendente','em_andamento','concluida','cancelada']).default('pendente').notNull(),
+	assignedToId: int(),
+	assignedToName: varchar({ length: 255 }),
+	completedAt: timestamp({ mode: 'string' }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaControls = mysqlTable("governanca_controls", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	programId: int().notNull(),
+	createdById: int().notNull(),
+	code: varchar({ length: 50 }).notNull(),
+	category: mysqlEnum(['governanca','processos','tecnologia','pessoas','compliance']).notNull(),
+	label: varchar({ length: 255 }).notNull(),
+	isImplemented: tinyint().default(0).notNull(),
+	implementedAt: timestamp({ mode: 'string' }),
+	evidenceDocumentUrl: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaCppdConfigs = mysqlTable("governanca_cppd_configs", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	createdById: int().notNull(),
+	year: int().notNull(),
+	programType: mysqlEnum(['ano1','em_curso']).notNull(),
+	regime: mysqlEnum(['quinzenal','mensal','bimestral']).notNull(),
+	dayOfWeek: mysqlEnum(['domingo','segunda','terca','quarta','quinta','sexta','sabado']).notNull(),
+	time: varchar({ length: 5 }).notNull(),
+	startDate: timestamp({ mode: 'string' }).notNull(),
+	endDate: timestamp({ mode: 'string' }).notNull(),
+	meetingLocationType: mysqlEnum(['teams','meet','outlook','google','outro']).default('teams').notNull(),
+	defaultMeetingUrl: varchar({ length: 255 }),
+	status: mysqlEnum(['ativo','inativo']).default('ativo').notNull(),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaCppdMembers = mysqlTable("governanca_cppd_members", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	cppdId: int().notNull(),
+	createdById: int().notNull(),
+	userId: int().notNull(),
+	nameSnapshot: varchar({ length: 255 }).notNull(),
+	emailSnapshot: varchar({ length: 255 }).notNull(),
+	roleInCommittee: mysqlEnum(['sponsor','dpo','juridico','ti','rh','seguranca_da_informacao','processos','comercial_marketing','operacoes','outro']).notNull(),
+	isVoting: tinyint().default(1).notNull(),
+	isCoordinator: tinyint().default(0).notNull(),
+	isSecretary: tinyint().default(0).notNull(),
+	isDpo: tinyint().default(0).notNull(),
+	status: mysqlEnum(['ativo','inativo']).default('ativo').notNull(),
+	nominationTermUrl: text(),
+	confidentialityTermUrl: text(),
+	regimentUrl: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaEntregavelOrganizacao = mysqlTable("governanca_entregavel_organizacao", {
+	id: int().autoincrement().notNull(),
+	mesOrganizacaoId: int().notNull(),
+	organizationId: int().notNull(),
+	order: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	status: mysqlEnum(['pendente','em_elaboracao','em_revisao','aprovado','arquivado']).default('pendente').notNull(),
+	assignedToId: int(),
+	assignedToName: varchar({ length: 255 }),
+	documentId: int(),
+	documentUrl: text(),
+	dueDate: timestamp({ mode: 'string' }),
+	completedAt: timestamp({ mode: 'string' }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaMeetingParticipants = mysqlTable("governanca_meeting_participants", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	meetingId: int().notNull(),
+	createdById: int().notNull(),
+	userId: int().notNull(),
+	nameSnapshot: varchar({ length: 255 }).notNull(),
+	emailSnapshot: varchar({ length: 255 }).notNull(),
+	role: mysqlEnum(['membro','convidado','consultor','secretario','presidente']).notNull(),
+	attendanceStatus: mysqlEnum(['nao_confirmado','presente','ausente','justificado']).default('nao_confirmado').notNull(),
+	joinTime: timestamp({ mode: 'string' }),
+	leaveTime: timestamp({ mode: 'string' }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaMeetings = mysqlTable("governanca_meetings", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	cppdId: int().notNull(),
+	programId: int(),
+	createdById: int().notNull(),
+	year: int().notNull(),
+	sequence: int().notNull(),
+	date: timestamp({ mode: 'string' }).notNull(),
+	durationMinutes: int().default(90).notNull(),
+	status: mysqlEnum(['agendada','em_andamento','concluida','cancelada']).default('agendada').notNull(),
+	location: varchar({ length: 255 }),
+	meetingProvider: mysqlEnum(['teams','meet','outlook','google','outro']).default('teams').notNull(),
+	meetingUrl: text(),
+	calendarEventId: varchar({ length: 255 }),
+	agendaTitle: varchar({ length: 255 }).notNull(),
+	agendaSummary: text(),
+	agendaTemplateCode: varchar({ length: 50 }),
+	recordingUrl: text(),
+	transcript: text(),
+	minutesPdfUrl: text(),
+	minutesStatus: mysqlEnum(['nao_gerada','em_validacao','em_assinatura','assinada']).default('nao_gerada').notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaMesOrganizacao = mysqlTable("governanca_mes_organizacao", {
+	id: int().autoincrement().notNull(),
+	planoOrganizacaoId: int().notNull(),
+	organizationId: int().notNull(),
+	mesTemplateId: int().notNull(),
+	monthNumber: int().notNull(),
+	scheduledStartDate: timestamp({ mode: 'string' }),
+	scheduledEndDate: timestamp({ mode: 'string' }),
+	actualStartDate: timestamp({ mode: 'string' }),
+	actualEndDate: timestamp({ mode: 'string' }),
+	status: mysqlEnum(['nao_iniciado','em_andamento','concluido']).default('nao_iniciado').notNull(),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaMesTemplates = mysqlTable("governanca_mes_templates", {
+	id: int().autoincrement().notNull(),
+	planoAnualTemplateId: int().notNull(),
+	templateKey: varchar({ length: 100 }).notNull(),
+	monthNumber: int().notNull(),
+	macroBlock: varchar({ length: 255 }).notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	theme: varchar({ length: 255 }).notNull(),
+	activities: json().notNull(),
+	deliverables: json().notNull(),
+	blockColor: varchar({ length: 7 }).default('#5f29cc'),
+	icon: varchar({ length: 50 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("templateKey").on(table.templateKey),
+]);
+
+export const governancaPlanoAnualOrganizacao = mysqlTable("governanca_plano_anual_organizacao", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	templateId: int().notNull(),
+	year: int().notNull(),
+	startDate: timestamp({ mode: 'string' }).notNull(),
+	status: mysqlEnum(['planejado','em_execucao','concluido','pausado']).default('planejado').notNull(),
+	notes: text(),
+	createdById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaPlanoAnualTemplates = mysqlTable("governanca_plano_anual_templates", {
+	id: int().autoincrement().notNull(),
+	templateKey: varchar({ length: 100 }).notNull(),
+	programModel: mysqlEnum(['ano1','em_curso']).notNull(),
+	label: varchar({ length: 255 }).notNull(),
+	description: text(),
+	totalMonths: int().default(10).notNull(),
+	isActive: tinyint().default(1).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("templateKey").on(table.templateKey),
+]);
+
+export const governancaProgramMilestones = mysqlTable("governanca_program_milestones", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	programId: int().notNull(),
+	phaseId: int().notNull(),
+	createdById: int().notNull(),
+	month: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	isCompleted: tinyint().default(0).notNull(),
+	completedAt: timestamp({ mode: 'string' }),
+	evidenceDocumentUrl: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaProgramPhases = mysqlTable("governanca_program_phases", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	programId: int().notNull(),
+	createdById: int().notNull(),
+	phaseNumber: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	theme: varchar({ length: 255 }),
+	startMonth: int().notNull(),
+	endMonth: int().notNull(),
+	quarter: varchar({ length: 10 }),
+	status: mysqlEnum(['nao_iniciado','em_andamento','concluido']).default('nao_iniciado').notNull(),
+	completedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const governancaPrograms = mysqlTable("governanca_programs", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	createdById: int().notNull(),
+	year: int().notNull(),
+	type: mysqlEnum(['ano1','em_curso']).notNull(),
+	status: mysqlEnum(['planejado','em_execucao','concluido','pausado']).default('planejado').notNull(),
+	description: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const lgpdClauseTemplateHistory = mysqlTable("lgpd_clause_template_history", {
+	id: int().autoincrement().notNull(),
+	templateId: int().notNull(),
+	organizationId: int(),
+	previousContent: text().notNull(),
+	newContent: text().notNull(),
+	changedBy: int().notNull(),
+	changeReason: text(),
+	version: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const lgpdClauseTemplates = mysqlTable("lgpd_clause_templates", {
+	id: int().autoincrement().notNull(),
+	organizationId: int(),
+	templateId: varchar({ length: 50 }).notNull(),
+	templateName: varchar({ length: 255 }).notNull(),
+	templateDescription: text(),
+	content: text().notNull(),
+	variables: text(),
+	isActive: tinyint().default(1).notNull(),
+	version: int().default(1).notNull(),
+	createdBy: int().notNull(),
+	updatedBy: int(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const mapeamentoAreas = mysqlTable("mapeamento_areas", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	contextId: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	isCustom: tinyint().default(0),
+	isActive: tinyint().default(1),
+	responsibleName: varchar({ length: 255 }),
+	responsibleEmail: varchar({ length: 255 }),
+	responsiblePhone: varchar({ length: 50 }),
+	processCount: int().default(0),
+	completedProcessCount: int().default(0),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("idx_org").on(table.organizationId),
+	index("idx_context").on(table.contextId),
+]);
+
+export const mapeamentoContexts = mysqlTable("mapeamento_contexts", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	segment: varchar({ length: 100 }).notNull(),
+	businessType: varchar({ length: 100 }).notNull(),
+	employeesRange: varchar({ length: 50 }),
+	unitsCount: int().default(1),
+	hasDataProtectionOfficer: tinyint().default(0),
+	dataProtectionOfficerName: varchar({ length: 255 }),
+	dataProtectionOfficerEmail: varchar({ length: 255 }),
+	status: mysqlEnum(['em_andamento','concluido']).default('em_andamento').notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("idx_org").on(table.organizationId),
+]);
+
+export const mapeamentoProcesses = mysqlTable("mapeamento_processes", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	areaId: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	purpose: text(),
+	isAiGenerated: tinyint().default(0),
+	isActive: tinyint().default(1),
+	orderIndex: int().default(0),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("idx_org").on(table.organizationId),
+	index("idx_area").on(table.areaId),
+]);
+
+export const mapeamentoRespondents = mysqlTable("mapeamento_respondents", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	areaId: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	email: varchar({ length: 255 }).notNull(),
+	phone: varchar({ length: 50 }),
+	role: varchar({ length: 100 }),
+	inviteToken: varchar({ length: 64 }),
+	inviteSentAt: timestamp({ mode: 'string' }),
+	inviteExpiresAt: timestamp({ mode: 'string' }),
+	status: mysqlEnum(['pendente','convidado','em_andamento','concluiu']).default('pendente').notNull(),
+	startedAt: timestamp({ mode: 'string' }),
+	completedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("idx_org").on(table.organizationId),
+	index("idx_area").on(table.areaId),
+	index("idx_token").on(table.inviteToken),
+	index("inviteToken").on(table.inviteToken),
+]);
+
+export const mapeamentoResponses = mysqlTable("mapeamento_responses", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	respondentId: int().notNull(),
+	processId: int().notNull(),
+	// Vínculo com ROT gerado automaticamente (Modelo 2)
+	rotId: int(),
+	dataCategories: json(),
+	titularCategories: json(),
+	legalBase: varchar({ length: 255 }),
+	sharing: json(),
+	consentObtained: tinyint().default(0),
+	retentionPeriod: varchar({ length: 100 }),
+	storageLocation: varchar({ length: 255 }),
+	securityMeasures: json(),
+	internationalTransfer: tinyint().default(0),
+	internationalCountries: json(),
+	riskLevel: mysqlEnum(['baixa','media','alta','extrema']),
+	riskScore: decimal({ precision: 5, scale: 2 }),
+	requiresAction: tinyint().default(0),
+	notes: text(),
+	completed: tinyint().default(0),
+	completedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+		index("idx_org").on(table.organizationId),
+		index("idx_respondent").on(table.respondentId),
+		index("idx_process").on(table.processId),
+		index("idx_rot").on(table.rotId),
+	]);
+
+export const meudpoSettings = mysqlTable("meudpo_settings", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	slaUrgentHours: int().default(24).notNull(),
+	slaPrioritarioHours: int().default(48).notNull(),
+	slaPadraoHours: int().default(120).notNull(),
+	notifyOnCreate: tinyint().default(1).notNull(),
+	notifyOnUpdate: tinyint().default(1).notNull(),
+	notifyOnResolve: tinyint().default(1).notNull(),
+	autoReportFrequency: mysqlEnum(['diario','semanal','mensal','desativado']).default('semanal').notNull(),
+	autoReportRecipients: json(),
+	customCategories: json(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+	slaCritica: int().default(4),
+	slaAlta: int().default(8),
+	slaMedia: int().default(24),
+	slaBaixa: int().default(72),
+	notifyOnComment: tinyint().default(1),
+	notifySlaWarning: tinyint().default(1),
+	slaWarningThreshold: int().default(80),
+	autoReportEnabled: tinyint().default(0),
+	reportRecipients: json(),
+	autoAssignEnabled: tinyint().default(0),
+	autoAssignRules: json(),
+},
+(table) => [
+	index("org_unique").on(table.organizationId),
+]);
+
+export const notifications = mysqlTable("notifications", {
+	id: int().autoincrement().notNull(),
+	userId: int().notNull(),
+	organizationId: int(),
+	type: mysqlEnum(['assessment_completed','risk_critical','action_due','action_overdue','document_added','assessment_responded','task_assigned','task_due_reminder','contract_analysis_complete','invitation_received','system','ticket_created','ticket_updated','ticket_comment','ticket_resolved','ticket_assigned','sla_warning','sla_breach','report_ready']).default('system').notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	message: text().notNull(),
+	isRead: tinyint().default(0).notNull(),
+	entityType: varchar({ length: 50 }),
+	entityId: int(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	notificationType: varchar({ length: 50 }),
+	link: varchar({ length: 500 }),
+	readAt: timestamp({ mode: 'string' }),
+	sentViaEmail: tinyint().default(0).notNull(),
+	emailSentAt: timestamp({ mode: 'string' }),
+});
+
+export const organizations = mysqlTable("organizations", {
+	id: int().autoincrement().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	tradeName: varchar({ length: 255 }).notNull(),
+	cnpj: varchar({ length: 18 }),
+	email: varchar({ length: 320 }),
+	phone: varchar({ length: 20 }),
+	address: text(),
+	street: varchar({ length: 255 }),
+	number: varchar({ length: 20 }),
+	complement: varchar({ length: 255 }),
+	neighborhood: varchar({ length: 100 }),
+	city: varchar({ length: 100 }),
+	state: varchar({ length: 2 }),
+	zipCode: varchar({ length: 10 }),
+	logoUrl: text(),
+	primaryColor: varchar({ length: 7 }).default('#5f29cc'),
+	secondaryColor: varchar({ length: 7 }).default('#0ea5e9'),
+	isActive: tinyint().default(1).notNull(),
+	deletedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("organizations_cnpj_unique").on(table.cnpj),
+]);
+
+export const reminderLogs = mysqlTable("reminder_logs", {
+	id: int().autoincrement().notNull(),
+	accessLinkId: int().notNull(),
+	organizationId: int().notNull(),
+	thirdPartyId: int().notNull(),
+	reminderNumber: int().default(1).notNull(),
+	sentAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	status: mysqlEnum(['sent','failed','skipped']).default('sent').notNull(),
+	errorMessage: text(),
+});
+
+export const reminderSettings = mysqlTable("reminder_settings", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	isEnabled: tinyint().default(1).notNull(),
+	daysAfterSent: int().default(7).notNull(),
+	maxReminders: int().default(3).notNull(),
+	reminderInterval: int().default(7).notNull(),
+	lastProcessedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("reminder_settings_organizationId_unique").on(table.organizationId),
+]);
+
+export const responseTemplates = mysqlTable("response_templates", {
+	id: int().autoincrement().notNull(),
+	organizationId: int(),
+	createdById: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	content: text().notNull(),
+	category: varchar({ length: 100 }),
+	ticketType: varchar({ length: 50 }),
+	isGlobal: tinyint().default(0).notNull(),
+	usageCount: int().default(0).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const riskActionPlans = mysqlTable("risk_action_plans", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	analysisId: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	priority: mysqlEnum(['baixa','media','alta','critica']).notNull(),
+	assigneeId: int(),
+	assigneeRole: mysqlEnum(['dpo','titular','consultor','admin']),
+	dueDate: timestamp({ mode: 'string' }),
+	estimatedEffortHours: int(),
+	status: mysqlEnum(['pendente','em_andamento','concluida','cancelada']).default('pendente').notNull(),
+	completedAt: timestamp({ mode: 'string' }),
+	completedById: int(),
+	evidence: text(),
+	evidenceFileKey: varchar({ length: 255 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("idx_org").on(table.organizationId),
+	index("idx_analysis").on(table.analysisId),
+	index("idx_assignee").on(table.assigneeId),
+	index("idx_status").on(table.status),
+]);
+
+export const riskAnalyses = mysqlTable("risk_analyses", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	sourceType: mysqlEnum(['rot','response','manual']).notNull(),
+	sourceId: int(),
+	riskLevel: mysqlEnum(['baixa','media','alta','extrema']).notNull(),
+	riskScore: decimal({ precision: 5, scale: 2 }),
+	riskFactors: json(),
+	analyzedById: int(),
+	analyzedAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP'),
+	aiAnalysis: json(),
+	status: mysqlEnum(['pendente','em_tratamento','mitigado','aceito']).default('pendente').notNull(),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("idx_org").on(table.organizationId),
+	index("idx_source").on(table.sourceType, table.sourceId),
+]);
+
+export const rotOperations = mysqlTable("rot_operations", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	createdById: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	department: varchar({ length: 100 }),
+	titularCategory: varchar({ length: 100 }).notNull(),
+	dataCategories: json().notNull(),
+	purpose: text().notNull(),
+	legalBase: varchar({ length: 255 }).notNull(),
+	requiresConsent: tinyint().notNull(),
+	alternativeBases: json(),
+	risksIfNoConsent: json(),
+	justification: text(),
+	aiAnalysis: json(),
+	aiGeneratedAt: timestamp({ mode: 'string' }),
+	popFileKey: varchar({ length: 255 }),
+	rotFileKey: varchar({ length: 255 }),
+	status: mysqlEnum(['rascunho','em_revisao','aprovado','arquivado']).default('rascunho').notNull(),
+	approvedById: int(),
+	approvedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const rotTasks = mysqlTable("rot_tasks", {
+	id: int().autoincrement().notNull(),
+	rotId: int().notNull(),
+	assigneeId: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	dueDate: timestamp({ mode: 'string' }),
+	priority: mysqlEnum(['baixa','media','alta','critica']).notNull(),
+	completed: tinyint().default(0),
+	completedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const simulationChecklist = mysqlTable("simulation_checklist", {
+	id: int().autoincrement().notNull(),
+	simulationId: int().notNull(),
+	organizationId: int().notNull(),
+	category: varchar({ length: 100 }).notNull(),
+	item: text().notNull(),
+	isCompleted: tinyint().default(0).notNull(),
+	completedAt: timestamp({ mode: 'string' }),
+	completedBy: varchar({ length: 255 }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const simulationDecisions = mysqlTable("simulation_decisions", {
+	id: int().autoincrement().notNull(),
+	simulationId: int().notNull(),
+	organizationId: int().notNull(),
+	timestamp: timestamp({ mode: 'string' }).notNull(),
+	phase: varchar({ length: 50 }).notNull(),
+	description: text().notNull(),
+	decisionMaker: varchar({ length: 255 }).notNull(),
+	decisionType: mysqlEnum(['operational','strategic','communication']).notNull(),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const simulationEvents = mysqlTable("simulation_events", {
+	id: int().autoincrement().notNull(),
+	simulationId: int().notNull(),
+	organizationId: int().notNull(),
+	timestamp: timestamp({ mode: 'string' }).notNull(),
+	phase: varchar({ length: 50 }).notNull(),
+	eventType: varchar({ length: 100 }).notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text().notNull(),
+	severity: mysqlEnum(['baixa','media','alta','critica']).notNull(),
+	isRead: tinyint().default(0).notNull(),
+	readAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const simulationFeedback = mysqlTable("simulation_feedback", {
+	id: int().autoincrement().notNull(),
+	simulationId: int().notNull(),
+	organizationId: int().notNull(),
+	participantId: int().notNull(),
+	participantRole: varchar({ length: 100 }).notNull(),
+	clarityScore: int().notNull(),
+	communicationScore: int().notNull(),
+	toolsScore: int().notNull(),
+	strengths: text(),
+	weaknesses: text(),
+	suggestions: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const simulationKpis = mysqlTable("simulation_kpis", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	description: text(),
+	unit: varchar({ length: 50 }).notNull(),
+	targetValue: decimal({ precision: 10, scale: 2 }),
+	isActive: tinyint().default(1).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const simulationScenarios = mysqlTable("simulation_scenarios", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	createdById: int().notNull(),
+	nome: varchar({ length: 255 }).notNull(),
+	tipoIncidente: varchar({ length: 100 }).notNull(),
+	descricao: text().notNull(),
+	areasEnvolvidas: json().notNull(),
+	sistemasAfetados: json().notNull(),
+	objetivos: json().notNull(),
+	papeisChave: json().notNull(),
+	criteriosSucesso: json().notNull(),
+	trimestre: varchar({ length: 20 }),
+	isTemplate: tinyint().default(0).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const simulationStakeholders = mysqlTable("simulation_stakeholders", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	role: varchar({ length: 100 }).notNull(),
+	department: varchar({ length: 100 }),
+	contactEmail: varchar({ length: 255 }),
+	contactPhone: varchar({ length: 50 }),
+	isActive: tinyint().default(1).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const simulations = mysqlTable("simulations", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	scenarioId: int().notNull(),
+	createdById: int().notNull(),
+	scenarioName: varchar({ length: 255 }).notNull(),
+	startTime: timestamp({ mode: 'string' }).notNull(),
+	endTime: timestamp({ mode: 'string' }),
+	status: mysqlEnum(['planejada','em_andamento','pausada','concluida','cancelada']).default('planejada').notNull(),
+	phaseTimings: json().notNull(),
+	kpiValues: json().notNull(),
+	playbookAdherence: int().default(0),
+	recordsCompleteness: int().default(0),
+	participants: json(),
+	quarter: varchar({ length: 20 }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const slaMetrics = mysqlTable("sla_metrics", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	ticketId: int().notNull(),
+	slaLevel: mysqlEnum(['padrao','prioritario','urgente']).notNull(),
+	deadline: timestamp({ mode: 'string' }).notNull(),
+	resolvedAt: timestamp({ mode: 'string' }),
+	slaMetHours: int(),
+	slaMet: tinyint(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const thirdParties = mysqlTable("third_parties", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	tradeName: varchar({ length: 255 }),
+	cnpj: varchar({ length: 18 }),
+	type: mysqlEnum(['fornecedor','parceiro','suboperador','outro']).default('fornecedor').notNull(),
+	category: varchar({ length: 100 }),
+	contactName: varchar({ length: 255 }),
+	contactEmail: varchar({ length: 320 }),
+	contactPhone: varchar({ length: 20 }),
+	address: text(),
+	description: text(),
+	riskLevel: mysqlEnum(['baixo','moderado','alto','critico']),
+	lastAssessmentDate: timestamp({ mode: 'string' }),
+	isActive: tinyint().default(1).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+	contactWhatsapp: varchar({ length: 20 }),
+	managerArea: varchar({ length: 255 }),
+	contractType: varchar({ length: 100 }),
+});
+
+export const thirdPartyAccessLinks = mysqlTable("third_party_access_links", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	thirdPartyId: int().notNull(),
+	assessmentId: int(),
+	token: varchar({ length: 64 }).notNull(),
+	status: mysqlEnum(['ativo','expirado','usado','cancelado']).default('ativo').notNull(),
+	expiresAt: timestamp({ mode: 'string' }),
+	usedAt: timestamp({ mode: 'string' }),
+	createdById: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	index("third_party_access_links_token_unique").on(table.token),
+]);
+
+export const thirdPartyAssessments = mysqlTable("third_party_assessments", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	thirdPartyId: int().notNull(),
+	createdById: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	status: mysqlEnum(['rascunho','em_andamento','concluida','arquivada']).default('rascunho').notNull(),
+	overallRiskScore: int(),
+	riskClassification: mysqlEnum(['baixo','moderado','alto','critico']),
+	totalQuestions: int().default(0),
+	answeredQuestions: int().default(0),
+	recommendation: text(),
+	completedAt: timestamp({ mode: 'string' }),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const thirdPartyResponses = mysqlTable("third_party_responses", {
+	id: int().autoincrement().notNull(),
+	assessmentId: int().notNull(),
+	questionId: int().notNull(),
+	selectedLevel: int().notNull(),
+	impactScore: int().notNull(),
+	probabilityScore: int().notNull(),
+	riskScore: int().notNull(),
+	notes: text(),
+	evidenceUrls: json(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const ticketAttachments = mysqlTable("ticket_attachments", {
+	id: int().autoincrement().notNull(),
+	ticketId: int().notNull(),
+	commentId: int("comment_id"),
+	organizationId: int().notNull(),
+	uploadedById: int().notNull(),
+	filename: varchar({ length: 255 }).notNull(),
+	originalFilename: varchar({ length: 255 }).notNull(),
+	mimeType: varchar({ length: 100 }).notNull(),
+	fileSize: int().notNull(),
+	storageUrl: varchar({ length: 500 }).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const ticketCalendarEvents = mysqlTable("ticket_calendar_events", {
+	id: int().autoincrement().notNull(),
+	ticketId: int().notNull(),
+	organizationId: int().notNull(),
+	userId: int().notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text(),
+	eventType: mysqlEnum(['deadline','reminder','meeting','followup']).default('deadline').notNull(),
+	startDate: timestamp({ mode: 'string' }).notNull(),
+	endDate: timestamp({ mode: 'string' }),
+	externalCalendarType: mysqlEnum(['google','outlook']),
+	externalEventId: varchar({ length: 255 }),
+	reminderMinutes: int().default(30),
+	reminderSent: tinyint().default(0).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const ticketComments = mysqlTable("ticket_comments", {
+	id: int().autoincrement().notNull(),
+	ticketId: int().notNull(),
+	organizationId: int().notNull(),
+	authorId: int().notNull(),
+	authorRole: mysqlEnum(['cliente','consultor','advogado','dpo','admin']).notNull(),
+	content: text().notNull(),
+	isInternal: tinyint().default(0).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const ticketEscalations = mysqlTable("ticket_escalations", {
+	id: int().autoincrement().notNull(),
+	ticketId: int().notNull(),
+	fromUserId: int(),
+	toUserId: int().notNull(),
+	reason: varchar({ length: 255 }).notNull(),
+	escalationType: mysqlEnum(['sla_warning','sla_breach','manual','priority_change']).notNull(),
+	previousPriority: varchar({ length: 20 }),
+	newPriority: varchar({ length: 20 }),
+	notifiedAt: timestamp({ mode: 'string' }),
+	acknowledgedAt: timestamp({ mode: 'string' }),
+	acknowledgedById: int(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const ticketTagAssociations = mysqlTable("ticket_tag_associations", {
+	id: int().autoincrement().notNull(),
+	ticketId: int().notNull(),
+	tagId: int().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const ticketTags = mysqlTable("ticket_tags", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	createdById: int().notNull(),
+	name: varchar({ length: 50 }).notNull(),
+	color: varchar({ length: 7 }).default('#6366f1').notNull(),
+	description: varchar({ length: 255 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const tickets = mysqlTable("tickets", {
+	id: int().autoincrement().notNull(),
+	ticketNumber: int("ticket_number").unique(),
+	organizationId: int().notNull(),
+	createdById: int().notNull(),
+	assignedToId: int(),
+	clientId: int(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text().notNull(),
+	ticketType: mysqlEnum(['solicitacao_titular','incidente_seguranca','duvida_juridica','consultoria_geral','auditoria','treinamento','documentacao']).notNull(),
+	priority: mysqlEnum(['baixa','media','alta','critica']).default('media').notNull(),
+	status: mysqlEnum(['novo','em_analise','aguardando_cliente','aguardando_terceiro','resolvido','cancelado']).default('novo').notNull(),
+	slaLevel: mysqlEnum(['padrao','prioritario','urgente']).default('padrao').notNull(),
+	deadline: timestamp({ mode: 'string' }),
+	resolvedAt: timestamp({ mode: 'string' }),
+	resolution: text(),
+	legalBasis: varchar({ length: 255 }),
+	applicableArticles: json(),
+	sourceContext: json(),
+	metadata: json(),
+	incidentId: int("incident_id"), // Vinculação com incidente
+	serviceCatalogItemId: int("service_catalog_item_id"), // Vinculação com catálogo de serviços CSC
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+
+export const userInvites = mysqlTable("user_invites", {
+	id: int().autoincrement().notNull(),
+	email: varchar({ length: 255 }).notNull(),
+	name: varchar({ length: 255 }),
+	token: varchar({ length: 100 }).notNull(),
+	role: mysqlEnum(['admin','consultor','usuario']).default('usuario').notNull(),
+	organizationId: int(),
+	invitedById: int().notNull(),
+	status: mysqlEnum(['pending','accepted','expired','cancelled']).default('pending').notNull(),
+	expiresAt: timestamp({ mode: 'string' }).notNull(),
+	acceptedAt: timestamp({ mode: 'string' }),
+	emailSentAt: timestamp({ mode: 'string' }),
+	emailSentCount: int().default(0).notNull(),
+	message: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("user_invites_token_unique").on(table.token),
+]);
+
+export const userOrganizations = mysqlTable("user_organizations", {
+	id: int().autoincrement().notNull(),
+	userId: int().notNull(),
+	organizationId: int().notNull(),
+	accessLevel: mysqlEnum(['viewer','editor','admin']).default('viewer').notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+});
+
+export const users = mysqlTable("users", {
+	id: int().autoincrement().notNull(),
+	openId: varchar({ length: 64 }).notNull(),
+	name: text(),
+	email: varchar({ length: 320 }),
+	loginMethod: varchar({ length: 64 }),
+	role: mysqlEnum(['admin_global','pmo','consultor','consultor_par','sponsor','dpo_interno','comite','usuario','terceiro']).default('usuario').notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+	lastSignedIn: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	organizationId: int(),
+	avatarUrl: text(),
+	phone: varchar({ length: 20 }),
+	isActive: tinyint().default(1).notNull(),
+	temporaryPassword: varchar("temporary_password", { length: 255 }),
+	passwordExpiresAt: timestamp("password_expires_at", { mode: 'string' }),
+	mustChangePassword: tinyint("must_change_password").default(0),
+	passwordHash: varchar("password_hash", { length: 255 }),
+},
+(table) => [
+	index("users_openId_unique").on(table.openId),
+]);
+
+
+// Vinculação entre Mapeamentos (ROT/POP) e documentos GED
+export const mapeamentoGedDocuments = mysqlTable("mapeamento_ged_documents", {
+  id: int().autoincrement().notNull(),
+  rotId: int("rot_id").notNull(),
+  gedDocumentId: int("ged_document_id").notNull(),
+  documentType: varchar("document_type", { length: 50 }).notNull(), // rot, pop, ropa, evidence
+  version: int().default(1).notNull(),
+  isLatest: tinyint("is_latest").default(1).notNull(),
+  generatedAt: timestamp("generated_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  generatedById: int("generated_by_id"),
+  notes: text(),
+  createdAt: timestamp("created_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("mapeamento_ged_rot_idx").on(table.rotId),
+  index("mapeamento_ged_document_idx").on(table.gedDocumentId),
+  index("mapeamento_ged_type_idx").on(table.documentType),
+]);
+
+export type MapeamentoGedDocument = typeof mapeamentoGedDocuments.$inferSelect;
+export type InsertMapeamentoGedDocument = typeof mapeamentoGedDocuments.$inferInsert;
+
+
+// ==================== FASE 3 - CENTRAL DE DIREITOS DO TITULAR ====================
+
+// Consolidação de onde cada titular aparece nos processos mapeados
+export const titularInstances = mysqlTable("titular_instances", {
+  id: int().autoincrement().notNull(),
+  organizationId: int().notNull(),
+  
+  // Identificação do titular
+  titularName: varchar({ length: 255 }).notNull(),
+  titularEmail: varchar({ length: 255 }),
+  titularDocument: varchar({ length: 50 }), // CPF, CNPJ, etc.
+  titularCategory: varchar({ length: 100 }), // Cliente, Funcionário, etc.
+  
+  // Vínculo com processo mapeado
+  processId: int().notNull(),
+  responseId: int(), // Referência à resposta da entrevista
+  
+  // Sistema/fonte onde os dados residem
+  systemName: varchar({ length: 100 }).notNull(),
+  databaseTable: varchar({ length: 100 }),
+  
+  // LGPD metadata
+  legalBasis: varchar({ length: 255 }),
+  purpose: varchar({ length: 500 }),
+  sharing: json(),
+  retentionPeriod: varchar({ length: 100 }),
+  
+  // Dados tratados
+  dataCategories: json(), // [{name, sensivel}]
+  hasSensitiveData: tinyint().default(0),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("titular_instances_org_idx").on(table.organizationId),
+  index("titular_instances_name_idx").on(table.titularName),
+  index("titular_instances_email_idx").on(table.titularEmail),
+  index("titular_instances_document_idx").on(table.titularDocument),
+  index("titular_instances_process_idx").on(table.processId),
+]);
+
+export type TitularInstance = typeof titularInstances.$inferSelect;
+export type InsertTitularInstance = typeof titularInstances.$inferInsert;
+
+// Solicitações de direitos LGPD dos titulares
+export const dataSubjectRequests = mysqlTable("data_subject_requests", {
+  id: int().autoincrement().notNull(),
+  organizationId: int().notNull(),
+  
+  // Titular identificado
+  titularName: varchar({ length: 255 }).notNull(),
+  titularEmail: varchar({ length: 255 }),
+  titularDocument: varchar({ length: 50 }),
+  
+  // Tipo de solicitação (Art. 18 LGPD)
+  requestType: mysqlEnum(['acesso', 'retificacao', 'exclusao', 'portabilidade', 'revogacao_consentimento', 'oposicao', 'informacao']).notNull(),
+  
+  // Detalhes da solicitação
+  description: text(),
+  receivedVia: varchar({ length: 100 }), // email, formulario, telefone, presencial
+  externalProtocol: varchar({ length: 100 }), // protocolo externo se houver
+  
+  // Status do atendimento
+  status: mysqlEnum(['recebida', 'em_analise', 'aguardando_info', 'respondida', 'negada', 'arquivada']).default('recebida').notNull(),
+  
+  // Prazos (LGPD: 15 dias)
+  receivedAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  dueDate: timestamp({ mode: 'string' }),
+  respondedAt: timestamp({ mode: 'string' }),
+  
+  // Resposta
+  responseUrl: varchar({ length: 500 }), // URL do relatório gerado
+  responseNotes: text(),
+  
+  // Responsável
+  assignedToId: int(),
+  
+  // Auditoria
+  createdById: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("dsr_org_idx").on(table.organizationId),
+  index("dsr_titular_name_idx").on(table.titularName),
+  index("dsr_status_idx").on(table.status),
+  index("dsr_type_idx").on(table.requestType),
+  index("dsr_due_date_idx").on(table.dueDate),
+]);
+
+export type DataSubjectRequest = typeof dataSubjectRequests.$inferSelect;
+export type InsertDataSubjectRequest = typeof dataSubjectRequests.$inferInsert;
+
+// Histórico de ações nas solicitações de direitos
+export const dataSubjectRequestHistory = mysqlTable("data_subject_request_history", {
+  id: int().autoincrement().notNull(),
+  requestId: int().notNull(),
+  
+  action: varchar({ length: 100 }).notNull(), // status_change, comment, attachment, response
+  previousStatus: varchar({ length: 50 }),
+  newStatus: varchar({ length: 50 }),
+  notes: text(),
+  
+  performedById: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("dsr_history_request_idx").on(table.requestId),
+]);
+
+export type DataSubjectRequestHistory = typeof dataSubjectRequestHistory.$inferSelect;
+export type InsertDataSubjectRequestHistory = typeof dataSubjectRequestHistory.$inferInsert;
+
+
+// ==================== INTEGRAÇÃO ANÁLISE DE CONTRATOS COM MAPEAMENTOS ====================
+
+// Vinculação entre análise de contrato e mapeamentos gerados automaticamente
+export const contractMapeamentoLinks = mysqlTable("contract_mapeamento_links", {
+  id: int().autoincrement().notNull(),
+  
+  // Referência à análise de contrato
+  contractAnalysisId: int().notNull(),
+  
+  // Referências ao mapeamento gerado
+  contextId: int(), // mapeamento_contexts
+  areaId: int(), // mapeamento_areas
+  processId: int(), // mapeamento_processes
+  responseId: int(), // mapeamento_responses
+  rotId: int(), // rot_operations - preenchido após conversão em ROT
+  
+  // Metadados da extração
+  extractionSource: mysqlEnum(['contract_map', 'contract_text', 'ai_analysis']).default('contract_map').notNull(),
+  extractedData: json(), // Dados brutos extraídos do contrato
+  
+  // Área/departamento identificado
+  identifiedDepartment: varchar({ length: 255 }),
+  
+  // Status da vinculação
+  linkStatus: mysqlEnum(['pending', 'created', 'reviewed', 'error', 'draft', 'approved']).default('pending').notNull(),
+  errorMessage: text(),
+  
+  // Auditoria
+  createdById: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("cml_contract_idx").on(table.contractAnalysisId),
+  index("cml_context_idx").on(table.contextId),
+  index("cml_area_idx").on(table.areaId),
+  index("cml_process_idx").on(table.processId),
+  index("cml_response_idx").on(table.responseId),
+  index("cml_rot_idx").on(table.rotId),
+  index("cml_status_idx").on(table.linkStatus),
+]);
+
+export type ContractMapeamentoLink = typeof contractMapeamentoLinks.$inferSelect;
+export type InsertContractMapeamentoLink = typeof contractMapeamentoLinks.$inferInsert;
+
+
+// ==========================================
+// PLANO CPPD CONTÍNUO - INICIATIVAS
+// ==========================================
+
+export const cppdInitiatives = mysqlTable("cppd_initiatives", {
+  id: int().autoincrement().notNull().primaryKey(),
+  organizationId: int().notNull(),
+  
+  // Informações básicas
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  category: mysqlEnum(['politica', 'treinamento', 'auditoria', 'mapeamento', 'tecnologia', 'processo', 'comunicacao', 'outro']).default('outro').notNull(),
+  
+  // Status e progresso
+  status: mysqlEnum(['planejado', 'em_andamento', 'concluido', 'atrasado', 'cancelado']).default('planejado').notNull(),
+  progress: int().default(0).notNull(), // 0-100
+  
+  // Datas
+  plannedStartDate: timestamp({ mode: 'string' }),
+  plannedEndDate: timestamp({ mode: 'string' }),
+  actualStartDate: timestamp({ mode: 'string' }),
+  actualEndDate: timestamp({ mode: 'string' }),
+  
+  // Responsável
+  responsibleId: int(),
+  responsibleName: varchar({ length: 255 }),
+  responsibleEmail: varchar({ length: 255 }),
+  
+  // Trimestre/Período
+  quarter: mysqlEnum(['Q1', 'Q2', 'Q3', 'Q4']),
+  year: int().notNull(),
+  
+  // Prioridade e impacto
+  priority: mysqlEnum(['baixa', 'media', 'alta', 'critica']).default('media').notNull(),
+  impact: mysqlEnum(['baixo', 'medio', 'alto', 'muito_alto']).default('medio').notNull(),
+  
+  // Notas e observações
+  notes: text(),
+  
+  // Auditoria
+  createdById: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("cppd_init_org_idx").on(table.organizationId),
+  index("cppd_init_status_idx").on(table.status),
+  index("cppd_init_year_idx").on(table.year),
+  index("cppd_init_quarter_idx").on(table.quarter),
+  index("cppd_init_responsible_idx").on(table.responsibleId),
+]);
+
+export type CppdInitiative = typeof cppdInitiatives.$inferSelect;
+export type InsertCppdInitiative = typeof cppdInitiatives.$inferInsert;
+
+// Tarefas das iniciativas CPPD
+export const cppdInitiativeTasks = mysqlTable("cppd_initiative_tasks", {
+  id: int().autoincrement().notNull().primaryKey(),
+  initiativeId: int().notNull(),
+  
+  // Informações da tarefa
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  
+  // Status
+  status: mysqlEnum(['pendente', 'em_andamento', 'concluida', 'cancelada']).default('pendente').notNull(),
+  
+  // Datas
+  dueDate: timestamp({ mode: 'string' }),
+  completedAt: timestamp({ mode: 'string' }),
+  
+  // Responsável
+  assignedToId: int(),
+  assignedToName: varchar({ length: 255 }),
+  
+  // Ordem
+  sortOrder: int().default(0).notNull(),
+  
+  // Auditoria
+  createdById: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("cppd_task_initiative_idx").on(table.initiativeId),
+  index("cppd_task_status_idx").on(table.status),
+  index("cppd_task_assigned_idx").on(table.assignedToId),
+]);
+
+export type CppdInitiativeTask = typeof cppdInitiativeTasks.$inferSelect;
+export type InsertCppdInitiativeTask = typeof cppdInitiativeTasks.$inferInsert;
+
+// Documentos das iniciativas CPPD
+export const cppdInitiativeDocuments = mysqlTable("cppd_initiative_documents", {
+  id: int().autoincrement().notNull().primaryKey(),
+  initiativeId: int().notNull(),
+  
+  // Documento do GED
+  documentId: int(),
+  
+  // Ou arquivo externo
+  fileName: varchar({ length: 255 }),
+  fileUrl: varchar({ length: 1024 }),
+  fileType: varchar({ length: 100 }),
+  fileSize: int(),
+  
+  // Descrição
+  description: text(),
+  
+  // Auditoria
+  uploadedById: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("cppd_doc_initiative_idx").on(table.initiativeId),
+  index("cppd_doc_document_idx").on(table.documentId),
+]);
+
+export type CppdInitiativeDocument = typeof cppdInitiativeDocuments.$inferSelect;
+export type InsertCppdInitiativeDocument = typeof cppdInitiativeDocuments.$inferInsert;
+
+// Histórico de notificações de documentos atrasados
+export const cppdOverdueNotifications = mysqlTable("cppd_overdue_notifications", {
+  id: int().autoincrement().notNull().primaryKey(),
+  organizationId: int().notNull(),
+  
+  // Tipo de item atrasado
+  itemType: mysqlEnum(['initiative', 'task', 'document']).notNull(),
+  itemId: int().notNull(),
+  itemTitle: varchar({ length: 255 }).notNull(),
+  
+  // Detalhes do atraso
+  dueDate: timestamp({ mode: 'string' }).notNull(),
+  daysOverdue: int().notNull(),
+  
+  // Notificação
+  notifiedUserId: int(),
+  notifiedEmail: varchar({ length: 255 }),
+  notificationSentAt: timestamp({ mode: 'string' }),
+  notificationStatus: mysqlEnum(['pending', 'sent', 'failed']).default('pending').notNull(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("cppd_notif_org_idx").on(table.organizationId),
+  index("cppd_notif_type_idx").on(table.itemType),
+  index("cppd_notif_status_idx").on(table.notificationStatus),
+]);
+
+export type CppdOverdueNotification = typeof cppdOverdueNotifications.$inferSelect;
+export type InsertCppdOverdueNotification = typeof cppdOverdueNotifications.$inferInsert;
+
+
+// Tabela de tokens de compartilhamento de análises de contratos
+export const contractShareTokens = mysqlTable("contract_share_tokens", {
+  id: int().autoincrement().notNull(),
+  analysisId: int().notNull(),
+  token: varchar({ length: 64 }).notNull(),
+  createdById: int().notNull(),
+  expiresAt: timestamp({ mode: 'string' }).notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  viewCount: int().default(0).notNull(),
+  lastViewedAt: timestamp({ mode: 'string' }),
+},
+(table) => [
+  index("contract_share_tokens_token_idx").on(table.token),
+  index("contract_share_tokens_analysisId_idx").on(table.analysisId),
+]);
+
+export type ContractShareToken = typeof contractShareTokens.$inferSelect;
+export type InsertContractShareToken = typeof contractShareTokens.$inferInsert;
+
+
+// Tabela de aprovações de DPA (Acordo de Processamento de Dados)
+export const dpaApprovals = mysqlTable("dpa_approvals", {
+  id: int().autoincrement().notNull().primaryKey(),
+  analysisId: int().notNull(),
+  
+  // Versão do DPA aprovado
+  version: int().default(1).notNull(),
+  
+  // Informações da aprovação
+  approvalStatus: mysqlEnum(['pending', 'approved', 'rejected', 'revision_requested']).default('pending').notNull(),
+  approvedById: int(),
+  approvedByName: varchar({ length: 255 }),
+  approvedByEmail: varchar({ length: 255 }),
+  approvedByRole: varchar({ length: 100 }), // Ex: "DPO", "Jurídico", "Diretor"
+  approvalDate: timestamp({ mode: 'string' }),
+  
+  // Assinatura digital (hash ou referência)
+  digitalSignature: text(),
+  signatureMethod: mysqlEnum(['manual', 'digital_certificate', 'oauth']).default('manual'),
+  ipAddress: varchar({ length: 45 }),
+  userAgent: text(),
+  
+  // Comentários e observações
+  comments: text(),
+  rejectionReason: text(),
+  
+  // Cláusulas aprovadas (JSON com IDs das cláusulas)
+  approvedClauses: json(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("dpa_approvals_analysisId_idx").on(table.analysisId),
+  index("dpa_approvals_status_idx").on(table.approvalStatus),
+]);
+export type DpaApproval = typeof dpaApprovals.$inferSelect;
+export type InsertDpaApproval = typeof dpaApprovals.$inferInsert;
+
+// Tabela de solicitações de aprovação de DPA
+export const dpaApprovalRequests = mysqlTable("dpa_approval_requests", {
+  id: int().autoincrement().notNull().primaryKey(),
+  analysisId: int().notNull(),
+  
+  // Quem solicitou
+  requestedById: int().notNull(),
+  requestedByName: varchar({ length: 255 }),
+  
+  // Para quem foi solicitado
+  approverEmail: varchar({ length: 255 }).notNull(),
+  approverName: varchar({ length: 255 }),
+  approverRole: varchar({ length: 100 }), // Ex: "DPO", "Jurídico", "Cliente"
+  
+  // Status da solicitação
+  status: mysqlEnum(['pending', 'viewed', 'approved', 'rejected', 'expired']).default('pending').notNull(),
+  
+  // Token de acesso único
+  accessToken: varchar({ length: 64 }).notNull(),
+  expiresAt: timestamp({ mode: 'string' }).notNull(),
+  
+  // Mensagem personalizada
+  message: text(),
+  
+  // Rastreamento
+  sentAt: timestamp({ mode: 'string' }),
+  viewedAt: timestamp({ mode: 'string' }),
+  respondedAt: timestamp({ mode: 'string' }),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("dpa_approval_requests_analysisId_idx").on(table.analysisId),
+  index("dpa_approval_requests_token_idx").on(table.accessToken),
+  index("dpa_approval_requests_status_idx").on(table.status),
+]);
+export type DpaApprovalRequest = typeof dpaApprovalRequests.$inferSelect;
+export type InsertDpaApprovalRequest = typeof dpaApprovalRequests.$inferInsert;
+
+
+// Tabela de assinaturas digitais Gov.br
+export const govbrDigitalSignatures = mysqlTable("govbr_digital_signatures", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Referência ao documento/entidade sendo assinado
+  entityType: mysqlEnum(['dpa', 'contract', 'document']).notNull(),
+  entityId: int().notNull(),
+  analysisId: int(), // Referência à análise de contrato (se aplicável)
+  
+  // Informações do signatário
+  signerUserId: int(), // ID do usuário no sistema (se logado)
+  signerCpf: varchar({ length: 14 }), // CPF do signatário
+  signerName: varchar({ length: 255 }),
+  signerEmail: varchar({ length: 255 }),
+  signerGovbrLevel: mysqlEnum(['bronze', 'prata', 'ouro']), // Nível da conta gov.br
+  
+  // Status da assinatura
+  status: mysqlEnum(['pending', 'awaiting_authorization', 'processing', 'completed', 'failed', 'expired', 'cancelled']).default('pending').notNull(),
+  
+  // Dados do fluxo OAuth Gov.br
+  govbrClientId: varchar({ length: 100 }),
+  govbrState: varchar({ length: 100 }), // State para CSRF protection
+  govbrNonce: varchar({ length: 100 }), // Nonce para replay protection
+  govbrCode: text(), // Authorization code recebido
+  govbrAccessToken: text(), // Access token para assinatura
+  govbrTokenExpiresAt: timestamp({ mode: 'string' }),
+  
+  // Dados do documento
+  documentHash: varchar({ length: 64 }), // SHA-256 do documento
+  documentHashBase64: text(), // Hash em Base64 para envio à API
+  documentUrl: text(), // URL do documento original
+  
+  // Dados da assinatura
+  signatureType: mysqlEnum(['pkcs7_detached', 'pkcs7_enveloped', 'pdf_embedded']).default('pkcs7_detached'),
+  signaturePkcs7: text(), // Assinatura PKCS#7 em Base64
+  signedDocumentUrl: text(), // URL do documento assinado
+  certificatePublic: text(), // Certificado público do signatário
+  certificateType: mysqlEnum(['govbr', 'icp_brasil']), // Tipo de certificado usado
+  
+  // Metadados da assinatura
+  signedAt: timestamp({ mode: 'string' }),
+  validatedAt: timestamp({ mode: 'string' }),
+  validationResult: json(), // Resultado da validação ITI
+  
+  // Rastreamento
+  ipAddress: varchar({ length: 45 }),
+  userAgent: text(),
+  
+  // Mensagens de erro
+  errorCode: varchar({ length: 50 }),
+  errorMessage: text(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("govbr_signatures_entity_idx").on(table.entityType, table.entityId),
+  index("govbr_signatures_analysis_idx").on(table.analysisId),
+  index("govbr_signatures_status_idx").on(table.status),
+  index("govbr_signatures_signer_idx").on(table.signerCpf),
+]);
+export type GovbrDigitalSignature = typeof govbrDigitalSignatures.$inferSelect;
+export type InsertGovbrDigitalSignature = typeof govbrDigitalSignatures.$inferInsert;
+
+// Tabela de configuração da integração Gov.br
+export const govbrIntegrationConfig = mysqlTable("govbr_integration_config", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Ambiente
+  environment: mysqlEnum(['staging', 'production']).default('staging').notNull(),
+  
+  // Credenciais OAuth
+  clientId: varchar({ length: 100 }),
+  clientSecret: text(), // Criptografado
+  
+  // URLs configuradas
+  redirectUri: text(),
+  
+  // Status
+  isActive: tinyint().default(0).notNull(),
+  lastTestedAt: timestamp({ mode: 'string' }),
+  testResult: mysqlEnum(['success', 'failed']),
+  testErrorMessage: text(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+  updatedById: int(),
+});
+export type GovbrIntegrationConfig = typeof govbrIntegrationConfig.$inferSelect;
+export type InsertGovbrIntegrationConfig = typeof govbrIntegrationConfig.$inferInsert;
+
+// Tabela de log de assinaturas (auditoria detalhada)
+export const govbrSignatureAuditLog = mysqlTable("govbr_signature_audit_log", {
+  id: int().autoincrement().notNull().primaryKey(),
+  signatureId: int().notNull(),
+  
+  // Ação realizada
+  action: mysqlEnum([
+    'signature_requested',
+    'oauth_redirect',
+    'oauth_callback',
+    'token_obtained',
+    'certificate_obtained',
+    'hash_submitted',
+    'signature_received',
+    'signature_validated',
+    'signature_failed',
+    'signature_cancelled'
+  ]).notNull(),
+  
+  // Detalhes
+  details: json(),
+  errorMessage: text(),
+  
+  // Rastreamento
+  ipAddress: varchar({ length: 45 }),
+  userAgent: text(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("govbr_audit_signature_idx").on(table.signatureId),
+  index("govbr_audit_action_idx").on(table.action),
+]);
+export type GovbrSignatureAuditLog = typeof govbrSignatureAuditLog.$inferSelect;
+export type InsertGovbrSignatureAuditLog = typeof govbrSignatureAuditLog.$inferInsert;
+
+
+// ============================================
+// MOTOR DE MATURIDADE POR EVIDÊNCIAS
+// ============================================
+
+// Tabela central de eventos - todos os módulos registram eventos aqui
+export const sdEvents = mysqlTable("sd_events", {
+  id: int().autoincrement().notNull().primaryKey(),
+  eventId: varchar({ length: 36 }).notNull(), // UUID
+  tenantId: int().notNull(), // organizationId
+  
+  // Classificação do evento
+  module: mysqlEnum([
+    'checklist', 'cppd', 'dpia', 'contratos', 
+    'mapeamentos', 'terceiros', 'incidentes'
+  ]).notNull(),
+  eventType: mysqlEnum([
+    'tarefa', 'reuniao', 'treinamento', 'dpia', 
+    'contrato_risco', 'mapeamento_area', 'terceiro', 'incidente'
+  ]).notNull(),
+  
+  // Nível de risco
+  riskLevel: mysqlEnum(['baixo', 'medio', 'alto']),
+  
+  // Referências
+  areaId: int(), // Área organizacional
+  entityId: int(), // ID da entidade relacionada (contrato, terceiro, etc)
+  entityType: varchar({ length: 50 }), // Tipo da entidade
+  
+  // Datas
+  expectedDate: date({ mode: 'string' }), // Data prevista
+  startDate: date({ mode: 'string' }), // Data de início
+  endDate: date({ mode: 'string' }), // Data de conclusão
+  
+  // Status e conformidade
+  status: mysqlEnum([
+    'programado', 'em_andamento', 'pendente', 
+    'concluido', 'bloqueado'
+  ]).default('programado').notNull(),
+  conformity: mysqlEnum([
+    'conforme', 'parcialmente_conforme', 'nao_conforme'
+  ]),
+  
+  // Flags de planejamento e execução
+  plannedFlag: tinyint().default(1).notNull(), // Indica se era item planejado
+  executedFlag: tinyint().default(0).notNull(), // Indica se foi executado
+  
+  // Evidências
+  evidenceLink: text(), // URL ou referência de evidência
+  evidenceDocumentId: int(), // Referência ao documento no GED
+  
+  // Responsável
+  responsibleId: int(),
+  
+  // Metadados adicionais
+  metadata: json(),
+  
+  // Auditoria
+  createdById: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("sd_events_tenant_idx").on(table.tenantId),
+  index("sd_events_module_idx").on(table.module),
+  index("sd_events_event_type_idx").on(table.eventType),
+  index("sd_events_status_idx").on(table.status),
+  index("sd_events_risk_idx").on(table.riskLevel),
+  index("sd_events_dates_idx").on(table.expectedDate, table.endDate),
+]);
+export type SdEvent = typeof sdEvents.$inferSelect;
+export type InsertSdEvent = typeof sdEvents.$inferInsert;
+
+// Tabela de áreas organizacionais
+export const sdAreas = mysqlTable("sd_areas", {
+  id: int().autoincrement().notNull().primaryKey(),
+  areaId: varchar({ length: 36 }).notNull(), // UUID
+  tenantId: int().notNull(), // organizationId
+  areaName: varchar({ length: 255 }).notNull(),
+  description: text(),
+  parentAreaId: int(), // Para hierarquia de áreas
+  isActive: tinyint().default(1).notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("sd_areas_tenant_idx").on(table.tenantId),
+]);
+export type SdArea = typeof sdAreas.$inferSelect;
+export type InsertSdArea = typeof sdAreas.$inferInsert;
+
+// Tabela de estágio de maturidade por organização
+export const sdMaturityStage = mysqlTable("sd_maturity_stage", {
+  id: int().autoincrement().notNull().primaryKey(),
+  tenantId: int().notNull().unique(), // organizationId
+  currentStage: int().default(1).notNull(), // Estágio atual (1-5)
+  previousStage: int(), // Estágio anterior
+  lastUpdated: date({ mode: 'string' }),
+  lastEvaluatedAt: timestamp({ mode: 'string' }),
+  nextEvaluationAt: timestamp({ mode: 'string' }),
+  suggestedPromotion: tinyint().default(0), // Sugestão de promoção ativa
+  promotionBlockedReason: text(), // Motivo do bloqueio de promoção
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("sd_maturity_tenant_idx").on(table.tenantId),
+]);
+export type SdMaturityStage = typeof sdMaturityStage.$inferSelect;
+export type InsertSdMaturityStage = typeof sdMaturityStage.$inferInsert;
+
+// Tabela de log de decisões de maturidade
+export const sdMaturityDecisionLog = mysqlTable("sd_maturity_decision_log", {
+  id: int().autoincrement().notNull().primaryKey(),
+  tenantId: int().notNull(), // organizationId
+  previousStage: int().notNull(),
+  newStage: int().notNull(),
+  decisionDate: timestamp({ mode: 'string' }).notNull(),
+  approvedById: int().notNull(),
+  justification: text(),
+  evidenceLinks: json(), // Array de links de evidências
+  indicatorSnapshot: json(), // Snapshot dos indicadores no momento da decisão
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("sd_maturity_log_tenant_idx").on(table.tenantId),
+  index("sd_maturity_log_date_idx").on(table.decisionDate),
+]);
+export type SdMaturityDecisionLog = typeof sdMaturityDecisionLog.$inferSelect;
+export type InsertSdMaturityDecisionLog = typeof sdMaturityDecisionLog.$inferInsert;
+
+// Tabela de configuração de indicadores
+export const sdIndicatorConfig = mysqlTable("sd_indicator_config", {
+  id: int().autoincrement().notNull().primaryKey(),
+  indicatorId: varchar({ length: 50 }).notNull().unique(),
+  module: varchar({ length: 50 }).notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  description: text(),
+  formula: varchar({ length: 255 }).notNull(),
+  cutoff: decimal({ precision: 5, scale: 2 }), // Valor de corte (ex: 0.85 = 85%)
+  cutoffDays: int(), // Para indicadores baseados em dias
+  windowDays: int().default(90), // Janela de análise em dias
+  isActive: tinyint().default(1).notNull(),
+  weight: decimal({ precision: 3, scale: 2 }).default('1.00'), // Peso do indicador
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+});
+export type SdIndicatorConfig = typeof sdIndicatorConfig.$inferSelect;
+export type InsertSdIndicatorConfig = typeof sdIndicatorConfig.$inferInsert;
+
+// Tabela de histórico de cálculo de indicadores
+export const sdIndicatorHistory = mysqlTable("sd_indicator_history", {
+  id: int().autoincrement().notNull().primaryKey(),
+  tenantId: int().notNull(),
+  indicatorId: varchar({ length: 50 }).notNull(),
+  calculatedValue: decimal({ precision: 5, scale: 4 }), // Valor calculado
+  cutoff: decimal({ precision: 5, scale: 2 }), // Valor de corte usado
+  passed: tinyint(), // Se passou no corte
+  windowStart: date({ mode: 'string' }),
+  windowEnd: date({ mode: 'string' }),
+  eventsCount: int(), // Quantidade de eventos considerados
+  metadata: json(), // Dados adicionais do cálculo
+  calculatedAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("sd_indicator_history_tenant_idx").on(table.tenantId),
+  index("sd_indicator_history_indicator_idx").on(table.indicatorId),
+  index("sd_indicator_history_date_idx").on(table.calculatedAt),
+]);
+export type SdIndicatorHistory = typeof sdIndicatorHistory.$inferSelect;
+export type InsertSdIndicatorHistory = typeof sdIndicatorHistory.$inferInsert;
+
+
+// ============================================================
+// MÓDULO DE INCIDENTES LGPD
+// ============================================================
+
+// Tabela principal de incidentes
+export const incidents = mysqlTable("incidents", {
+  id: int().autoincrement().notNull().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  status: mysqlEnum(['standby', 'active', 'contained', 'remediated', 'closed']).default('active').notNull(),
+  riskLevel: mysqlEnum("risk_level", ['low', 'medium', 'high', 'critical']).default('medium').notNull(),
+  
+  // Timestamps
+  detectedAt: timestamp("detected_at", { mode: 'string' }).notNull(),
+  knowledgeAt: timestamp("knowledge_at", { mode: 'string' }).notNull(), // Data do conhecimento (para contagem ANPD)
+  closedAt: timestamp("closed_at", { mode: 'string' }),
+  
+  // Progress
+  currentPhaseId: int("current_phase_id").default(1).notNull(),
+  phases: json().notNull(), // Array de fases com checklist
+  
+  // Triage
+  triageAnswers: json("triage_answers"), // Array de respostas da triagem
+  triageResult: json("triage_result"), // Resultado da triagem (notificationRequired, anpdRequired, etc)
+  
+  // Deadlines
+  deadlines: json(), // Array de prazos
+  
+  // Responsáveis
+  assignedDpoId: int("assigned_dpo_id"),
+  assignedTeamIds: json("assigned_team_ids"), // Array de IDs de usuários
+  
+  // LGPD Specific
+  affectedDataCategories: json("affected_data_categories"), // Array de categorias de dados afetados
+  estimatedAffectedTitulars: int("estimated_affected_titulars"),
+  dataProcessorInvolved: tinyint("data_processor_involved").default(0),
+  
+  // Communications
+  anpdCommunicationId: varchar("anpd_communication_id", { length: 100 }),
+  anpdCommunicationSentAt: timestamp("anpd_communication_sent_at", { mode: 'string' }),
+  titularCommunicationSentAt: timestamp("titular_communication_sent_at", { mode: 'string' }),
+  
+  // Metadata
+  tags: json(), // Array de tags
+  externalReferences: json("external_references"), // Array de referências externas
+  attachments: json(), // Array de URLs de anexos
+  
+  createdById: int("created_by_id").notNull(),
+  ticketId: int("ticket_id"), // Vinculação com ticket do MeuDPO
+  createdAt: timestamp("created_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("incidents_organization_idx").on(table.organizationId),
+  index("incidents_status_idx").on(table.status),
+  index("incidents_knowledge_at_idx").on(table.knowledgeAt),
+]);
+export type Incident = typeof incidents.$inferSelect;
+export type InsertIncident = typeof incidents.$inferInsert;
+
+// Tabela de logs de incidentes
+export const incidentLogs = mysqlTable("incident_logs", {
+  id: int().autoincrement().notNull().primaryKey(),
+  incidentId: int("incident_id").notNull(),
+  timestamp: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  message: text().notNull(),
+  type: mysqlEnum(['action', 'system', 'alert', 'communication']).default('action').notNull(),
+  userId: int("user_id"),
+  userName: varchar("user_name", { length: 255 }),
+  phaseId: int("phase_id"),
+  metadata: json(),
+},
+(table) => [
+  index("incident_logs_incident_idx").on(table.incidentId),
+]);
+export type IncidentLog = typeof incidentLogs.$inferSelect;
+export type InsertIncidentLog = typeof incidentLogs.$inferInsert;
+
+// Tabela de contatos de emergência
+export const incidentEmergencyContacts = mysqlTable("incident_emergency_contacts", {
+  id: int().autoincrement().notNull().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  role: varchar({ length: 100 }).notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  email: varchar({ length: 255 }).notNull(),
+  phone: varchar({ length: 50 }).notNull(),
+  priority: int().default(1).notNull(),
+  isAvailable: tinyint("is_available").default(1).notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("incident_contacts_organization_idx").on(table.organizationId),
+]);
+export type IncidentEmergencyContact = typeof incidentEmergencyContacts.$inferSelect;
+export type InsertIncidentEmergencyContact = typeof incidentEmergencyContacts.$inferInsert;
+
+
+// ============================================
+// CATÁLOGO DE SERVIÇOS CSC - MeuDPO
+// ============================================
+
+// Tabela de Blocos de Serviços (categorias)
+export const serviceCatalogBlocks = mysqlTable("service_catalog_blocks", {
+  id: int().autoincrement().notNull().primaryKey(),
+  code: varchar({ length: 10 }).notNull(), // TS, DT, GI, GC, CT, PS
+  name: varchar({ length: 100 }).notNull(),
+  description: text(),
+  color: varchar({ length: 7 }).notNull(), // Cor hex
+  icon: varchar({ length: 50 }), // Nome do ícone
+  displayOrder: int("display_order").default(0).notNull(),
+  isActive: tinyint("is_active").default(1).notNull(),
+  createdAt: timestamp("created_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("service_blocks_code_idx").on(table.code),
+]);
+export type ServiceCatalogBlock = typeof serviceCatalogBlocks.$inferSelect;
+export type InsertServiceCatalogBlock = typeof serviceCatalogBlocks.$inferInsert;
+
+// Tabela de Serviços do Catálogo
+export const serviceCatalogItems = mysqlTable("service_catalog_items", {
+  id: int().autoincrement().notNull().primaryKey(),
+  blockId: int("block_id").notNull(),
+  code: varchar({ length: 20 }).notNull(), // TS-01, DT-01, etc.
+  name: varchar({ length: 255 }).notNull(),
+  description: text(),
+  slaHours: int("sla_hours").notNull(), // SLA em horas úteis
+  legalDeadlineDays: int("legal_deadline_days"), // Prazo legal em dias (quando aplicável)
+  deliverable: varchar({ length: 255 }), // Tipo de entrega (Relatório, Documento, etc.)
+  priority: mysqlEnum(['baixa', 'media', 'alta', 'critica']).default('media').notNull(),
+  requiresApproval: tinyint("requires_approval").default(0).notNull(),
+  isActive: tinyint("is_active").default(1).notNull(),
+  displayOrder: int("display_order").default(0).notNull(),
+  metadata: json(), // Dados adicionais específicos do serviço
+  createdAt: timestamp("created_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("service_items_block_idx").on(table.blockId),
+  index("service_items_code_idx").on(table.code),
+]);
+export type ServiceCatalogItem = typeof serviceCatalogItems.$inferSelect;
+export type InsertServiceCatalogItem = typeof serviceCatalogItems.$inferInsert;
+
+// Tabela de SLAs por Organização (customização)
+export const organizationServiceSlas = mysqlTable("organization_service_slas", {
+  id: int().autoincrement().notNull().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  serviceItemId: int("service_item_id").notNull(),
+  customSlaHours: int("custom_sla_hours"), // SLA customizado para a organização
+  customLegalDeadlineDays: int("custom_legal_deadline_days"),
+  isEnabled: tinyint("is_enabled").default(1).notNull(),
+  notes: text(),
+  createdAt: timestamp("created_at", { mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp("updated_at", { mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("org_service_slas_org_idx").on(table.organizationId),
+  index("org_service_slas_service_idx").on(table.serviceItemId),
+]);
+export type OrganizationServiceSla = typeof organizationServiceSlas.$inferSelect;
+export type InsertOrganizationServiceSla = typeof organizationServiceSlas.$inferInsert;
+
+
+// ==================== PREFERÊNCIAS DE USUÁRIO ====================
+
+// Preferências de notificação e configurações do usuário
+export const userPreferences = mysqlTable("user_preferences", {
+  id: int().autoincrement().notNull(),
+  userId: int().notNull().unique(),
+  
+  // Preferências de notificação
+  emailNotifications: tinyint().default(1).notNull(),
+  pushNotifications: tinyint().default(1).notNull(),
+  notifyAvaliacoes: tinyint().default(1).notNull(),
+  notifyTickets: tinyint().default(1).notNull(),
+  notifyReunioes: tinyint().default(1).notNull(),
+  
+  // Preferências de toast de organização
+  showAutoSelectToast: tinyint().default(1).notNull(),
+  showManualSelectToast: tinyint().default(1).notNull(),
+  showClearSelectToast: tinyint().default(1).notNull(),
+  
+  // Preferências de interface
+  theme: mysqlEnum(['light', 'dark', 'system']).default('system').notNull(),
+  language: varchar({ length: 10 }).default('pt-BR').notNull(),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("user_prefs_user_idx").on(table.userId),
+]);
+
+export type UserPreference = typeof userPreferences.$inferSelect;
+export type InsertUserPreference = typeof userPreferences.$inferInsert;
+
+
+// GED Types
+export type GedFolder = typeof gedFolders.$inferSelect;
+export type InsertGedFolder = typeof gedFolders.$inferInsert;
+export type GedDocument = typeof gedDocuments.$inferSelect;
+export type InsertGedDocument = typeof gedDocuments.$inferInsert;
+export type InsertGedPermission = typeof gedPermissions.$inferInsert;
+export type InsertGedAccessLog = typeof gedAccessLogs.$inferInsert;
+
+
+// Histórico de Notificações
+export const notificationHistory = mysqlTable("notification_history", {
+  id: int().autoincrement().notNull(),
+  organizationId: int(),
+  userId: int(),
+  type: mysqlEnum(['sla_alert', 'sla_summary', 'ticket_created', 'ticket_updated', 'ticket_assigned', 'deadline_warning', 'system', 'email', 'owner']).notNull(),
+  title: varchar({ length: 255 }).notNull(),
+  content: text().notNull(),
+  channel: mysqlEnum(['app', 'email', 'owner_notification']).default('app').notNull(),
+  status: mysqlEnum(['pending', 'sent', 'failed', 'read']).default('pending').notNull(),
+  metadata: json(),
+  errorMessage: text(),
+  sentAt: timestamp({ mode: 'string' }),
+  readAt: timestamp({ mode: 'string' }),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("notification_history_org_idx").on(table.organizationId),
+  index("notification_history_user_idx").on(table.userId),
+  index("notification_history_type_idx").on(table.type),
+  index("notification_history_status_idx").on(table.status),
+]);
+export type NotificationHistory = typeof notificationHistory.$inferSelect;
+export type InsertNotificationHistory = typeof notificationHistory.$inferInsert;
+
+
+// ============================================
+// SISTEMA DE COMENTÁRIOS E ANOTAÇÕES EM CLÁUSULAS
+// ============================================
+
+// Tabela de comentários por cláusula
+export const clauseComments = mysqlTable("clause_comments", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Referência à cláusula
+  analysisId: int().notNull(), // ID da análise de contrato
+  clauseId: varchar({ length: 50 }).notNull(), // ID da cláusula (ex: "clause_1")
+  
+  // Autor do comentário
+  authorId: int().notNull(),
+  authorRole: mysqlEnum(['admin_global', 'consultor', 'cliente', 'advogado', 'dpo']).notNull(),
+  
+  // Conteúdo
+  content: text().notNull(),
+  
+  // Thread de respostas
+  parentCommentId: int(), // Se for resposta, referencia o comentário pai
+  
+  // Menções de usuários
+  mentions: json(), // Array de IDs de usuários mencionados
+  
+  // Status
+  isResolved: tinyint().default(0).notNull(),
+  resolvedById: int(),
+  resolvedAt: timestamp({ mode: 'string' }),
+  
+  // Edição
+  isEdited: tinyint().default(0).notNull(),
+  editedAt: timestamp({ mode: 'string' }),
+  
+  // Soft delete
+  isDeleted: tinyint().default(0).notNull(),
+  deletedAt: timestamp({ mode: 'string' }),
+  deletedById: int(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("clause_comments_analysis_idx").on(table.analysisId),
+  index("clause_comments_clause_idx").on(table.clauseId),
+  index("clause_comments_author_idx").on(table.authorId),
+  index("clause_comments_parent_idx").on(table.parentCommentId),
+  index("clause_comments_resolved_idx").on(table.isResolved),
+]);
+export type ClauseComment = typeof clauseComments.$inferSelect;
+export type InsertClauseComment = typeof clauseComments.$inferInsert;
+
+// Tabela de anotações destacadas no texto
+export const clauseAnnotations = mysqlTable("clause_annotations", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Referência à cláusula
+  analysisId: int().notNull(),
+  clauseId: varchar({ length: 50 }).notNull(),
+  
+  // Autor da anotação
+  authorId: int().notNull(),
+  authorRole: mysqlEnum(['admin_global', 'consultor', 'cliente', 'advogado', 'dpo']).notNull(),
+  
+  // Seleção de texto
+  selectedText: text().notNull(), // Texto selecionado
+  startOffset: int().notNull(), // Posição inicial no texto
+  endOffset: int().notNull(), // Posição final no texto
+  
+  // Conteúdo da anotação
+  content: text().notNull(),
+  
+  // Cor/tipo da anotação
+  highlightColor: mysqlEnum(['yellow', 'green', 'blue', 'red', 'purple', 'orange']).default('yellow').notNull(),
+  annotationType: mysqlEnum(['note', 'question', 'suggestion', 'issue', 'approval']).default('note').notNull(),
+  
+  // Status
+  isResolved: tinyint().default(0).notNull(),
+  resolvedById: int(),
+  resolvedAt: timestamp({ mode: 'string' }),
+  
+  // Soft delete
+  isDeleted: tinyint().default(0).notNull(),
+  deletedAt: timestamp({ mode: 'string' }),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("clause_annotations_analysis_idx").on(table.analysisId),
+  index("clause_annotations_clause_idx").on(table.clauseId),
+  index("clause_annotations_author_idx").on(table.authorId),
+  index("clause_annotations_type_idx").on(table.annotationType),
+]);
+export type ClauseAnnotation = typeof clauseAnnotations.$inferSelect;
+export type InsertClauseAnnotation = typeof clauseAnnotations.$inferInsert;
+
+// Tabela de notificações de comentários
+export const commentNotifications = mysqlTable("comment_notifications", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Usuário que receberá a notificação
+  userId: int().notNull(),
+  
+  // Tipo de notificação
+  notificationType: mysqlEnum(['new_comment', 'reply', 'mention', 'resolved', 'new_annotation']).notNull(),
+  
+  // Referência ao comentário/anotação
+  commentId: int(),
+  annotationId: int(),
+  
+  // Contexto
+  analysisId: int().notNull(),
+  clauseId: varchar({ length: 50 }).notNull(),
+  
+  // Autor da ação
+  triggeredById: int().notNull(),
+  
+  // Status
+  isRead: tinyint().default(0).notNull(),
+  readAt: timestamp({ mode: 'string' }),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("comment_notif_user_idx").on(table.userId),
+  index("comment_notif_read_idx").on(table.isRead),
+  index("comment_notif_analysis_idx").on(table.analysisId),
+]);
+export type CommentNotification = typeof commentNotifications.$inferSelect;
+export type InsertCommentNotification = typeof commentNotifications.$inferInsert;
+
+
+// ============================================
+// MÓDULO DPIA - Data Protection Impact Assessment
+// ============================================
+
+// Tabela principal de avaliações DPIA
+export const dpiaAssessments = mysqlTable("dpia_assessments", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Organização e contexto
+  organizationId: int().notNull(),
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  
+  // Origem do DPIA
+  sourceType: mysqlEnum(['manual', 'mapeamento', 'contrato', 'incidente']).default('manual').notNull(),
+  sourceId: int(), // ID do mapeamento, contrato ou incidente de origem
+  
+  // Classificação de risco
+  riskLevel: mysqlEnum(['baixo', 'moderado', 'alto', 'critico']).default('moderado').notNull(),
+  overallScore: int().default(0), // Pontuação geral 0-100
+  
+  // Status do DPIA
+  status: mysqlEnum(['draft', 'in_progress', 'pending_review', 'approved', 'rejected', 'archived']).default('draft').notNull(),
+  
+  // Responsáveis
+  dpoId: int(), // DPO responsável
+  createdById: int().notNull(),
+  reviewedById: int(),
+  approvedById: int(),
+  
+  // Datas
+  reviewedAt: timestamp({ mode: 'string' }),
+  approvedAt: timestamp({ mode: 'string' }),
+  nextReviewDate: timestamp({ mode: 'string' }),
+  
+  // Metadados
+  metadata: json(),
+  
+  // PATCH-2: Campos de Workflow e PDF
+  workflowStatus: mysqlEnum(['draft', 'in_progress', 'review', 'ready_for_signature', 'signing', 'signed']).default('draft'),
+  version: int().default(1).notNull(),
+  
+  // PATCH-2: IDs dos documentos PDF no GED
+  finalPdfGedId: int(), // PDF completo
+  simplifiedPdfGedId: int(), // PDF simplificado
+  anpdPackageGedId: int(), // Pacote ANPD (ZIP)
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("dpia_org_idx").on(table.organizationId),
+  index("dpia_status_idx").on(table.status),
+  index("dpia_risk_idx").on(table.riskLevel),
+  index("dpia_source_idx").on(table.sourceType, table.sourceId),
+  index("dpia_workflow_idx").on(table.workflowStatus),
+]);
+export type DpiaAssessment = typeof dpiaAssessments.$inferSelect;
+export type InsertDpiaAssessment = typeof dpiaAssessments.$inferInsert;
+
+// Perguntas do questionário DPIA (template)
+export const dpiaQuestions = mysqlTable("dpia_questions", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Categoria da pergunta
+  category: mysqlEnum([
+    'necessidade_proporcionalidade',
+    'direitos_titulares',
+    'medidas_seguranca',
+    'transferencia_internacional',
+    'compartilhamento',
+    'retencao_dados',
+    'riscos_identificados',
+    'medidas_mitigacao'
+  ]).notNull(),
+  
+  // Conteúdo
+  questionText: text().notNull(),
+  helpText: text(),
+  
+  // Configuração
+  questionType: mysqlEnum(['text', 'textarea', 'select', 'multiselect', 'boolean', 'scale']).default('text').notNull(),
+  options: json(), // Opções para select/multiselect
+  
+  // Peso para cálculo de risco
+  riskWeight: int().default(1),
+  
+  // Ordem de exibição
+  displayOrder: int().default(0),
+  
+  // Status
+  isActive: tinyint().default(1).notNull(),
+  isRequired: tinyint().default(1).notNull(),
+  
+  // Referência legal
+  legalReference: varchar({ length: 255 }), // Ex: "Art. 38, LGPD"
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("dpia_questions_category_idx").on(table.category),
+  index("dpia_questions_order_idx").on(table.displayOrder),
+]);
+export type DpiaQuestion = typeof dpiaQuestions.$inferSelect;
+export type InsertDpiaQuestion = typeof dpiaQuestions.$inferInsert;
+
+// Respostas do questionário DPIA
+export const dpiaResponses = mysqlTable("dpia_responses", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  dpiaId: int().notNull(),
+  questionId: int().notNull(),
+  
+  // Resposta
+  responseText: text(),
+  responseValue: varchar({ length: 255 }), // Para respostas de escala/select
+  responseJson: json(), // Para multiselect
+  
+  // Avaliação de risco da resposta
+  riskScore: int().default(0), // 0-10
+  
+  // Comentários
+  notes: text(),
+  
+  // Autor
+  answeredById: int().notNull(),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("dpia_responses_dpia_idx").on(table.dpiaId),
+  index("dpia_responses_question_idx").on(table.questionId),
+]);
+export type DpiaResponse = typeof dpiaResponses.$inferSelect;
+export type InsertDpiaResponse = typeof dpiaResponses.$inferInsert;
+
+// Riscos identificados no DPIA
+export const dpiaRisks = mysqlTable("dpia_risks", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  dpiaId: int().notNull(),
+  
+  // Descrição do risco
+  title: varchar({ length: 255 }).notNull(),
+  description: text().notNull(),
+  
+  // Classificação
+  riskCategory: mysqlEnum([
+    'acesso_nao_autorizado',
+    'perda_dados',
+    'uso_indevido',
+    'violacao_privacidade',
+    'discriminacao',
+    'dano_financeiro',
+    'dano_reputacional',
+    'nao_conformidade_legal',
+    'outro'
+  ]).notNull(),
+  
+  // Avaliação de risco
+  likelihood: mysqlEnum(['muito_baixa', 'baixa', 'media', 'alta', 'muito_alta']).default('media').notNull(),
+  impact: mysqlEnum(['muito_baixo', 'baixo', 'medio', 'alto', 'muito_alto']).default('medio').notNull(),
+  riskLevel: mysqlEnum(['baixo', 'moderado', 'alto', 'critico']).default('moderado').notNull(),
+  riskScore: int().default(0), // Calculado: likelihood * impact
+  
+  // Status
+  status: mysqlEnum(['identificado', 'em_mitigacao', 'mitigado', 'aceito', 'transferido']).default('identificado').notNull(),
+  
+  // Referência legal
+  legalReference: varchar({ length: 255 }),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("dpia_risks_dpia_idx").on(table.dpiaId),
+  index("dpia_risks_level_idx").on(table.riskLevel),
+  index("dpia_risks_status_idx").on(table.status),
+]);
+export type DpiaRisk = typeof dpiaRisks.$inferSelect;
+export type InsertDpiaRisk = typeof dpiaRisks.$inferInsert;
+
+// Medidas de mitigação para riscos do DPIA
+export const dpiaMitigations = mysqlTable("dpia_mitigations", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  dpiaId: int().notNull(),
+  riskId: int().notNull(),
+  
+  // Descrição da medida
+  title: varchar({ length: 255 }).notNull(),
+  description: text().notNull(),
+  
+  // Tipo de medida
+  mitigationType: mysqlEnum([
+    'tecnica',
+    'organizacional',
+    'juridica',
+    'fisica',
+    'treinamento',
+    'monitoramento',
+    'outro'
+  ]).notNull(),
+  
+  // Status
+  status: mysqlEnum(['planejada', 'em_implementacao', 'implementada', 'verificada', 'cancelada']).default('planejada').notNull(),
+  
+  // Responsável e prazo
+  responsibleId: int(),
+  dueDate: timestamp({ mode: 'string' }),
+  completedAt: timestamp({ mode: 'string' }),
+  
+  // Eficácia
+  effectivenessRating: mysqlEnum(['baixa', 'media', 'alta']),
+  
+  // Vinculação com plano de ação
+  actionPlanId: int(),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("dpia_mitigations_dpia_idx").on(table.dpiaId),
+  index("dpia_mitigations_risk_idx").on(table.riskId),
+  index("dpia_mitigations_status_idx").on(table.status),
+]);
+export type DpiaMitigation = typeof dpiaMitigations.$inferSelect;
+export type InsertDpiaMitigation = typeof dpiaMitigations.$inferInsert;
+
+// ============================================
+// SISTEMA DE REVISÃO PERIÓDICA DE MAPEAMENTOS
+// ============================================
+
+// Configuração de revisão por organização
+export const mapeamentoReviewConfig = mysqlTable("mapeamento_review_config", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  organizationId: int().notNull(),
+  
+  // Periodicidade (em dias)
+  reviewPeriodDays: int().default(365).notNull(), // Padrão: anual
+  
+  // Alertas
+  alertDaysBefore: int().default(30), // Dias antes do vencimento para alertar
+  sendEmailAlerts: tinyint().default(1).notNull(),
+  
+  // Responsável padrão
+  defaultReviewerId: int(),
+  
+  // Status
+  isActive: tinyint().default(1).notNull(),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("review_config_org_idx").on(table.organizationId),
+]);
+export type MapeamentoReviewConfig = typeof mapeamentoReviewConfig.$inferSelect;
+export type InsertMapeamentoReviewConfig = typeof mapeamentoReviewConfig.$inferInsert;
+
+// Agendamento de revisões
+export const mapeamentoReviewSchedule = mysqlTable("mapeamento_review_schedule", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  organizationId: int().notNull(),
+  
+  // Referência ao mapeamento (ROT ou processo)
+  mapeamentoType: mysqlEnum(['rot', 'processo', 'area']).notNull(),
+  mapeamentoId: int().notNull(),
+  
+  // Datas
+  lastReviewDate: timestamp({ mode: 'string' }),
+  nextReviewDate: timestamp({ mode: 'string' }).notNull(),
+  
+  // Status
+  status: mysqlEnum(['scheduled', 'pending', 'overdue', 'completed', 'skipped']).default('scheduled').notNull(),
+  
+  // Responsável
+  reviewerId: int(),
+  
+  // Notificações enviadas
+  alertsSent: int().default(0),
+  lastAlertSentAt: timestamp({ mode: 'string' }),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("review_schedule_org_idx").on(table.organizationId),
+  index("review_schedule_type_idx").on(table.mapeamentoType, table.mapeamentoId),
+  index("review_schedule_next_idx").on(table.nextReviewDate),
+  index("review_schedule_status_idx").on(table.status),
+]);
+export type MapeamentoReviewSchedule = typeof mapeamentoReviewSchedule.$inferSelect;
+export type InsertMapeamentoReviewSchedule = typeof mapeamentoReviewSchedule.$inferInsert;
+
+// Histórico de revisões
+export const mapeamentoReviewHistory = mysqlTable("mapeamento_review_history", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  scheduleId: int().notNull(),
+  organizationId: int().notNull(),
+  
+  // Referência ao mapeamento
+  mapeamentoType: mysqlEnum(['rot', 'processo', 'area']).notNull(),
+  mapeamentoId: int().notNull(),
+  
+  // Revisão
+  reviewedById: int().notNull(),
+  reviewedAt: timestamp({ mode: 'string' }).notNull(),
+  
+  // Resultado
+  reviewResult: mysqlEnum(['approved', 'updated', 'archived', 'flagged']).notNull(),
+  
+  // Notas e alterações
+  notes: text(),
+  changesDescription: text(),
+  
+  // Snapshot do estado anterior (para auditoria)
+  previousState: json(),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("review_history_schedule_idx").on(table.scheduleId),
+  index("review_history_org_idx").on(table.organizationId),
+  index("review_history_type_idx").on(table.mapeamentoType, table.mapeamentoId),
+]);
+export type MapeamentoReviewHistory = typeof mapeamentoReviewHistory.$inferSelect;
+export type InsertMapeamentoReviewHistory = typeof mapeamentoReviewHistory.$inferInsert;
+
+
+// ============================================================================
+// FRAMEWORK-SPECIFIC QUESTIONS - Questões Específicas por Framework
+// ============================================================================
+
+// Domínios de Conformidade por Framework
+export const complianceDomains = mysqlTable("compliance_domains", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Identificação
+  framework: mysqlEnum(['misto','sgd','ico','cnil','seusdados']).notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  description: text(),
+  color: varchar({ length: 7 }), // Cor em hex (ex: #7c3aed)
+  icon: varchar({ length: 50 }), // Ícone emoji ou nome
+  
+  // Ordenação
+  order: int().default(0).notNull(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("compliance_domains_framework_idx").on(table.framework),
+  index("compliance_domains_order_idx").on(table.order),
+]);
+export type ComplianceDomain = typeof complianceDomains.$inferSelect;
+export type InsertComplianceDomain = typeof complianceDomains.$inferInsert;
+
+// Questões de Conformidade Específicas por Framework
+export const complianceQuestions = mysqlTable("compliance_questions", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Identificação
+  framework: mysqlEnum(['misto','sgd','ico','cnil','seusdados']).notNull(),
+  domainId: int().notNull(),
+  
+  // Conteúdo da Questão
+  questionText: text().notNull(),
+  
+  // Opções de Resposta (4 níveis de maturidade)
+  option1Text: text().notNull(),
+  option1Evidence: text(), // Evidência necessária para opção 1
+  
+  option2Text: text().notNull(),
+  option2Evidence: text(),
+  
+  option3Text: text().notNull(),
+  option3Evidence: text(),
+  
+  option4Text: text().notNull(),
+  option4Evidence: text(),
+  
+  // Ordenação
+  order: int().default(0).notNull(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("compliance_questions_framework_idx").on(table.framework),
+  index("compliance_questions_domain_idx").on(table.domainId),
+  index("compliance_questions_order_idx").on(table.order),
+]);
+export type ComplianceQuestion = typeof complianceQuestions.$inferSelect;
+export type InsertComplianceQuestion = typeof complianceQuestions.$inferInsert;
+
+// Respostas Específicas por Framework (estendendo complianceResponses)
+export const complianceFrameworkResponses = mysqlTable("compliance_framework_responses", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Referências
+  assessmentId: int().notNull(),
+  questionId: int().notNull(),
+  
+  // Resposta
+  selectedOption: int().notNull(), // 1, 2, 3 ou 4
+  notes: text(),
+  evidenceUrls: json(), // Array de URLs de evidências
+  
+  // Auditoria
+  respondedById: int(),
+  respondedAt: timestamp({ mode: 'string' }),
+  
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("compliance_framework_responses_assessment_idx").on(table.assessmentId),
+  index("compliance_framework_responses_question_idx").on(table.questionId),
+]);
+export type ComplianceFrameworkResponse = typeof complianceFrameworkResponses.$inferSelect;
+export type InsertComplianceFrameworkResponse = typeof complianceFrameworkResponses.$inferInsert;
+
+
+// ==================== FRAMEWORK SEUSDADOS - MATURIDADE LGPD ====================
+
+// Domínios do Framework SeusDados
+export const seusdadosDomains = mysqlTable("seusdados_domains", {
+  id: int().autoincrement().notNull().primaryKey(),
+  code: varchar({ length: 50 }).notNull().unique(),
+  label: varchar({ length: 255 }).notNull(),
+  weight: decimal({ precision: 3, scale: 2 }).default('1.00').notNull(),
+  order: int().default(0).notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("seusdados_domains_code_idx").on(table.code),
+  index("seusdados_domains_order_idx").on(table.order),
+]);
+export type SeusdadosDomain = typeof seusdadosDomains.$inferSelect;
+export type InsertSeusdadosDomain = typeof seusdadosDomains.$inferInsert;
+
+// Perguntas do Framework SeusDados
+export const seusdadosQuestions = mysqlTable("seusdados_questions", {
+  id: int().autoincrement().notNull().primaryKey(),
+  code: varchar({ length: 20 }).notNull().unique(),
+  domainCode: varchar({ length: 50 }).notNull(),
+  idx: int().notNull(),
+  prompt: text().notNull(),
+  frameworkTags: json().$type<string[]>().default([]).notNull(),
+  frameworkMetadata: json().$type<{
+    iso?: { family: string[]; topics: string[] };
+    nist_privacy?: { functions: string[]; categories: string[] };
+    lgpd?: { topics: string[] };
+    ia?: { topics: string[] };
+  }>().default({}).notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("seusdados_questions_code_idx").on(table.code),
+  index("seusdados_questions_domain_idx").on(table.domainCode),
+]);
+export type SeusdadosQuestion = typeof seusdadosQuestions.$inferSelect;
+export type InsertSeusdadosQuestion = typeof seusdadosQuestions.$inferInsert;
+
+// Opções de Resposta do Framework SeusDados (5 níveis)
+export const seusdadosOptions = mysqlTable("seusdados_options", {
+  id: int().autoincrement().notNull().primaryKey(),
+  questionCode: varchar({ length: 20 }).notNull(),
+  optionCode: varchar({ length: 20 }).notNull(),
+  level: int().notNull(), // 1-5
+  label: text().notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("seusdados_options_question_idx").on(table.questionCode),
+  index("seusdados_options_level_idx").on(table.level),
+]);
+export type SeusdadosOption = typeof seusdadosOptions.$inferSelect;
+export type InsertSeusdadosOption = typeof seusdadosOptions.$inferInsert;
+
+// Avaliações do Framework SeusDados
+export const seusdadosAssessments = mysqlTable("seusdados_assessments", {
+  id: int().autoincrement().notNull().primaryKey(),
+  organizationId: int().notNull(),
+  createdById: int().notNull(),
+  title: varchar({ length: 255 }).notNull(),
+  status: mysqlEnum(['rascunho','em_andamento','concluida','arquivada']).default('rascunho').notNull(),
+  
+  // Scores calculados
+  overallScoreAvg: decimal({ precision: 5, scale: 2 }),
+  overallLevelRounded: int(),
+  totalQuestions: int().default(39),
+  answeredQuestions: int().default(0),
+  
+  // Timestamps
+  completedAt: timestamp({ mode: 'string' }),
+  notes: text(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("seusdados_assessments_org_idx").on(table.organizationId),
+  index("seusdados_assessments_status_idx").on(table.status),
+]);
+export type SeusdadosAssessment = typeof seusdadosAssessments.$inferSelect;
+export type InsertSeusdadosAssessment = typeof seusdadosAssessments.$inferInsert;
+
+// Respostas do Framework SeusDados
+export const seusdadosAnswers = mysqlTable("seusdados_answers", {
+  id: int().autoincrement().notNull().primaryKey(),
+  assessmentId: int().notNull(),
+  questionCode: varchar({ length: 20 }).notNull(),
+  selectedOptionCode: varchar({ length: 20 }).notNull(),
+  selectedLevel: int().notNull(), // 1-5
+  observations: text(),
+  evidence: json().$type<{ links?: string[]; files?: string[]; metadata?: Record<string, unknown> }>().default({}).notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("seusdados_answers_assessment_idx").on(table.assessmentId),
+  index("seusdados_answers_question_idx").on(table.questionCode),
+]);
+export type SeusdadosAnswer = typeof seusdadosAnswers.$inferSelect;
+export type InsertSeusdadosAnswer = typeof seusdadosAnswers.$inferInsert;
+
+// Scores por Domínio do Framework SeusDados
+export const seusdadosDomainScores = mysqlTable("seusdados_domain_scores", {
+  id: int().autoincrement().notNull().primaryKey(),
+  assessmentId: int().notNull(),
+  domainCode: varchar({ length: 50 }).notNull(),
+  scoreAvg: decimal({ precision: 5, scale: 2 }).notNull(),
+  levelRounded: int().notNull(),
+  answeredQuestions: int().notNull(),
+  totalQuestions: int().notNull(),
+  distribution: json().$type<{ l1: number; l2: number; l3: number; l4: number; l5: number }>().default({ l1: 0, l2: 0, l3: 0, l4: 0, l5: 0 }).notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("seusdados_domain_scores_assessment_idx").on(table.assessmentId),
+  index("seusdados_domain_scores_domain_idx").on(table.domainCode),
+]);
+export type SeusdadosDomainScore = typeof seusdadosDomainScores.$inferSelect;
+export type InsertSeusdadosDomainScore = typeof seusdadosDomainScores.$inferInsert;
+
+
+// ============================================
+// MÓDULO PA ANPD - Gestão de Incidentes e Processos Administrativos
+// ============================================
+
+// Incidentes de Segurança (PAISI)
+export const irIncidents = mysqlTable("ir_incidents", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  organizationId: int().notNull(),
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  incidentType: varchar({ length: 100 }),
+  severity: mysqlEnum(['baixa', 'media', 'alta', 'critica']),
+  discoveryDate: timestamp({ mode: 'string' }),
+  reportedBy: int(),
+  stage: int().default(0).notNull(),
+  status: mysqlEnum(['aberto', 'em_investigacao', 'resolvido', 'encerrado']).default('aberto').notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_incidents_organization_idx").on(table.organizationId),
+  index("ir_incidents_status_idx").on(table.status),
+]);
+
+// Casos Administrativos (ANPD-PA)
+export const irCases = mysqlTable("ir_cases", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  incidentId: varchar({ length: 36 }).notNull(),
+  caseNumber: varchar({ length: 50 }).notNull().unique(),
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  status: mysqlEnum(['aberto', 'em_analise', 'em_decisao', 'finalizado', 'arquivado']).default('aberto').notNull(),
+  cisStatus: mysqlEnum(['nao_iniciado', 'rascunho', 'em_analise', 'finalizado']).default('nao_iniciado').notNull(),
+  cisInitialDeadline: timestamp({ mode: 'string' }),
+  cisFinalDeadline: timestamp({ mode: 'string' }),
+  doubleDeadlineApplied: tinyint().default(0).notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_cases_incident_idx").on(table.incidentId),
+  index("ir_cases_status_idx").on(table.status),
+  index("ir_cases_cisStatus_idx").on(table.cisStatus),
+]);
+
+// Atos Processuais
+export const irActs = mysqlTable("ir_acts", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  caseId: varchar({ length: 36 }).notNull(),
+  actType: varchar({ length: 100 }).notNull(),
+  description: text().notNull(),
+  actDate: timestamp({ mode: 'string' }).notNull(),
+  recordedBy: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_acts_case_idx").on(table.caseId),
+  index("ir_acts_actDate_idx").on(table.actDate),
+]);
+
+// Prazos
+export const irDeadlines = mysqlTable("ir_deadlines", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  caseId: varchar({ length: 36 }).notNull(),
+  category: varchar({ length: 50 }).notNull(),
+  dueDate: timestamp({ mode: 'string' }).notNull(),
+  status: mysqlEnum(['pendente', 'em_alerta', 'vencido', 'cumprido']).default('pendente').notNull(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_deadlines_case_idx").on(table.caseId),
+  index("ir_deadlines_dueDate_idx").on(table.dueDate),
+  index("ir_deadlines_status_idx").on(table.status),
+]);
+
+// Termo de Ajustamento de Conduta (TAC)
+export const irTacs = mysqlTable("ir_tacs", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  caseId: varchar({ length: 36 }).notNull().unique(),
+  obligations: text(),
+  deadline: timestamp({ mode: 'string' }),
+  terms: text(),
+  status: mysqlEnum(['pendente', 'assinado', 'cumprido']).default('pendente'),
+  signedAt: timestamp({ mode: 'string' }),
+  fulfilledAt: timestamp({ mode: 'string' }),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_tacs_case_idx").on(table.caseId),
+]);
+
+// Sanções
+export const irSanctions = mysqlTable("ir_sanctions", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  caseId: varchar({ length: 36 }).notNull().unique(),
+  gravity: varchar({ length: 50 }),
+  damageLevel: varchar({ length: 50 }),
+  sanctionType: varchar({ length: 100 }),
+  fineAmount: decimal({ precision: 15, scale: 2 }),
+  appliedAt: timestamp({ mode: 'string' }),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_sanctions_case_idx").on(table.caseId),
+]);
+
+// CIS (Comunicado de Investigação Sumária)
+export const irCisDocuments = mysqlTable("ir_cis_documents", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  caseId: varchar({ length: 36 }).notNull().unique(),
+  content: json(),
+  status: mysqlEnum(['rascunho', 'em_revisao', 'finalizado', 'enviado']).default('rascunho').notNull(),
+  generatedAt: timestamp({ mode: 'string' }),
+  submittedAt: timestamp({ mode: 'string' }),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_cis_documents_case_idx").on(table.caseId),
+  index("ir_cis_documents_status_idx").on(table.status),
+]);
+
+// CIS - Histórico de versões (imutável)
+export const irCisDocumentVersions = mysqlTable("ir_cis_document_versions", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  caseId: varchar({ length: 36 }).notNull(),
+  versionStatus: mysqlEnum(['rascunho', 'em_analise', 'finalizado', 'enviado']).default('rascunho').notNull(),
+  content: text(),
+  affectedDataTypes: text(),
+  affectedIndividuals: varchar({ length: 50 }),
+  riskAssessment: text(),
+  mitigationMeasures: text(),
+  aiDraft: text(),
+  createdBy: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+  index("ir_cis_doc_versions_case_idx").on(table.caseId),
+  index("ir_cis_doc_versions_status_idx").on(table.versionStatus),
+  index("ir_cis_doc_versions_createdAt_idx").on(table.createdAt),
+]);
+
+// Evidências (integração com Custódia Digital)
+export const irEvidences = mysqlTable("ir_evidences", {
+  id: varchar({ length: 36 }).primaryKey().notNull(),
+  caseId: varchar({ length: 36 }).notNull(),
+  title: varchar({ length: 255 }).notNull(),
+  description: text(),
+  documentId: int(),
+  storageUrl: varchar({ length: 500 }),
+  status: mysqlEnum(['pendente', 'coletada', 'analisada', 'arquivada']).default('pendente').notNull(),
+  collectedAt: timestamp({ mode: 'string' }),
+  collectedBy: int(),
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+  index("ir_evidences_case_idx").on(table.caseId),
+  index("ir_evidences_status_idx").on(table.status),
+]);
+
+// Type exports para TypeScript
+export type IrIncident = typeof irIncidents.$inferSelect;
+export type InsertIrIncident = typeof irIncidents.$inferInsert;
+
+export type IrCase = typeof irCases.$inferSelect;
+export type InsertIrCase = typeof irCases.$inferInsert;
+
+export type IrAct = typeof irActs.$inferSelect;
+export type InsertIrAct = typeof irActs.$inferInsert;
+
+export type IrDeadline = typeof irDeadlines.$inferSelect;
+export type InsertIrDeadline = typeof irDeadlines.$inferInsert;
+
+export type IrTac = typeof irTacs.$inferSelect;
+export type InsertIrTac = typeof irTacs.$inferInsert;
+
+export type IrSanction = typeof irSanctions.$inferSelect;
+export type InsertIrSanction = typeof irSanctions.$inferInsert;
+
+export type IrCisDocument = typeof irCisDocuments.$inferSelect;
+export type InsertIrCisDocument = typeof irCisDocuments.$inferInsert;
+
+export type IrCisDocumentVersion = typeof irCisDocumentVersions.$inferSelect;
+export type InsertIrCisDocumentVersion = typeof irCisDocumentVersions.$inferInsert;
+
+export type IrEvidence = typeof irEvidences.$inferSelect;
+export type InsertIrEvidence = typeof irEvidences.$inferInsert;
+
+
+// ============================================
+// SISTEMA UNIFICADO DE AVALIAÇÕES
+// ============================================
+
+// Avaliações Unificadas (Conformidade LGPD + Framework Seusdados)
+export const unifiedAssessments = mysqlTable("ua_assessments", {
+	id: int().autoincrement().notNull().primaryKey(),
+	organizationId: int().notNull(),
+	assessmentCode: varchar({ length: 20 }).notNull().unique(), // AC#100000ABC format
+	framework: mysqlEnum(['seusdados','conformidade_lgpd','misto','sgd','ico','cnil']).default('seusdados').notNull(),
+	status: mysqlEnum(['programada','iniciada','concluida','arquivada']).default('programada').notNull(),
+	deadline: timestamp({ mode: 'string' }).notNull(),
+	defaultDeadlineDays: int().default(15).notNull(),
+	createdById: int().notNull(), // Consultor Seusdados
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("unified_assessments_org_idx").on(table.organizationId),
+	index("unified_assessments_code_idx").on(table.assessmentCode),
+	index("unified_assessments_status_idx").on(table.status),
+]);
+
+// Atribuições de Domínios a Usuários
+export const assessmentAssignments = mysqlTable("ua_assignments", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	domainId: varchar({ length: 20 }).notNull(), // IA-01, IA-02, etc
+	domainName: varchar({ length: 255 }).notNull(),
+	assignedToUserId: int().notNull(), // Usuário cliente que responderá
+	assignedToName: varchar({ length: 255 }).notNull(),
+	assignedToEmail: varchar({ length: 255 }).notNull(),
+	status: mysqlEnum(['pendente','em_progresso','concluida']).default('pendente').notNull(),
+	deadline: timestamp({ mode: 'string' }).notNull(),
+	startedAt: timestamp({ mode: 'string' }),
+	completedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("assessment_assignments_assessment_idx").on(table.assessmentId),
+	index("assessment_assignments_user_idx").on(table.assignedToUserId),
+	index("assessment_assignments_status_idx").on(table.status),
+	unique("ua_assign_assessment_domain_unique").on(table.assessmentId, table.domainId),
+]);
+
+// Respostas do Questionário
+export const assessmentResponses = mysqlTable("ua_responses", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	assignmentId: int().notNull(),
+	questionId: varchar({ length: 20 }).notNull(), // IA-01, IA-02, etc
+	questionText: text().notNull(),
+	selectedLevel: int().notNull(), // 1-5 maturity level
+	respondedByUserId: int().notNull(),
+	respondedAt: timestamp({ mode: 'string' }).notNull(),
+	notes: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("assessment_responses_assessment_idx").on(table.assessmentId),
+	index("assessment_responses_question_idx").on(table.questionId),
+	unique("ua_resp_assessment_question_unique").on(table.assessmentId, table.questionId),
+]);
+// Evidências (Documentos e Links))
+export const assessmentEvidences = mysqlTable("ua_evidences", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	responseId: int().notNull(),
+	questionId: varchar({ length: 20 }).notNull(),
+	type: mysqlEnum(['pdf','link']).notNull(),
+	fileName: varchar({ length: 500 }),
+	fileUrl: varchar({ length: 1000 }).notNull(),
+	fileKey: varchar({ length: 500 }), // S3 key for GED storage
+	description: text(),
+	uploadedByUserId: int().notNull(),
+	uploadedAt: timestamp({ mode: 'string' }).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	index("assessment_evidences_assessment_idx").on(table.assessmentId),
+	index("assessment_evidences_response_idx").on(table.responseId),
+	index("assessment_evidences_question_idx").on(table.questionId),
+]);
+
+// Status de Evidências por Pergunta
+export const assessmentEvidenceStatus = mysqlTable("ua_evidence_status", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	questionId: varchar({ length: 20 }).notNull(),
+	hasEvidence: tinyint().default(0).notNull(),
+	evidenceCount: int().default(0).notNull(),
+	lastUpdatedAt: timestamp({ mode: 'string' }).notNull(),
+},
+(table) => [
+	index("evidence_status_assessment_idx").on(table.assessmentId),
+	index("evidence_status_question_idx").on(table.questionId),
+]);
+
+// Análise de Risco Multi-Norma
+export const riskAnalysis = mysqlTable("ua_risk_analysis", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	domainId: varchar({ length: 20 }).notNull(),
+	questionId: varchar({ length: 20 }).notNull(),
+	riskLevel: mysqlEnum(['baixa','media','alta','critica']).notNull(),
+	probability: int(), // 1-5
+	impact: int(), // 1-5
+	severity: int(), // Calculated: probability * impact
+	referencedNorms: json().$type<{ norm: string; articles: string[] }[]>().default([]).notNull(),
+	mitigation: text(),
+	editedByConsultant: tinyint().default(0).notNull(),
+	editedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("risk_analysis_assessment_idx").on(table.assessmentId),
+	index("risk_analysis_domain_idx").on(table.domainId),
+]);
+
+// Matriz de Risco (5 Colunas)
+export const riskMatrix = mysqlTable("ua_risk_matrix", {
+	id: int().autoincrement().notNull().primaryKey(),
+	riskAnalysisId: int().notNull(),
+	domainId: varchar({ length: 20 }).notNull(),
+	lgpdArticles: varchar({ length: 500 }), // LGPD articles referenced
+	isoControls: varchar({ length: 500 }), // ISO 27001 controls
+	nistFramework: varchar({ length: 500 }), // NIST CSF categories
+	riskDescription: text().notNull(),
+	severity: mysqlEnum(['baixa','media','alta','critica']).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("risk_matrix_analysis_idx").on(table.riskAnalysisId),
+	index("risk_matrix_domain_idx").on(table.domainId),
+]);
+
+// Resultados da Avaliação
+export const assessmentResults = mysqlTable("ua_results", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	status: mysqlEnum(['rascunho','em_analise','finalizado','liberado']).default('rascunho').notNull(),
+	overallMaturityScore: int(), // 1-5
+	radarData: json().$type<{ domain: string; score: number }[]>().default([]).notNull(),
+	classifications: json().$type<{ domain: string; level: string; color: string }[]>().default([]).notNull(),
+	riskSummary: text(),
+	actionPlanSummary: text(),
+	consultantNotes: text(),
+	editedByConsultantId: int(),
+	editedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("assessment_results_assessment_idx").on(table.assessmentId),
+	index("assessment_results_status_idx").on(table.status),
+]);
+
+// Liberação de Resultados
+export const resultRelease = mysqlTable("ua_result_release", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	releasedByConsultantId: int().notNull(),
+	releasedAt: timestamp({ mode: 'string' }).notNull(),
+	releasedToRoles: json().$type<string[]>().default(['sponsor']).notNull(), // sponsor, cppd_member
+	actionPlanIncluded: tinyint().default(1).notNull(),
+	radarChartIncluded: tinyint().default(1).notNull(),
+	riskMatrixIncluded: tinyint().default(1).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	index("result_release_assessment_idx").on(table.assessmentId),
+]);
+
+// Plano de Ação Integrado
+export const assessmentActionPlan = mysqlTable("ua_action_plan", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	domainId: varchar({ length: 20 }).notNull(),
+	title: varchar({ length: 255 }).notNull(),
+	description: text().notNull(),
+	priority: mysqlEnum(['baixa','media','alta','critica']).notNull(),
+	status: mysqlEnum(['pendente','em_andamento','concluida']).default('pendente').notNull(),
+	dueDate: timestamp({ mode: 'string' }).notNull(),
+	responsibleUserId: int(),
+	mitigationMeasures: text(),
+	normsReferenced: json().$type<string[]>().default([]).notNull(),
+	editedByConsultantId: int(),
+	editedAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("action_plan_assessment_idx").on(table.assessmentId),
+	index("action_plan_domain_idx").on(table.domainId),
+]);
+
+// Notificações e Alertas de Prazo
+export const assessmentNotifications = mysqlTable("ua_notifications", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	assignmentId: int(),
+	userId: int().notNull(),
+	type: mysqlEnum(['assignment','reminder_10d','reminder_5d','reminder_2d','reminder_1d','reminder_today','deadline_passed']).notNull(),
+	message: text().notNull(),
+	isRead: tinyint().default(0).notNull(),
+	readAt: timestamp({ mode: 'string' }),
+	sentAt: timestamp({ mode: 'string' }).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	index("notifications_user_idx").on(table.userId),
+	index("notifications_assessment_idx").on(table.assessmentId),
+	index("notifications_type_idx").on(table.type),
+]);
+
+// Requisições de Redistribuição de Domínios
+export const domainRedistributionRequests = mysqlTable("ua_redistribution_requests", {
+	id: int().autoincrement().notNull().primaryKey(),
+	assessmentId: int().notNull(),
+	assignmentId: int().notNull(),
+	requestedByUserId: int().notNull(),
+	domainId: varchar({ length: 20 }).notNull(),
+	currentAssigneeId: int().notNull(),
+	newAssigneeId: int(), // NULL if requesting new user creation
+	newUserData: json().$type<{ name: string; email: string; role: string }>(), // If new user needed
+	status: mysqlEnum(['pendente','aprovada','recusada']).default('pendente').notNull(),
+	reason: text(),
+	reviewedByConsultantId: int(),
+	reviewedAt: timestamp({ mode: 'string' }),
+	rejectionReason: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("redistribution_assessment_idx").on(table.assessmentId),
+	index("redistribution_status_idx").on(table.status),
+]);
+
+// Type exports para TypeScript
+export type UnifiedAssessment = typeof unifiedAssessments.$inferSelect;
+export type InsertUnifiedAssessment = typeof unifiedAssessments.$inferInsert;
+
+export type AssessmentAssignment = typeof assessmentAssignments.$inferSelect;
+export type InsertAssessmentAssignment = typeof assessmentAssignments.$inferInsert;
+
+export type AssessmentResponse = typeof assessmentResponses.$inferSelect;
+export type InsertAssessmentResponse = typeof assessmentResponses.$inferInsert;
+
+export type AssessmentEvidence = typeof assessmentEvidences.$inferSelect;
+export type InsertAssessmentEvidence = typeof assessmentEvidences.$inferInsert;
+
+export type RiskAnalysis = typeof riskAnalysis.$inferSelect;
+export type InsertRiskAnalysis = typeof riskAnalysis.$inferInsert;
+
+export type RiskMatrix = typeof riskMatrix.$inferSelect;
+export type InsertRiskMatrix = typeof riskMatrix.$inferInsert;
+
+export type AssessmentResult = typeof assessmentResults.$inferSelect;
+export type InsertAssessmentResult = typeof assessmentResults.$inferInsert;
+
+export type ResultRelease = typeof resultRelease.$inferSelect;
+export type InsertResultRelease = typeof resultRelease.$inferInsert;
+
+export type AssessmentActionPlan = typeof assessmentActionPlan.$inferSelect;
+export type InsertAssessmentActionPlan = typeof assessmentActionPlan.$inferInsert;
+
+export type AssessmentNotification = typeof assessmentNotifications.$inferSelect;
+export type InsertAssessmentNotification = typeof assessmentNotifications.$inferInsert;
+
+export type DomainRedistributionRequest = typeof domainRedistributionRequests.$inferSelect;
+export type InsertDomainRedistributionRequest = typeof domainRedistributionRequests.$inferInsert;
+
+// ==================== EMAIL LOGS ====================
+// Tabela para rastrear todos os e-mails enviados pelo sistema
+export const emailLogs = mysqlTable("email_logs", {
+	id: int().autoincrement().notNull(),
+	organizationId: int().notNull(),
+	recipientEmail: varchar({ length: 255 }).notNull(),
+	recipientName: varchar({ length: 255 }),
+	subject: varchar({ length: 500 }).notNull(),
+	emailType: mysqlEnum(['convite_avaliacao','lembrete_avaliacao','resultado_avaliacao','convite_usuario','notificacao_sistema','lembrete_prazo']).notNull(),
+	relatedEntityType: mysqlEnum(['third_party_assessment','compliance_assessment','action_plan','ticket','user']),
+	relatedEntityId: int(),
+	status: mysqlEnum(['pending','sent','delivered','opened','clicked','bounced','failed','spam']).default('pending').notNull(),
+	resendMessageId: varchar({ length: 100 }), // ID retornado pelo Resend
+	errorMessage: text(),
+	sentAt: timestamp({ mode: 'string' }),
+	deliveredAt: timestamp({ mode: 'string' }),
+	openedAt: timestamp({ mode: 'string' }),
+	clickedAt: timestamp({ mode: 'string' }),
+	bouncedAt: timestamp({ mode: 'string' }),
+	sentById: int(), // Usuário que disparou o envio
+	retryCount: int().default(0).notNull(),
+	lastRetryAt: timestamp({ mode: 'string' }),
+	metadata: json().$type<{ templateVersion?: string; linkToken?: string; assessmentId?: number }>(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("email_logs_org_idx").on(table.organizationId),
+	index("email_logs_recipient_idx").on(table.recipientEmail),
+	index("email_logs_status_idx").on(table.status),
+	index("email_logs_type_idx").on(table.emailType),
+	index("email_logs_created_idx").on(table.createdAt),
+]);
+
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = typeof emailLogs.$inferInsert;
+
+// ==================== CONTRACT ANALYSIS FIELD EVIDENCE ====================
+/**
+ * Tabela para armazenar evidências de campos da análise de contratos.
+ * Guarda trechos e confiança para reduzir retrabalho e dar rastreabilidade.
+ */
+export const contractAnalysisFieldEvidence = mysqlTable("contract_analysis_field_evidence", {
+	id: int().autoincrement().notNull(),
+	analysisId: int().notNull(),
+	fieldName: varchar({ length: 120 }).notNull(),
+	excerpt: text(),
+	clauseRef: varchar({ length: 255 }),
+	confidence: int(),
+	note: text(),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	index("contract_analysis_field_evidence_analysisId_idx").on(table.analysisId),
+	index("contract_analysis_field_evidence_fieldName_idx").on(table.fieldName),
+]);
+
+export type ContractAnalysisFieldEvidence = typeof contractAnalysisFieldEvidence.$inferSelect;
+export type InsertContractAnalysisFieldEvidence = typeof contractAnalysisFieldEvidence.$inferInsert;
+
+
+// ==================== TICKET AUDIT LOG ====================
+/**
+ * Tabela de audit log imutável para tickets do MeuDPO.
+ * Registra todas as ações críticas com cadeia de hash para rastreabilidade.
+ */
+export const ticketAuditLog = mysqlTable("ticket_audit_log", {
+	id: int().autoincrement().notNull(),
+	ticketId: int().notNull(),
+	action: varchar({ length: 100 }).notNull(),
+	actorId: int(),
+	actorRole: varchar({ length: 50 }),
+	payloadJson: json(),
+	prevHash: varchar({ length: 64 }),
+	entryHash: varchar({ length: 64 }),
+	createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+},
+(table) => [
+	primaryKey({ columns: [table.id], name: "ticket_audit_log_id" }),
+	index("ticket_audit_log_ticket_idx").on(table.ticketId),
+	index("ticket_audit_log_action_idx").on(table.action),
+	index("ticket_audit_log_created_idx").on(table.createdAt),
+]);
+
+export type TicketAuditLog = typeof ticketAuditLog.$inferSelect;
+export type InsertTicketAuditLog = typeof ticketAuditLog.$inferInsert;
+
+
+// ==================== PATCH-2-RIPD-AUTOMATION ====================
+
+export const ripdEvidences = mysqlTable("ripd_evidences", {
+  id: int("id").primaryKey().autoincrement(),
+  ripdId: int("ripdId").notNull(),
+  organizationId: int("organizationId").notNull(),
+  questionId: int("questionId"),
+  riskId: int("riskId"),
+  mitigationId: int("mitigationId"),
+  gedDocumentId: int("gedDocumentId").notNull(),
+  evidenceType: mysqlEnum("evidenceType", ["documento", "captura_tela", "log_sistema", "declaracao", "certificado", "outro"]).default("documento"),
+  tags: json("tags"),
+  uploadedByUserId: int("uploadedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow(),
+}, (table) => [
+  index("ripd_evidences_ripd_idx").on(table.ripdId),
+  index("ripd_evidences_org_idx").on(table.organizationId),
+]);
+
+export type RipdEvidence = typeof ripdEvidences.$inferSelect;
+export type InsertRipdEvidence = typeof ripdEvidences.$inferInsert;
+
+
+// ==================== COMPLIANCE ASSIGNMENTS ====================
+
+export const complianceAssignments = mysqlTable("compliance_assignments", {
+  id: int().autoincrement().notNull().primaryKey(),
+  
+  // Referências
+  assessmentId: int().notNull(),
+  domainId: int().notNull(),
+  userId: int().notNull(),
+  
+  // Rastreamento de envio
+  sentAt: timestamp({ mode: 'string' }),
+  resentAt: timestamp({ mode: 'string' }),
+  respondedAt: timestamp({ mode: 'string' }),
+  viewedAt: timestamp({ mode: 'string' }),
+  
+  // Status
+  status: mysqlEnum(['pending', 'sent', 'resent', 'viewed', 'responded', 'overdue']).default('pending').notNull(),
+  
+  // Auditoria
+  createdAt: timestamp({ mode: 'string' }).default('CURRENT_TIMESTAMP').notNull(),
+  updatedAt: timestamp({ mode: 'string' }).defaultNow().onUpdateNow().notNull(),
+},
+(table) => [
+	index("compliance_assignments_assessment_idx").on(table.assessmentId),
+	index("compliance_assignments_domain_idx").on(table.domainId),
+	index("compliance_assignments_user_idx").on(table.userId),
+	index("compliance_assignments_status_idx").on(table.status),
+	// Unique constraint: apenas 1 usuário por domínio por avaliação
+	unique("compliance_assignments_domain_unique").on(table.assessmentId, table.domainId),
+]);
+
+export type ComplianceAssignment = typeof complianceAssignments.$inferSelect;
+export type InsertComplianceAssignment = typeof complianceAssignments.$inferInsert;

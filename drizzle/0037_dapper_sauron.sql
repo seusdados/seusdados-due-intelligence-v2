@@ -1,0 +1,1 @@
+ALTER TABLE `ua_evidences` MODIFY COLUMN `type` enum('pdf','link','file') NOT NULL;

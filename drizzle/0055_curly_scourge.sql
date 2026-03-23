@@ -1,0 +1,1 @@
+ALTER TABLE `ua_assessments` MODIFY COLUMN `status` enum('programada','pendente_atribuicao','em_andamento','concluida','arquivada','iniciada') NOT NULL DEFAULT 'programada';

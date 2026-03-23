@@ -1,0 +1,1 @@
+ALTER TABLE `text_version_history` MODIFY COLUMN `entityType` enum('rot','pop','justificativa','base_legal','analise_risco','recomendacoes','ropa') NOT NULL;

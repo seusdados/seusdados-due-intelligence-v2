@@ -1,0 +1,159 @@
+{
+  "version": "ptBR-codes-v1",
+  "segments": [
+    { "value": "agronegocio", "label": "Agronegócio" },
+    { "value": "alimentacao_bebidas", "label": "Alimentação e Bebidas" },
+    { "value": "atacado_distribuicao", "label": "Atacado e Distribuição" },
+    { "value": "automotivo", "label": "Automotivo" },
+    { "value": "bancos_financas", "label": "Bancos e Serviços Financeiros" },
+    { "value": "construcao_incorporacao", "label": "Construção e Incorporação" },
+    { "value": "consultoria", "label": "Consultoria" },
+    { "value": "educacao", "label": "Educação" },
+    { "value": "energia_utilities", "label": "Energia e Utilities" },
+    { "value": "entretenimento_midia", "label": "Entretenimento e Mídia" },
+    { "value": "farmaceutico_saude", "label": "Farmacêutico e Saúde" },
+    { "value": "industria", "label": "Indústria" },
+    { "value": "logistica_transporte", "label": "Logística e Transporte" },
+    { "value": "marketing_publicidade", "label": "Marketing e Publicidade" },
+    { "value": "orgao_publico", "label": "Órgão Público" },
+    { "value": "prestacao_servicos", "label": "Prestação de Serviços" },
+    { "value": "saude", "label": "Saúde (Hospitais/Clínicas)" },
+    { "value": "seguranca", "label": "Segurança (Privada/Monitoramento)" },
+    { "value": "seguros", "label": "Seguros" },
+    { "value": "tecnologia", "label": "Tecnologia (SaaS/Software)" },
+    { "value": "telecom", "label": "Telecomunicações" },
+    { "value": "varejo", "label": "Varejo (Físico/Online)" }
+  ],
+  "businessTypesBySegment": {
+    "saude": [
+      { "value": "clinica", "label": "Clínica" },
+      { "value": "hospital", "label": "Hospital" },
+      { "value": "laboratorio", "label": "Laboratório" },
+      { "value": "plano_saude", "label": "Operadora/Plano de Saúde" },
+      { "value": "odontologia", "label": "Odontologia" }
+    ],
+    "educacao": [
+      { "value": "escola", "label": "Escola (Educação Básica)" },
+      { "value": "universidade", "label": "Universidade/Faculdade" },
+      { "value": "plataforma_ead", "label": "EdTech/Plataforma" },
+      { "value": "curso_livre", "label": "Curso Livre" }
+    ],
+    "varejo": [
+      { "value": "e_commerce", "label": "E-commerce" },
+      { "value": "loja_fisica", "label": "Loja Física" },
+      { "value": "marketplace", "label": "Marketplace" },
+      { "value": "franquia", "label": "Franquia" }
+    ],
+    "tecnologia": [
+      { "value": "saas_b2b", "label": "SaaS B2B" },
+      { "value": "saas_b2c", "label": "SaaS B2C" },
+      { "value": "software_sob_encomenda", "label": "Software Sob Encomenda" },
+      { "value": "cloud_infra", "label": "Provedor Cloud/Infra" }
+    ],
+    "orgao_publico": [
+      { "value": "prefeitura_secretaria", "label": "Prefeitura/Secretaria" },
+      { "value": "autarquia", "label": "Autarquia" },
+      { "value": "fundacao", "label": "Fundação" },
+      { "value": "universidade_publica", "label": "Universidade Pública" }
+    ],
+    "bancos_financas": [
+      { "value": "banco", "label": "Banco" },
+      { "value": "fintech", "label": "Fintech" },
+      { "value": "pagamentos", "label": "Meios de Pagamento" },
+      { "value": "consorcio", "label": "Consórcios" }
+    ],
+    "seguranca": [
+      { "value": "cftv_monitoramento", "label": "CFTV/Monitoramento" },
+      { "value": "controle_acesso", "label": "Portaria/Controle de Acesso" },
+      { "value": "seguranca_patrimonial", "label": "Segurança Patrimonial" }
+    ]
+  },
+  "defaultBusinessTypes": [
+    { "value": "servicos_geral", "label": "Empresa de Serviços" },
+    { "value": "industria_geral", "label": "Indústria" },
+    { "value": "comercio_geral", "label": "Comércio" },
+    { "value": "tecnologia_geral", "label": "Tecnologia" },
+    { "value": "org_publico_geral", "label": "Órgão Público" }
+  ],
+  "areasByBusinessType": {
+    "escola": ["secretaria_escolar","pedagogico","financeiro","rh","ti","marketing","atendimento"],
+    "clinica": ["recepcao","corpo_clinico","faturamento_convenios","financeiro","ti","compliance_qualidade"],
+    "e_commerce": ["comercial","marketing","sac","logistica","financeiro","ti","fraude"],
+    "saas_b2b": ["produto","engenharia_ti","suporte","comercial","marketing","financeiro","rh","seguranca_info"],
+    "prefeitura_secretaria": ["atendimento_cidadao","protocolo","rh","ti","juridico","fiscalizacao"],
+    "cftv_monitoramento": ["operacoes","central_monitoramento","atendimento","comercial","ti","juridico_contratos"]
+  },
+  "defaultAreas": ["comercial","atendimento","financeiro","rh","ti","juridico_contratos","marketing"],
+  "areaLabels": {
+    "secretaria_escolar": "Secretaria Escolar",
+    "pedagogico": "Coordenação Pedagógica",
+    "financeiro": "Financeiro",
+    "rh": "Recursos Humanos",
+    "ti": "TI",
+    "marketing": "Marketing",
+    "atendimento": "Atendimento",
+    "recepcao": "Recepção/Atendimento",
+    "corpo_clinico": "Corpo Clínico",
+    "faturamento_convenios": "Faturamento/Convênios",
+    "compliance_qualidade": "Compliance/Qualidade",
+    "comercial": "Comercial",
+    "sac": "Atendimento/SAC",
+    "logistica": "Logística",
+    "fraude": "Fraude/Prevenção",
+    "produto": "Produto",
+    "engenharia_ti": "Engenharia/TI",
+    "suporte": "Suporte",
+    "seguranca_info": "Segurança da Informação",
+    "protocolo": "Protocolo",
+    "juridico": "Jurídico",
+    "fiscalizacao": "Fiscalização",
+    "atendimento_cidadao": "Atendimento ao Cidadão",
+    "operacoes": "Operações",
+    "central_monitoramento": "Central de Monitoramento",
+    "juridico_contratos": "Jurídico/Contratos"
+  },
+  "processesByArea": {
+    "secretaria_escolar": ["matricula_rematricula","historico_escolar","emissao_documentos","notas_frequencia"],
+    "financeiro": ["contas_pagar_receber","cobranca_inadimplencia","notas_faturas","conciliacao_bancaria"],
+    "rh": ["admissao","folha_pagamento","beneficios","treinamentos"],
+    "ti": ["gestao_acessos","suporte_usuarios","backups_retencao","fornecedores_saas"],
+    "marketing": ["campanhas_leads","newsletter","remarketing","eventos"],
+    "sac": ["atendimento_multicanal","reclamacoes","solicitacoes","ouvidoria"],
+    "central_monitoramento": ["monitoramento_cftv","alertas","ocorrencias","armazenamento_imagens"],
+    "juridico_contratos": ["gestao_contratos","litigios","due_diligence_terceiros","pareceres"]
+  },
+  "processLabels": {
+    "matricula_rematricula": "Matrícula e Rematrícula",
+    "historico_escolar": "Gestão de Histórico Escolar",
+    "emissao_documentos": "Emissão de Documentos",
+    "notas_frequencia": "Gestão de Presença/Notas",
+    "contas_pagar_receber": "Contas a Pagar/Receber",
+    "cobranca_inadimplencia": "Cobrança e Inadimplência",
+    "notas_faturas": "Emissão de Notas/Faturas",
+    "conciliacao_bancaria": "Conciliação Bancária",
+    "admissao": "Admissão e Documentação",
+    "folha_pagamento": "Folha de Pagamento",
+    "beneficios": "Gestão de Benefícios",
+    "treinamentos": "Treinamentos",
+    "gestao_acessos": "Gestão de Acessos",
+    "suporte_usuarios": "Suporte a Usuários",
+    "backups_retencao": "Backups e Retenção",
+    "fornecedores_saas": "Gestão de Fornecedores SaaS",
+    "campanhas_leads": "Campanhas e Leads",
+    "newsletter": "Gestão de Newsletter",
+    "remarketing": "Remarketing",
+    "eventos": "Eventos",
+    "atendimento_multicanal": "Atendimento Multicanal",
+    "reclamacoes": "Registro de Reclamações",
+    "solicitacoes": "Gestão de Solicitações",
+    "ouvidoria": "Ouvidoria",
+    "monitoramento_cftv": "Monitoramento de CFTV",
+    "alertas": "Tratamento de Alertas",
+    "ocorrencias": "Atendimento a Ocorrências",
+    "armazenamento_imagens": "Armazenamento de Imagens",
+    "gestao_contratos": "Gestão de Contratos",
+    "litigios": "Gestão de Litígios",
+    "due_diligence_terceiros": "Due Diligence de Terceiros",
+    "pareceres": "Pareceres"
+  }
+}

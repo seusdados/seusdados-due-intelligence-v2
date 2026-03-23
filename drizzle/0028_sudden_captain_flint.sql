@@ -1,0 +1,1 @@
+ALTER TABLE `third_party_link_responses` ADD `ropaData` json;

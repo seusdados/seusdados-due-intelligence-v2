@@ -1,0 +1,2 @@
+ALTER TABLE `contract_risk_items` ADD `riskDecision` enum('capitulo_lgpd','celebrar_dpa','aditamento','risco_assumido','em_negociacao');--> statement-breakpoint
+ALTER TABLE `contract_risk_items` ADD `decisionNotes` text;

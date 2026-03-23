@@ -1,0 +1,235 @@
+versao: "2025.01"
+policy_set: "Seusdados-LGPD-2025"
+
+regras:
+  # Regras LGPD - Papéis e Responsabilidades
+  - id: RG-LGPD-BASE-01
+    descricao: "Cláusulas devem conter definição clara de papéis (controlador, operador, encarregado)."
+    criterio_objetivo: "Detecta termos de papel sem vinculação: controlador, operador, encarregado, sem sujeito definido."
+    categoria: "Papéis e Responsabilidades"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 5º, VI, VII, VIII"
+        justificativa: "Definição legal dos agentes de tratamento"
+
+  - id: RG-LGPD-BASE-02
+    descricao: "Identificação clara do controlador e suas obrigações."
+    criterio_objetivo: "Verificar se o controlador está identificado com CNPJ/CPF e responsabilidades definidas."
+    categoria: "Papéis e Responsabilidades"
+    gravidade_padrao: "alta"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 5º, VI"
+        justificativa: "Controlador é quem toma decisões sobre o tratamento"
+
+  - id: RG-LGPD-BASE-03
+    descricao: "Identificação clara do operador e limites de atuação."
+    criterio_objetivo: "Verificar se o operador está identificado e se há limites claros de tratamento."
+    categoria: "Papéis e Responsabilidades"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 5º, VII"
+        justificativa: "Operador atua em nome do controlador"
+
+  # Regras LGPD - Incidentes de Segurança
+  - id: RG-LGPD-INCIDENTE-48H
+    descricao: "Comunicações à ANPD devem ocorrer em prazos compatíveis com melhores práticas."
+    criterio_objetivo: "Marcar cláusulas que indiquem notificação acima de 48h ou sem prazo definido."
+    categoria: "Incidentes de Segurança"
+    gravidade_padrao: "alta"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 48"
+        justificativa: "Comunicação de incidente de segurança em prazo razoável"
+      - norma: "ANPD"
+        artigo_item: "Resolução CD/ANPD nº 15/2024"
+        justificativa: "Regulamentação sobre comunicação de incidentes"
+
+  - id: RG-LGPD-INCIDENTE-PROC
+    descricao: "Procedimentos de resposta a incidentes devem estar documentados."
+    criterio_objetivo: "Verificar existência de procedimentos de notificação, contenção e remediação."
+    categoria: "Incidentes de Segurança"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 48, §1º"
+        justificativa: "Conteúdo mínimo da comunicação de incidente"
+
+  # Regras LGPD - Dados Sensíveis e Menores
+  - id: RG-LGPD-MENORES
+    descricao: "Cláusulas que tratem de dados de crianças e adolescentes devem estabelecer salvaguardas adicionais."
+    criterio_objetivo: "Identificar menções a crianças, adolescentes, menores de 18 anos, sem salvaguardas específicas."
+    categoria: "Dados Sensíveis"
+    gravidade_padrao: "alta"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 14"
+        justificativa: "Tratamento de dados de crianças e adolescentes"
+
+  - id: RG-LGPD-SENSIVEL
+    descricao: "Dados sensíveis requerem base legal específica e medidas de segurança reforçadas."
+    criterio_objetivo: "Identificar tratamento de dados sensíveis sem base legal adequada."
+    categoria: "Dados Sensíveis"
+    gravidade_padrao: "alta"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 11"
+        justificativa: "Tratamento de dados pessoais sensíveis"
+
+  # Regras de Responsabilidade Contratual
+  - id: RG-RESP-01
+    descricao: "Cláusulas de responsabilidade devem prever limite objetivo."
+    criterio_objetivo: "Detectar expressões como ilimitada, todos e quaisquer danos, integral, sem exceções de limite."
+    categoria: "Responsabilidade"
+    gravidade_padrao: "alta"
+    normas:
+      - norma: "Boas práticas contratuais B2B"
+        artigo_item: ""
+        justificativa: "Responsabilidades sem limite são incomuns e podem gerar risco financeiro excessivo"
+
+  - id: RG-RESP-02
+    descricao: "Responsabilidade solidária deve estar claramente definida."
+    criterio_objetivo: "Verificar se há definição clara de responsabilidade solidária entre controlador e operador."
+    categoria: "Responsabilidade"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 42"
+        justificativa: "Responsabilidade dos agentes de tratamento"
+
+  # Regras de SLA e Prazos
+  - id: RG-SLA-01
+    descricao: "Prazos contratuais devem ser compatíveis com obrigações de proteção de dados."
+    criterio_objetivo: "Comparar prazos de resposta com benchmarks internos por tipo de evento."
+    categoria: "SLA e Prazos"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 18, §5º"
+        justificativa: "Prazo de resposta às requisições dos titulares"
+
+  - id: RG-SLA-02
+    descricao: "Prazo de retenção de dados deve estar definido e justificado."
+    criterio_objetivo: "Verificar se há prazo de retenção definido e se está alinhado com a finalidade."
+    categoria: "SLA e Prazos"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 16"
+        justificativa: "Término do tratamento de dados"
+
+  # Regras ISO 27001/27701
+  - id: RG-ISO-27001-CL36
+    descricao: "Controle A.5.36 – acordos de confidencialidade entre as partes."
+    criterio_objetivo: "Detectar ausência de obrigação mínima de confidencialidade ou prazos de guarda."
+    categoria: "Confidencialidade"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "ISO/IEC 27001:2022"
+        artigo_item: "A.5.36"
+        justificativa: "Acordos de confidencialidade ou não divulgação"
+
+  - id: RG-ISO-27701-DPA
+    descricao: "Requisitos de contratos entre controlador e operador."
+    criterio_objetivo: "Verificar se faltam itens obrigatórios: instruções documentadas, suboperadores, segurança, retorno ou exclusão dos dados."
+    categoria: "DPA - Data Processing Agreement"
+    gravidade_padrao: "alta"
+    normas:
+      - norma: "ISO/IEC 27701:2019"
+        artigo_item: "7.2.6"
+        justificativa: "Contratos com operadores de dados pessoais"
+      - norma: "LGPD"
+        artigo_item: "Art. 39"
+        justificativa: "Operador deve realizar tratamento segundo instruções do controlador"
+
+  - id: RG-ISO-27001-SEC
+    descricao: "Medidas de segurança técnicas e administrativas devem estar especificadas."
+    criterio_objetivo: "Verificar se há menção a medidas de segurança adequadas ao risco."
+    categoria: "Segurança da Informação"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "ISO/IEC 27001:2022"
+        artigo_item: "A.8"
+        justificativa: "Controles tecnológicos"
+      - norma: "LGPD"
+        artigo_item: "Art. 46"
+        justificativa: "Medidas de segurança"
+
+  # Regras de Transferência Internacional
+  - id: RG-LGPD-TRANSF-01
+    descricao: "Transferência internacional de dados deve ter base legal adequada."
+    criterio_objetivo: "Identificar transferências internacionais sem mecanismo de adequação."
+    categoria: "Transferência Internacional"
+    gravidade_padrao: "alta"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 33"
+        justificativa: "Hipóteses de transferência internacional"
+
+  - id: RG-LGPD-TRANSF-02
+    descricao: "Cláusulas contratuais padrão devem ser utilizadas quando aplicável."
+    criterio_objetivo: "Verificar uso de cláusulas padrão aprovadas pela ANPD."
+    categoria: "Transferência Internacional"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 33, II, b"
+        justificativa: "Cláusulas contratuais específicas"
+
+  # Regras de Direitos dos Titulares
+  - id: RG-LGPD-DIREITOS-01
+    descricao: "Mecanismos para exercício dos direitos dos titulares devem estar previstos."
+    criterio_objetivo: "Verificar se há previsão de atendimento aos direitos do Art. 18."
+    categoria: "Direitos dos Titulares"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 18"
+        justificativa: "Direitos do titular"
+
+  - id: RG-LGPD-DIREITOS-02
+    descricao: "Canal de comunicação com o titular deve estar definido."
+    criterio_objetivo: "Verificar existência de canal de atendimento ao titular."
+    categoria: "Direitos dos Titulares"
+    gravidade_padrao: "baixa"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 41, §2º, I"
+        justificativa: "Atribuições do encarregado"
+
+  # Regras de Subcontratação
+  - id: RG-LGPD-SUBOP-01
+    descricao: "Subcontratação de operadores deve ter autorização prévia."
+    criterio_objetivo: "Verificar se há cláusula de autorização para suboperadores."
+    categoria: "Subcontratação"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 39"
+        justificativa: "Operador deve seguir instruções do controlador"
+      - norma: "ISO/IEC 27701:2019"
+        artigo_item: "7.2.6"
+        justificativa: "Controle sobre subcontratados"
+
+  # Regras de Auditoria e Compliance
+  - id: RG-AUDIT-01
+    descricao: "Direito de auditoria deve estar previsto no contrato."
+    criterio_objetivo: "Verificar se há cláusula permitindo auditoria pelo controlador."
+    categoria: "Auditoria e Compliance"
+    gravidade_padrao: "media"
+    normas:
+      - norma: "ISO/IEC 27701:2019"
+        artigo_item: "7.2.6"
+        justificativa: "Verificação de conformidade do operador"
+
+  - id: RG-AUDIT-02
+    descricao: "Registros de tratamento devem ser mantidos e disponibilizados."
+    criterio_objetivo: "Verificar obrigação de manter registros de operações de tratamento."
+    categoria: "Auditoria e Compliance"
+    gravidade_padrao: "baixa"
+    normas:
+      - norma: "LGPD"
+        artigo_item: "Art. 37"
+        justificativa: "Registro das operações de tratamento"

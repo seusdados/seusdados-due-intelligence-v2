@@ -1,0 +1,960 @@
+// =====================================================
+// MEUDPO PREMIUM - SMART DPO BUTTON
+// Seusdados Due Diligence - Módulo MeuDPO v2.0
+// Botão Inteligente com Captura de Contexto Automática
+// =====================================================
+
+import { useState, useCallback } from "react";
+import { useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { cn } from "@/lib/utils";
+
+// Icons
+import {
+  Shield, MessageSquare, Plus, X, Send, Loader2, Sparkles,
+  AlertCircle, CheckCircle2, ChevronRight, Zap, HelpCircle,
+  Users, AlertTriangle, FileText, ClipboardList, GraduationCap,
+  Phone, Mail, Clock, Building2
+} from "lucide-react";
+
+import {
+  TICKET_TYPE_CONFIG,
+  PRIORITY_CONFIG,
+  TicketTypeBadge,
+  PriorityBadge,
+  TicketType,
+  TicketPriority
+} from "./UIComponents";
+
+// =====================================================
+// TIPOS
+// =====================================================
+
+export interface DPOButtonContext {
+  module?: string;
+  page?: string;
+  entityId?: number;
+  entityType?: string;
+  entityName?: string;
+
+  /**
+   * Deep-link interno da plataforma (ex: /mapeamento/processos/123).
+   * Usado pelo consultor para abrir um modal diretamente no ponto da tela.
+   */
+  deepLink?: string;
+
+  /**
+   * Snapshot textual/estruturado do ponto onde o botão foi acionado.
+   * A ideia é reduzir escrita do usuário, mantendo contexto técnico.
+   */
+  snapshot?: {
+    title?: string;
+    summary?: string;
+    checklistItems?: Array<{ id?: string; label: string; status?: string }>;
+    risks?: Array<{ id?: string; label: string; level?: string }>;
+    evidence?: Array<{ id?: string; label: string; url?: string }>;
+    extra?: Record<string, unknown>;
+  };
+}
+
+/**
+ * Inferência de contexto quando o módulo chamador não fornece explicitamente.
+ * Objetivo: reduzir dependências entre módulos e garantir que o ticket já nasça
+ * com um “histórico mínimo útil” (rota, título da página e possíveis data-*).
+ *
+ * Estratégia (não invasiva):
+ * - rota atual (pathname)
+ * - document.title
+ * - atributos data-sd-* (se existirem no DOM)
+ *
+ * Observação: não captura dados sensíveis do conteúdo de campos; apenas metadados.
+ */
+function inferContextFromRuntime(): DPOButtonContext | undefined {
+  try {
+    if (typeof window === "undefined") return undefined;
+
+    const title = typeof document !== "undefined" ? document.title : undefined;
+    const path = typeof window !== "undefined" ? window.location?.pathname : undefined;
+
+    const el =
+      typeof document !== "undefined"
+        ? (document.querySelector("[data-sd-entity-id], [data-entity-id]") as HTMLElement | null)
+        : null;
+
+    const entityIdRaw =
+      el?.dataset?.sdEntityId ||
+      el?.dataset?.entityId ||
+      (typeof window !== "undefined" ? (window as any).__SD_ENTITY_ID__ : undefined);
+
+    const entityName =
+      el?.dataset?.sdEntityName ||
+      el?.dataset?.entityName ||
+      (typeof window !== "undefined" ? (window as any).__SD_ENTITY_NAME__ : undefined);
+
+    const entityType =
+      el?.dataset?.sdEntityType ||
+      el?.dataset?.entityType ||
+      (typeof window !== "undefined" ? (window as any).__SD_ENTITY_TYPE__ : undefined);
+
+    const entityId = entityIdRaw ? Number(entityIdRaw) : undefined;
+
+    const module = path ? path.split("/").filter(Boolean)[0] : undefined;
+
+    return {
+      module,
+      page: title,
+      entityType: entityType || module,
+      entityId: Number.isFinite(entityId as any) ? (entityId as number) : undefined,
+      entityName: entityName || undefined,
+      deepLink: path || undefined,
+      snapshot: {
+        title: title,
+        summary: path,
+        extra: { inferred: true }
+      }
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+interface SmartDPOButtonProps {
+  context?: DPOButtonContext;
+  variant?: "default" | "outline" | "ghost" | "floating";
+  size?: "sm" | "default" | "lg" | "icon";
+  showLabel?: boolean;
+  className?: string;
+  onSuccess?: (ticketId: number) => void;
+}
+
+interface QuickTicketFormData {
+  ticketType: TicketType | "";
+  title: string;
+  /** Pergunta / dúvida do usuário (curta). O contexto detalhado é automático. */
+  question: string;
+  priority: TicketPriority;
+}
+
+function buildAutoTitle(context?: DPOButtonContext, selectedType?: TicketType | ""): string {
+  const typeLabel = selectedType ? TICKET_TYPE_CONFIG[selectedType as TicketType]?.label ?? "Solicitação" : "Solicitação";
+  const parts = [
+    context?.module,
+    context?.page,
+    context?.entityName
+  ].filter(Boolean);
+
+  if (parts.length === 0) return `${typeLabel} via MeuDPO`;
+  return `${typeLabel}: ${parts.join(" > ")}`;
+}
+
+function buildAutoContextText(context?: DPOButtonContext): string {
+  const lines: string[] = [];
+  if (!context) return "";
+
+  const origin = [context.module, context.page, context.entityName].filter(Boolean).join(" > ");
+  if (origin) lines.push(`Origem: ${origin}`);
+  if (context.entityType || context.entityId) {
+    lines.push(`Entidade: ${context.entityType ?? ""}${context.entityId ? ` #${context.entityId}` : ""}`.trim());
+  }
+  if (context.deepLink) lines.push(`DeepLink: ${context.deepLink}`);
+
+  const s = context.snapshot;
+  if (s?.summary) lines.push(`Resumo: ${s.summary}`);
+  if (s?.checklistItems?.length) {
+    lines.push("Checklist relacionado:");
+    s.checklistItems.slice(0, 10).forEach((i) => lines.push(`- ${i.label}${i.status ? ` (${i.status})` : ""}`));
+    if (s.checklistItems.length > 10) lines.push(`- (+${s.checklistItems.length - 10} itens)`);
+  }
+  if (s?.risks?.length) {
+    lines.push("Riscos relacionados:");
+    s.risks.slice(0, 10).forEach((r) => lines.push(`- ${r.label}${r.level ? ` (${r.level})` : ""}`));
+    if (s.risks.length > 10) lines.push(`- (+${s.risks.length - 10} riscos)`);
+  }
+  if (s?.evidence?.length) {
+    lines.push("Evidências sugeridas/relacionadas:");
+    s.evidence.slice(0, 10).forEach((e) => lines.push(`- ${e.label}${e.url ? ` (${e.url})` : ""}`));
+    if (s.evidence.length > 10) lines.push(`- (+${s.evidence.length - 10} evidências)`);
+  }
+
+  return lines.join("\n");
+}
+
+function composeFinalDescription(question: string, context?: DPOButtonContext): string {
+  const ctx = buildAutoContextText(context);
+  return [
+    `Dúvida/Pedido do cliente:\n${question.trim()}`,
+    ctx ? `\n\n---\nContexto automático (não editar):\n${ctx}` : ""
+  ].join("");
+}
+
+function composeFinalActiveRequest(request: string, context?: DPOButtonContext): string {
+  const ctx = buildAutoContextText(context);
+  return [
+    `Solicitação do consultor (ação requerida do cliente):\n${request.trim()}`,
+    ctx ? `\n\n---\nContexto automático (não editar):\n${ctx}` : ""
+  ].join("");
+}
+
+// =====================================================
+// MODAL - CHAMADO ATIVO (CONSULTOR -> SPONSOR)
+// =====================================================
+
+function ActiveCreateModal({
+  isOpen,
+  onClose,
+  context,
+  onSuccess,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  context?: DPOButtonContext;
+  onSuccess?: (ticketId: number) => void;
+}) {
+  const effectiveContext = context ?? inferContextFromRuntime();
+
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? 0;
+
+  const [step, setStep] = useState<"type" | "details">("type");
+  const [sponsorUserId, setSponsorUserId] = useState<number | null>(null);
+  const [formData, setFormData] = useState<QuickTicketFormData>({
+    ticketType: "",
+    title: "",
+    question: "",
+    priority: "media"
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { data: sponsors, isLoading: sponsorsLoading } = trpc.tickets.getSponsors.useQuery(
+    { organizationId: orgId },
+    { enabled: isOpen && orgId > 0 }
+  );
+
+  const createActiveMutation = trpc.tickets.createActive.useMutation({
+    onSuccess: (data) => {
+      onSuccess?.(data.id);
+      handleClose();
+    },
+    onError: (error) => {
+      setErrors({ submit: error.message });
+    }
+  });
+
+  const handleClose = () => {
+    setStep("type");
+    setSponsorUserId(null);
+    setFormData({ ticketType: "", title: "", question: "", priority: "media" });
+    setErrors({});
+    onClose();
+  };
+
+  const handleTypeSelect = (type: TicketType) => {
+    setFormData(prev => ({
+      ...prev,
+      ticketType: type,
+      title: prev.title?.trim() ? prev.title : buildAutoTitle(effectiveContext, type)
+    }));
+    setStep("details");
+  };
+
+  const handleSubmit = () => {
+    const newErrors: Record<string, string> = {};
+    if (!sponsorUserId) newErrors.sponsor = "Selecione o sponsor";
+    if (!formData.title || formData.title.trim().length < 5) newErrors.title = "Mínimo 5 caracteres";
+    if (!formData.question || formData.question.trim().length < 10) newErrors.question = "Mínimo 10 caracteres";
+    if (!formData.ticketType) newErrors.ticketType = "Selecione o tipo";
+
+    if (Object.keys(newErrors).length) {
+      setErrors(newErrors);
+      return;
+    }
+
+    createActiveMutation.mutate({
+      organizationId: orgId,
+      sponsorUserId: sponsorUserId!,
+      title: formData.title,
+      request: composeFinalActiveRequest(formData.question, context),
+      ticketType: formData.ticketType as TicketType,
+      priority: formData.priority,
+      sourceContext: effectiveContext
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-[560px]">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Shield className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle>Chamado ativo MeuDPO</DialogTitle>
+              <DialogDescription>
+                {step === "type" ? "Selecione o tipo de demanda" : "Defina o sponsor e descreva a ação"}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {step === "type" ? (
+          <div className="py-4">
+            <QuickTypeSelector selected={formData.ticketType} onSelect={handleTypeSelect} />
+          </div>
+        ) : (
+          <div className="py-4 space-y-4">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <TicketTypeBadge type={formData.ticketType as TicketType} size="sm" />
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setStep("type")}>
+                Alterar
+              </Button>
+            </div>
+
+            {/* Sponsor */}
+            <div className="space-y-2">
+              <Label>Sponsor (responsável do cliente) *</Label>
+              <Select
+                value={sponsorUserId ? String(sponsorUserId) : ""}
+                onValueChange={(v) => setSponsorUserId(Number(v))}
+              >
+                <SelectTrigger className={cn(errors.sponsor && "border-destructive")}
+                  >
+                  <SelectValue placeholder={sponsorsLoading ? "Carregando..." : "Selecione"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(sponsors ?? []).map((s: any) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.sponsor && <p className="text-xs text-destructive">{errors.sponsor}</p>}
+              {!sponsorsLoading && (sponsors?.length ?? 0) === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum sponsor encontrado. Cadastre um usuário sponsor na organização para habilitar o chamado ativo.
+                </p>
+              )}
+            </div>
+
+            {/* Contexto */}
+            {context && (context.module || context.entityName) && (
+              <Alert>
+                <Building2 className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  Origem: {context.module}
+                  {context.page && ` > ${context.page}`}
+                  {context.entityName && ` > ${context.entityName}`}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Título */}
+            <div className="space-y-2">
+              <Label htmlFor="active-title">Título *</Label>
+              <Input
+                id="active-title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Resumo da demanda"
+                className={cn(errors.title && "border-destructive")}
+              />
+              {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
+            </div>
+
+            {/* Ação solicitada */}
+            <div className="space-y-2">
+              <Label htmlFor="active-request">Ação solicitada *</Label>
+              <Textarea
+                id="active-request"
+                value={formData.question}
+                onChange={(e) => setFormData(prev => ({ ...prev, question: e.target.value }))}
+                placeholder="Explique o que o sponsor deve fazer (o contexto da tela/atividade já será anexado automaticamente)."
+                className={cn("min-h-[110px]", errors.question && "border-destructive")}
+              />
+              {errors.question && <p className="text-xs text-destructive">{errors.question}</p>}
+            </div>
+
+            {/* Prioridade */}
+            <div className="space-y-2">
+              <Label>Prioridade</Label>
+              <div className="flex gap-2">
+                {(Object.keys(PRIORITY_CONFIG) as TicketPriority[]).map((priority) => {
+                  const config = PRIORITY_CONFIG[priority];
+                  return (
+                    <button
+                      key={priority}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, priority }))}
+                      className={cn(
+                        "flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all",
+                        formData.priority === priority
+                          ? "border-primary bg-primary/5"
+                          : "border-muted hover:border-primary/30"
+                      )}
+                    >
+                      <span className={cn("inline-block h-2 w-2 rounded-full mr-2", config.dotColor)} />
+                      {config.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {errors.submit && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{errors.submit}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={handleClose}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmit} disabled={createActiveMutation.isPending}>
+                {createActiveMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  "Criar chamado ativo"
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =====================================================
+// COMPONENTE DE SELEÇÃO RÁPIDA DE TIPO
+// =====================================================
+
+function QuickTypeSelector({
+  selected,
+  onSelect,
+  compact = false
+}: {
+  selected: TicketType | "";
+  onSelect: (type: TicketType) => void;
+  compact?: boolean;
+}) {
+  const quickTypes: TicketType[] = ["solicitacao_titular", "duvida_juridica", "consultoria_geral", "incidente_seguranca"];
+
+  if (compact) {
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        {quickTypes.map((type) => {
+          const config = TICKET_TYPE_CONFIG[type];
+          const Icon = config.icon;
+          const isSelected = selected === type;
+
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onSelect(type)}
+              className={cn(
+                "flex items-center gap-2 p-3 rounded-lg border-2 text-left transition-all",
+                isSelected
+                  ? "border-primary bg-primary/5"
+                  : "border-muted hover:border-primary/30"
+              )}
+            >
+              <div className={cn("p-1.5 rounded-lg", config.bgColor)}>
+                <Icon className={cn("h-4 w-4", config.color)} />
+              </div>
+              <span className="text-sm font-medium line-clamp-1">
+                {config.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {(Object.keys(TICKET_TYPE_CONFIG) as TicketType[]).map((type) => {
+        const config = TICKET_TYPE_CONFIG[type];
+        const Icon = config.icon;
+        const isSelected = selected === type;
+
+        return (
+          <button
+            key={type}
+            type="button"
+            onClick={() => onSelect(type)}
+            className={cn(
+              "w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all",
+              isSelected
+                ? "border-primary bg-primary/5"
+                : "border-muted hover:border-primary/30"
+            )}
+          >
+            <div className={cn("p-2 rounded-lg shrink-0", config.bgColor)}>
+              <Icon className={cn("h-5 w-5", config.color)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">{config.label}</p>
+              <p className="text-xs text-muted-foreground line-clamp-1">
+                {config.description}
+              </p>
+            </div>
+            {isSelected && (
+              <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// =====================================================
+// MODAL DE CRIAÇÃO RÁPIDA
+// =====================================================
+
+function QuickCreateModal({
+  isOpen,
+  onClose,
+  context,
+  onSuccess
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  context?: DPOButtonContext;
+  onSuccess?: (ticketId: number) => void;
+}) {
+  const effectiveContext = context ?? inferContextFromRuntime();
+
+  const { user } = useAuth();
+  const [step, setStep] = useState<"type" | "details">("type");
+  const [formData, setFormData] = useState<QuickTicketFormData>({
+    ticketType: "",
+    title: "",
+    question: "",
+    priority: "media"
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Mutation
+  const createMutation = trpc.tickets.create.useMutation({
+    onSuccess: (data) => {
+      onSuccess?.(data.id);
+      handleClose();
+    },
+    onError: (error) => {
+      setErrors({ submit: error.message });
+    }
+  });
+
+  const handleClose = () => {
+    setStep("type");
+    setFormData({
+      ticketType: "",
+      title: "",
+      question: "",
+      priority: "media"
+    });
+    setErrors({});
+    onClose();
+  };
+
+  const handleTypeSelect = (type: TicketType) => {
+    setFormData(prev => ({
+      ...prev,
+      ticketType: type,
+      // Prefill automático (reduz escrita)
+      title: prev.title?.trim() ? prev.title : buildAutoTitle(effectiveContext, type)
+    }));
+    setStep("details");
+  };
+
+  const handleBack = () => {
+    setStep("type");
+  };
+
+  const handleSubmit = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.title || formData.title.length < 5) {
+      newErrors.title = "Mínimo 5 caracteres";
+    }
+    if (!formData.question || formData.question.length < 10) {
+      newErrors.question = "Mínimo 10 caracteres";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    createMutation.mutate({
+      organizationId: user?.organizationId || 0,
+      title: formData.title,
+      description: composeFinalDescription(formData.question, context),
+      ticketType: formData.ticketType as TicketType,
+      priority: formData.priority,
+      sourceContext: effectiveContext
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Shield className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle>Acionar DPO</DialogTitle>
+              <DialogDescription>
+                {step === "type" 
+                  ? "Selecione o tipo da sua solicitação"
+                  : "Descreva sua necessidade"}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <AnimatePresence mode="wait">
+          {step === "type" ? (
+            <motion.div
+              key="type"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="py-4"
+            >
+              <QuickTypeSelector
+                selected={formData.ticketType}
+                onSelect={handleTypeSelect}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="py-4 space-y-4"
+            >
+              {/* Tipo Selecionado */}
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <TicketTypeBadge type={formData.ticketType as TicketType} size="sm" />
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleBack}>
+                  Alterar
+                </Button>
+              </div>
+
+              {/* Contexto (se houver) */}
+              {context && (context.module || context.entityName) && (
+                <Alert>
+                  <Building2 className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    Origem: {context.module}
+                    {context.page && ` > ${context.page}`}
+                    {context.entityName && ` > ${context.entityName}`}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Título */}
+              <div className="space-y-2">
+                <Label htmlFor="quick-title">Título *</Label>
+                <Input
+                  id="quick-title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Resumo da sua solicitação"
+                  className={cn(errors.title && "border-destructive")}
+                />
+                {errors.title && (
+                  <p className="text-xs text-destructive">{errors.title}</p>
+                )}
+              </div>
+
+              {/* Pergunta / dúvida */}
+              <div className="space-y-2">
+                <Label htmlFor="quick-question">Sua dúvida/pedido *</Label>
+                <Textarea
+                  id="quick-question"
+                  value={formData.question}
+                  onChange={(e) => setFormData(prev => ({ ...prev, question: e.target.value }))}
+                  placeholder="Descreva sua dúvida ou pedido de ajuda (o contexto já será anexado automaticamente)."
+                  className={cn("min-h-[100px]", errors.question && "border-destructive")}
+                />
+                {errors.question && (
+                  <p className="text-xs text-destructive">{errors.question}</p>
+                )}
+              </div>
+
+              {/* Prioridade */}
+              <div className="space-y-2">
+                <Label>Prioridade</Label>
+                <div className="flex gap-2">
+                  {(Object.keys(PRIORITY_CONFIG) as TicketPriority[]).map((priority) => {
+                    const config = PRIORITY_CONFIG[priority];
+                    return (
+                      <button
+                        key={priority}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, priority }))}
+                        className={cn(
+                          "flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all",
+                          formData.priority === priority
+                            ? "border-primary bg-primary/5"
+                            : "border-muted hover:border-primary/30"
+                        )}
+                      >
+                        <span className={cn("inline-block h-2 w-2 rounded-full mr-2", config.dotColor)} />
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {errors.submit && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{errors.submit}</AlertDescription>
+                </Alert>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <DialogFooter>
+          {step === "details" && (
+            <>
+              <Button variant="outline" onClick={handleBack}>
+                Voltar
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Enviar
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// =====================================================
+// COMPONENTE PRINCIPAL - SMART DPO BUTTON
+// =====================================================
+
+export function SmartDPOButton({
+  context,
+  variant = "default",
+  size = "default",
+  showLabel = true,
+  className,
+  onSuccess
+}: SmartDPOButtonProps) {
+  const { user } = useAuth();
+  const isCliente = user?.role === 'sponsor';
+  const isConsultor = user?.role === 'consultor';
+  const isAdmin = user?.role === 'admin_global';
+  const effectiveContext = context ?? inferContextFromRuntime();
+  const [, navigate] = useLocation();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isActiveModalOpen, setIsActiveModalOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const handleClick = useCallback(() => {
+    if (isCliente) {
+      // Cliente: abre modal de criação rápida
+      setIsModalOpen(true);
+    } else if (isConsultor || isAdmin) {
+      // Consultor/Admin: chamado ativo (solicita ação ao sponsor)
+      setIsActiveModalOpen(true);
+    } else {
+      // Outros perfis: fallback
+      navigate("/meudpo/novo");
+    }
+  }, [isCliente, isConsultor, isAdmin, navigate]);
+
+  const handleSuccess = useCallback((ticketId: number) => {
+    onSuccess?.(ticketId);
+    navigate(`/meudpo/${ticketId}`);
+  }, [navigate, onSuccess]);
+
+  // Variante flutuante
+  if (variant === "floating") {
+    return (
+      <>
+        <TooltipProvider>
+          <Tooltip open={showTooltip} onOpenChange={setShowTooltip}>
+            <TooltipTrigger asChild>
+              <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleClick}
+                className={cn(
+                  "fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full",
+                  "bg-primary text-primary-foreground shadow-lg",
+                  "flex items-center justify-center",
+                  "hover:shadow-xl transition-shadow",
+                  className
+                )}
+              >
+                <Shield className="h-6 w-6" />
+                
+                {/* Ping indicator */}
+                <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-40" />
+                  <span className="relative inline-flex rounded-full h-4 w-4 bg-primary border-2 border-primary-foreground" />
+                </span>
+              </motion.button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p className="font-medium">Acionar DPO</p>
+              <p className="text-xs text-muted-foreground">
+                Abra uma solicitação ao encarregado
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <QuickCreateModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          context={effectiveContext}
+          onSuccess={handleSuccess}
+        />
+
+        <ActiveCreateModal
+          isOpen={isActiveModalOpen}
+          onClose={() => setIsActiveModalOpen(false)}
+          context={effectiveContext}
+          onSuccess={handleSuccess}
+        />
+      </>
+    );
+  }
+
+  // Variantes normais
+  const buttonVariants = {
+    default: "bg-primary text-primary-foreground hover:bg-primary/90",
+    outline: "border border-primary text-primary hover:bg-primary/10",
+    ghost: "text-primary hover:bg-primary/10"
+  };
+
+  const buttonSizes = {
+    sm: "h-8 px-3 text-sm",
+    default: "h-10 px-4",
+    lg: "h-12 px-6",
+    icon: "h-10 w-10"
+  };
+
+  return (
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={variant === "outline" ? "outline" : variant === "ghost" ? "ghost" : "default"}
+              size={size}
+              onClick={handleClick}
+              className={cn(
+                "gap-2 transition-all",
+                variant === "default" && "bg-primary hover:bg-primary/90",
+                className
+              )}
+            >
+              <Shield className={cn(
+                size === "sm" ? "h-4 w-4" : size === "lg" ? "h-5 w-5" : "h-4 w-4"
+              )} />
+              {showLabel && size !== "icon" && (
+                <span>
+                  {isCliente ? "MeuDPO" : (isConsultor || isAdmin) ? "Chamado ativo MeuDPO" : "Criar demanda"}
+                </span>
+              )}
+            </Button>
+          </TooltipTrigger>
+          {!showLabel && (
+            <TooltipContent>
+              {isCliente ? "MeuDPO" : (isConsultor || isAdmin) ? "Chamado ativo MeuDPO" : "Criar demanda MeuDPO"}
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
+
+      <QuickCreateModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        context={effectiveContext}
+        onSuccess={handleSuccess}
+      />
+
+      <ActiveCreateModal
+        isOpen={isActiveModalOpen}
+        onClose={() => setIsActiveModalOpen(false)}
+        context={effectiveContext}
+        onSuccess={handleSuccess}
+      />
+    </>
+  );
+}
+
+// =====================================================
+// VARIANTES DO BOTÃO
+// =====================================================
+
+export function AcionarDPO(props: Omit<SmartDPOButtonProps, "variant">) {
+  return <SmartDPOButton {...props} variant="default" />;
+}
+
+export function AcionarDPOFloating(props: Omit<SmartDPOButtonProps, "variant">) {
+  return <SmartDPOButton {...props} variant="floating" />;
+}
+
+export function AcionarDPOCompact(props: Omit<SmartDPOButtonProps, "variant" | "size" | "showLabel">) {
+  return <SmartDPOButton {...props} variant="ghost" size="sm" showLabel={false} />;
+}
+
+export function CriarDemandaDPO(props: Omit<SmartDPOButtonProps, "variant">) {
+  return <SmartDPOButton {...props} variant="outline" />;
+}
+
+export default SmartDPOButton;

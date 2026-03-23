@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `clientRoles` json DEFAULT ('[]') NOT NULL;

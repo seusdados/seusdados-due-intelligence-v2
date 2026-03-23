@@ -1,0 +1,2 @@
+ALTER TABLE `ua_assignments` MODIFY COLUMN `status` enum('pendente','em_progresso','concluida') NOT NULL DEFAULT 'pendente';--> statement-breakpoint
+ALTER TABLE `ua_assessments` MODIFY COLUMN `status` enum('programada','iniciada','concluida','arquivada') NOT NULL DEFAULT 'programada';

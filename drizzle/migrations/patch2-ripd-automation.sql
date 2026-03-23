@@ -1,0 +1,50 @@
+-- PATCH-2-RIPD-AUTOMATION: Migrations SQL
+-- Data: 2026-02-03
+
+CREATE TABLE IF NOT EXISTS ripd_evidences (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ripdId INT NOT NULL,
+  organizationId INT NOT NULL,
+  questionId INT NULL,
+  riskId INT NULL,
+  mitigationId INT NULL,
+  gedDocumentId INT NOT NULL,
+  evidenceType VARCHAR(50) DEFAULT 'documento',
+  tags JSON NULL,
+  uploadedByUserId INT NOT NULL,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE dpia_questions
+  ADD COLUMN IF NOT EXISTS evidenceRequired BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS evidenceMinCount INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS evidenceHint TEXT NULL;
+
+ALTER TABLE dpia_responses
+  ADD COLUMN IF NOT EXISTS evidenceStatus VARCHAR(20) DEFAULT 'pendente',
+  ADD COLUMN IF NOT EXISTS evidenceCount INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS aiValidation JSON NULL;
+
+ALTER TABLE dpia_risks
+  ADD COLUMN IF NOT EXISTS inherentLikelihood INT DEFAULT 3,
+  ADD COLUMN IF NOT EXISTS inherentImpact INT DEFAULT 3,
+  ADD COLUMN IF NOT EXISTS inherentScore INT DEFAULT 9,
+  ADD COLUMN IF NOT EXISTS inherentLevel VARCHAR(20) DEFAULT 'moderado',
+  ADD COLUMN IF NOT EXISTS residualLikelihood INT NULL,
+  ADD COLUMN IF NOT EXISTS residualImpact INT NULL,
+  ADD COLUMN IF NOT EXISTS residualScore INT NULL,
+  ADD COLUMN IF NOT EXISTS residualLevel VARCHAR(20) NULL,
+  ADD COLUMN IF NOT EXISTS acceptanceDecision VARCHAR(20) NULL,
+  ADD COLUMN IF NOT EXISTS acceptanceJustification TEXT NULL;
+
+ALTER TABLE dpia_mitigations
+  ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pendente',
+  ADD COLUMN IF NOT EXISTS evidenceGedDocumentId INT NULL;
+
+ALTER TABLE dpia_assessments
+  ADD COLUMN IF NOT EXISTS workflowStatus VARCHAR(30) DEFAULT 'draft',
+  ADD COLUMN IF NOT EXISTS meudpoTicketId INT NULL,
+  ADD COLUMN IF NOT EXISTS linkedContractAnalysisId INT NULL;
+
+ALTER TABLE contract_analyses
+  ADD COLUMN IF NOT EXISTS linkedRipdId INT NULL;

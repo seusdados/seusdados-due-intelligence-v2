@@ -1,0 +1,2 @@
+ALTER TABLE `compliance_assessments` MODIFY COLUMN `status` enum('rascunho','aguardando_vinculacao','em_andamento','concluida','arquivada') NOT NULL DEFAULT 'rascunho';--> statement-breakpoint
+ALTER TABLE `third_party_assessments` MODIFY COLUMN `status` enum('rascunho','aguardando_vinculacao','em_andamento','concluida','arquivada') NOT NULL DEFAULT 'rascunho';

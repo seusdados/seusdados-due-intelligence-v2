@@ -1,0 +1,1 @@
+ALTER TABLE `ua_assignments` MODIFY COLUMN `status` enum('pendente','em_andamento','concluida') NOT NULL DEFAULT 'pendente';

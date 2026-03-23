@@ -1,0 +1,2 @@
+ALTER TABLE `action_plans` MODIFY COLUMN `assessmentType` enum('compliance','third_party','contract_analysis') NOT NULL;--> statement-breakpoint
+ALTER TABLE `evidences` MODIFY COLUMN `assessmentType` enum('compliance','third_party','contract_analysis') NOT NULL;

@@ -1,0 +1,57 @@
+/**
+ * PATCH-2-RIPD-AUTOMATION: Router de Evidências RIPD
+ */
+import { z } from "zod";
+import { router, protectedProcedure } from "./_core/trpc";
+import { getDb } from "./db";
+import { sql } from "drizzle-orm";
+
+export const ripdEvidenceRouter = router({
+  uploadAndLink: protectedProcedure
+    .input(z.object({
+      ripdId: z.number(),
+      gedDocumentId: z.number(),
+      questionId: z.number().optional(),
+      riskId: z.number().optional(),
+      mitigationId: z.number().optional(),
+      evidenceType: z.enum(["documento", "captura_tela", "log_sistema", "declaracao", "certificado", "outro"]).default("documento"),
+      tags: z.array(z.string()).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      const [result] = await db.execute(sql`
+        INSERT INTO ripd_evidences (ripdId, organizationId, questionId, riskId, mitigationId, gedDocumentId, evidenceType, tags, uploadedByUserId)
+        VALUES (${input.ripdId}, ${ctx.user.organizationId}, ${input.questionId || null}, ${input.riskId || null}, ${input.mitigationId || null}, ${input.gedDocumentId}, ${input.evidenceType}, ${JSON.stringify(input.tags || [])}, ${ctx.user.id})
+      `);
+      if (input.questionId) {
+        await db.execute(sql`UPDATE dpia_responses SET evidenceCount = evidenceCount + 1 WHERE questionId = ${input.questionId} AND assessmentId = ${input.ripdId}`);
+      }
+      return { success: true, id: (result as any).insertId };
+    }),
+
+  list: protectedProcedure
+    .input(z.object({ ripdId: z.number(), questionId: z.number().optional(), riskId: z.number().optional(), mitigationId: z.number().optional() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      const [rows] = await db.execute(sql`SELECT e.*, g.fileName, g.fileUrl FROM ripd_evidences e LEFT JOIN ged_documents g ON e.gedDocumentId = g.id WHERE e.ripdId = ${input.ripdId} AND e.organizationId = ${ctx.user.organizationId}`);
+      return rows as unknown as any[];
+    }),
+
+  unlink: protectedProcedure
+    .input(z.object({ evidenceId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      await db.execute(sql`DELETE FROM ripd_evidences WHERE id = ${input.evidenceId} AND organizationId = ${ctx.user.organizationId}`);
+      return { success: true };
+    }),
+
+  validateCompleteness: protectedProcedure
+    .input(z.object({ ripdId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      const [questions] = await db.execute(sql`SELECT q.id, q.text, q.evidenceRequired, q.evidenceMinCount, COALESCE(r.evidenceCount, 0) as currentCount FROM dpia_questions q LEFT JOIN dpia_responses r ON q.id = r.questionId AND r.assessmentId = ${input.ripdId} WHERE q.evidenceRequired = TRUE`);
+      const questionsArr = questions as unknown as any[];
+      const incomplete = questionsArr.filter(q => q.currentCount < (q.evidenceMinCount || 1));
+      return { isComplete: incomplete.length === 0, totalRequired: questionsArr.length, completed: questionsArr.length - incomplete.length, incomplete };
+    }),
+});

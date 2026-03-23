@@ -1,0 +1,1833 @@
+import { logger } from "./_core/logger";
+// server/mapeamentoService.ts
+import { getDb } from "./db";
+import { eq, and, desc, sql, inArray, isNull, lte } from "drizzle-orm";
+import {
+  mapeamentoContexts,
+  mapeamentoAreas,
+  mapeamentoRespondents,
+  mapeamentoProcesses,
+  mapeamentoResponses,
+  riskAnalyses,
+  riskActionPlans,
+  users,
+  rotOperations,
+} from "../drizzle/schema";
+import { invokeLLM } from "./_core/llm";
+import crypto from "crypto";
+import { TRPCError } from "@trpc/server";
+
+// ==========================
+// KNOWLEDGE BASE - Áreas por Segmento
+// ==========================
+
+const areasBySegment: Record<string, Record<string, string[]>> = {
+  saude: {
+    clinica: ["Recepção", "Atendimento Médico", "Enfermagem", "Faturamento", "RH", "TI", "Administrativo"],
+    hospital: ["Recepção", "Pronto-Socorro", "Internação", "Centro Cirúrgico", "UTI", "Faturamento", "RH", "TI", "Compras", "Jurídico"],
+    laboratorio: ["Recepção", "Coleta", "Análises", "Laudos", "Faturamento", "RH", "TI"],
+    plano_saude: ["Comercial", "Atendimento ao Cliente", "Autorização", "Faturamento", "RH", "TI", "Jurídico", "Compliance"],
+  },
+  educacao: {
+    escola: ["Secretaria", "Coordenação Pedagógica", "Professores", "Financeiro", "RH", "TI"],
+    universidade: ["Secretaria Acadêmica", "Coordenações de Curso", "Pesquisa", "Extensão", "Financeiro", "RH", "TI", "Jurídico"],
+    curso_livre: ["Atendimento", "Pedagógico", "Financeiro", "Marketing", "TI"],
+    plataforma_ead: ["Conteúdo", "Suporte ao Aluno", "Tecnologia", "Marketing", "Financeiro", "RH"],
+  },
+  varejo: {
+    loja_fisica: ["Vendas", "Caixa", "Estoque", "RH", "Financeiro", "Marketing"],
+    e_commerce: ["Vendas Online", "Logística", "Atendimento ao Cliente", "TI", "Marketing", "Financeiro", "RH"],
+    franquia: ["Operações", "Expansão", "Marketing", "Treinamento", "Financeiro", "RH", "Jurídico"],
+    atacado: ["Comercial", "Logística", "Compras", "Financeiro", "RH", "TI"],
+  },
+  financas: {
+    banco: ["Agências", "Crédito", "Investimentos", "Compliance", "Jurídico", "TI", "RH", "Ouvidoria"],
+    corretora: ["Mesa de Operações", "Compliance", "Atendimento ao Cliente", "TI", "RH", "Jurídico"],
+    fintech: ["Produto", "Tecnologia", "Compliance", "Atendimento", "Marketing", "RH"],
+    consultoria: ["Consultoria", "Comercial", "Administrativo", "RH", "TI"],
+  },
+  industria: {
+    manufatura: ["Produção", "Qualidade", "Logística", "Compras", "RH", "TI", "Segurança do Trabalho", "Financeiro"],
+    alimentos: ["Produção", "Qualidade", "P&D", "Logística", "Comercial", "RH", "TI", "Regulatório"],
+    quimica: ["Produção", "P&D", "Qualidade", "Segurança", "Meio Ambiente", "RH", "TI", "Regulatório"],
+    automotiva: ["Produção", "Engenharia", "Qualidade", "Logística", "Compras", "RH", "TI"],
+  },
+  servicos: {
+    consultoria: ["Consultoria", "Comercial", "Projetos", "RH", "Financeiro", "TI"],
+    marketing: ["Criação", "Mídia", "Atendimento", "Comercial", "RH", "Financeiro"],
+    limpeza: ["Operações", "Supervisão", "RH", "Comercial", "Financeiro"],
+    seguranca: ["Operações", "Monitoramento", "RH", "Comercial", "Financeiro", "Jurídico"],
+  },
+  tecnologia: {
+    software: ["Desenvolvimento", "Produto", "QA", "Suporte", "Comercial", "RH", "Financeiro"],
+    ia: ["Pesquisa", "Engenharia de ML", "Dados", "Produto", "Comercial", "RH"],
+    infraestrutura: ["Operações", "Suporte", "Projetos", "Comercial", "RH", "Financeiro"],
+    cloud: ["Engenharia", "Suporte", "Comercial", "Produto", "RH", "Financeiro"],
+  },
+};
+
+// Processos sugeridos por área
+const processesByArea: Record<string, { title: string; purpose: string }[]> = {
+  "RH": [
+    { title: "Recrutamento e Seleção", purpose: "Coleta e análise de currículos de candidatos" },
+    { title: "Admissão de Funcionários", purpose: "Coleta de documentos e dados para registro" },
+    { title: "Folha de Pagamento", purpose: "Processamento de salários e benefícios" },
+    { title: "Controle de Ponto", purpose: "Registro de jornada de trabalho" },
+    { title: "Treinamento e Desenvolvimento", purpose: "Gestão de capacitações" },
+    { title: "Desligamento", purpose: "Processo de rescisão contratual" },
+  ],
+  "Financeiro": [
+    { title: "Contas a Pagar", purpose: "Gestão de pagamentos a fornecedores" },
+    { title: "Contas a Receber", purpose: "Gestão de recebimentos de clientes" },
+    { title: "Faturamento", purpose: "Emissão de notas fiscais" },
+    { title: "Conciliação Bancária", purpose: "Conferência de extratos" },
+  ],
+  "Comercial": [
+    { title: "Prospecção de Clientes", purpose: "Captação de novos clientes" },
+    { title: "Cadastro de Clientes", purpose: "Registro de dados de clientes" },
+    { title: "Proposta Comercial", purpose: "Elaboração de propostas" },
+    { title: "Pós-Venda", purpose: "Acompanhamento após a venda" },
+  ],
+  "TI": [
+    { title: "Gestão de Acessos", purpose: "Controle de permissões de usuários" },
+    { title: "Suporte Técnico", purpose: "Atendimento a chamados" },
+    { title: "Backup de Dados", purpose: "Cópias de segurança" },
+    { title: "Monitoramento de Sistemas", purpose: "Acompanhamento de infraestrutura" },
+  ],
+  "Atendimento ao Cliente": [
+    { title: "Abertura de Chamados", purpose: "Registro de solicitações" },
+    { title: "Resolução de Reclamações", purpose: "Tratamento de queixas" },
+    { title: "Pesquisa de Satisfação", purpose: "Coleta de feedback" },
+  ],
+  "Marketing": [
+    { title: "Campanhas de E-mail", purpose: "Envio de comunicações promocionais" },
+    { title: "Gestão de Redes Sociais", purpose: "Publicação e interação em redes" },
+    { title: "Eventos", purpose: "Organização de eventos corporativos" },
+  ],
+  "Jurídico": [
+    { title: "Contratos", purpose: "Elaboração e gestão de contratos" },
+    { title: "Contencioso", purpose: "Gestão de processos judiciais" },
+    { title: "Compliance", purpose: "Conformidade regulatória" },
+  ],
+  "Recepção": [
+    { title: "Cadastro de Visitantes", purpose: "Registro de entrada de visitantes" },
+    { title: "Agendamento", purpose: "Marcação de consultas/reuniões" },
+  ],
+};
+
+// ==========================
+// FASE 0 - CONTEXTO ORGANIZACIONAL
+// ==========================
+
+export async function saveContext(data: {
+  organizationId: number;
+  segment: string;
+  businessType: string;
+  employeesRange?: string;
+  unitsCount?: number;
+  hasDataProtectionOfficer?: boolean;
+  dataProtectionOfficerName?: string;
+  dataProtectionOfficerEmail?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Verificar se já existe contexto
+  const [existing] = await db
+    .select()
+    .from(mapeamentoContexts)
+    .where(eq(mapeamentoContexts.organizationId, data.organizationId));
+
+  if (existing) {
+    await db
+      .update(mapeamentoContexts)
+      .set(data as any)
+      .where(eq(mapeamentoContexts.id, existing.id));
+    return existing.id;
+  }
+
+  const result = await db.insert(mapeamentoContexts).values(data as any);
+  return Number((result as any).insertId || 0);
+}
+
+export async function getContext(organizationId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [context] = await db
+    .select()
+    .from(mapeamentoContexts)
+    .where(eq(mapeamentoContexts.organizationId, organizationId));
+
+  return context || null;
+}
+
+export function suggestAreas(segment: string, businessType: string): string[] {
+  const segmentAreas = areasBySegment[segment];
+  if (!segmentAreas) return ["RH", "Financeiro", "TI", "Comercial", "Administrativo"];
+  
+  return segmentAreas[businessType] || ["RH", "Financeiro", "TI", "Comercial", "Administrativo"];
+}
+
+export async function confirmAreas(
+  organizationId: number,
+  contextId: number,
+  areas: { name: string; isCustom?: boolean }[]
+) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Buscar áreas existentes para evitar duplicação
+  const existingAreas = await db
+    .select({ name: mapeamentoAreas.name })
+    .from(mapeamentoAreas)
+    .where(eq(mapeamentoAreas.organizationId, organizationId));
+  
+  const existingNames = new Set(existingAreas.map(a => a.name.toLowerCase()));
+
+  // Inserir apenas áreas que não existem
+  for (const area of areas) {
+    if (!existingNames.has(area.name.toLowerCase())) {
+      await db.insert(mapeamentoAreas).values({
+        organizationId,
+        contextId,
+        name: area.name,
+        isCustom: area.isCustom ? 1 : 0,
+        isActive: 1,
+      } as any);
+      existingNames.add(area.name.toLowerCase());
+    }
+  }
+
+  // Atualizar status do contexto
+  await db
+    .update(mapeamentoContexts)
+    .set({ status: "concluido" } as any)
+    .where(eq(mapeamentoContexts.organizationId, organizationId));
+
+  return { success: true };
+}
+
+export async function listAreas(organizationId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(mapeamentoAreas)
+    .where(eq(mapeamentoAreas.organizationId, organizationId))
+    .orderBy(mapeamentoAreas.name);
+}
+
+// ==========================
+// FASE 1 - DELEGAÇÃO E CONVITES
+// ==========================
+
+export async function createRespondent(data: {
+  organizationId: number;
+  areaId: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Gerar token único
+  const inviteToken = crypto.randomBytes(32).toString("hex");
+  const inviteExpiresAt = new Date();
+  inviteExpiresAt.setDate(inviteExpiresAt.getDate() + 30); // 30 dias de validade
+
+  const result = await db.insert(mapeamentoRespondents).values({
+    ...data,
+    inviteToken,
+    inviteExpiresAt,
+    status: "pendente",
+  } as any);
+
+  return {
+    id: Number((result as any).insertId || 0),
+    inviteToken,
+  };
+}
+
+export async function listRespondents(organizationId: number, areaId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let query = db
+    .select({
+      id: mapeamentoRespondents.id,
+      organizationId: mapeamentoRespondents.organizationId,
+      areaId: mapeamentoRespondents.areaId,
+      name: mapeamentoRespondents.name,
+      email: mapeamentoRespondents.email,
+      phone: mapeamentoRespondents.phone,
+      role: mapeamentoRespondents.role,
+      inviteToken: mapeamentoRespondents.inviteToken,
+      inviteSentAt: mapeamentoRespondents.inviteSentAt,
+      status: mapeamentoRespondents.status,
+      startedAt: mapeamentoRespondents.startedAt,
+      completedAt: mapeamentoRespondents.completedAt,
+      areaName: mapeamentoAreas.name,
+    })
+    .from(mapeamentoRespondents)
+    .leftJoin(mapeamentoAreas, eq(mapeamentoRespondents.areaId, mapeamentoAreas.id))
+    .where(eq(mapeamentoRespondents.organizationId, organizationId))
+    .orderBy(desc(mapeamentoRespondents.createdAt));
+
+  if (areaId) {
+    return db
+      .select({
+        id: mapeamentoRespondents.id,
+        organizationId: mapeamentoRespondents.organizationId,
+        areaId: mapeamentoRespondents.areaId,
+        name: mapeamentoRespondents.name,
+        email: mapeamentoRespondents.email,
+        phone: mapeamentoRespondents.phone,
+        role: mapeamentoRespondents.role,
+        inviteToken: mapeamentoRespondents.inviteToken,
+        inviteSentAt: mapeamentoRespondents.inviteSentAt,
+        status: mapeamentoRespondents.status,
+        startedAt: mapeamentoRespondents.startedAt,
+        completedAt: mapeamentoRespondents.completedAt,
+        areaName: mapeamentoAreas.name,
+      })
+      .from(mapeamentoRespondents)
+      .leftJoin(mapeamentoAreas, eq(mapeamentoRespondents.areaId, mapeamentoAreas.id))
+      .where(
+        and(
+          eq(mapeamentoRespondents.organizationId, organizationId),
+          eq(mapeamentoRespondents.areaId, areaId)
+        )
+      )
+      .orderBy(desc(mapeamentoRespondents.createdAt));
+  }
+
+  return query;
+}
+
+export async function markInviteSent(respondentId: number) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  await db
+    .update(mapeamentoRespondents)
+    .set({
+      inviteSentAt: new Date(),
+      status: "convidado",
+    } as any)
+    .where(eq(mapeamentoRespondents.id, respondentId));
+}
+
+export async function getRespondentByToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [respondent] = await db
+    .select({
+      id: mapeamentoRespondents.id,
+      organizationId: mapeamentoRespondents.organizationId,
+      areaId: mapeamentoRespondents.areaId,
+      name: mapeamentoRespondents.name,
+      email: mapeamentoRespondents.email,
+      status: mapeamentoRespondents.status,
+      inviteExpiresAt: mapeamentoRespondents.inviteExpiresAt,
+      areaName: mapeamentoAreas.name,
+    })
+    .from(mapeamentoRespondents)
+    .leftJoin(mapeamentoAreas, eq(mapeamentoRespondents.areaId, mapeamentoAreas.id))
+    .where(eq(mapeamentoRespondents.inviteToken, token));
+
+  if (!respondent) return null;
+
+  // Verificar expiração
+  if (respondent.inviteExpiresAt && new Date(respondent.inviteExpiresAt) < new Date()) {
+    return null;
+  }
+
+  return respondent;
+}
+
+// ==========================
+// FASE 2 - ENTREVISTA DIGITAL
+// ==========================
+
+export async function getInterviewByToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const respondent = await getRespondentByToken(token);
+  if (!respondent) return null;
+  const readOnly = respondent.status === "concluiu";
+
+  // Buscar ou criar processos para a área
+  let processes = await db
+    .select()
+    .from(mapeamentoProcesses)
+    .where(and(eq(mapeamentoProcesses.organizationId, respondent.organizationId), eq(mapeamentoProcesses.areaId, respondent.areaId!), eq(mapeamentoProcesses.isActive, 1)));
+
+  if (processes.length === 0 && respondent.areaName) {
+    // Gerar processos sugeridos
+    const suggested = processesByArea[respondent.areaName] || [];
+    for (const p of suggested) {
+      await db.insert(mapeamentoProcesses).values({
+        organizationId: respondent.organizationId,
+        areaId: respondent.areaId,
+        title: p.title,
+        purpose: p.purpose,
+        isAiGenerated: 1,
+      } as any);
+    }
+    
+    processes = await db
+      .select()
+      .from(mapeamentoProcesses)
+      .where(and(eq(mapeamentoProcesses.organizationId, respondent.organizationId), eq(mapeamentoProcesses.areaId, respondent.areaId!), eq(mapeamentoProcesses.isActive, 1)));
+  }
+
+  // Buscar respostas existentes
+  const responses = await db
+    .select()
+    .from(mapeamentoResponses)
+    .where(eq(mapeamentoResponses.respondentId, respondent.id));
+
+  // Atualizar status se ainda não iniciou
+  if (!readOnly && (respondent.status === "convidado" || respondent.status === "pendente")) {
+    await db
+      .update(mapeamentoRespondents)
+      .set({
+        status: "em_andamento",
+        startedAt: new Date(),
+      } as any)
+      .where(eq(mapeamentoRespondents.id, respondent.id));
+  }
+
+  return {
+    readOnly,
+    respondent,
+    processes,
+    responses,
+    completedCount: responses.filter(r => r.completed).length,
+    totalCount: processes.length,
+  };
+}
+
+export async function saveResponse(
+  token: string,
+  processId: number,
+  responseData: {
+    dataCategories?: { name: string; sensivel: boolean }[];
+    titularCategories?: string[];
+    legalBase?: string;
+    sharing?: string[];
+    consentObtained?: boolean;
+    retentionPeriod?: string;
+    storageLocation?: string;
+    securityMeasures?: string[];
+    internationalTransfer?: boolean;
+    internationalCountries?: string[];
+    notes?: string;
+  },
+  options?: { completed?: boolean }
+) {
+
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  const respondent = await getRespondentByToken(token);
+  if (!respondent) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Respondente não encontrado' });
+
+  // Calcular risco
+  const riskResult = calculateRiskScore(responseData);
+
+  // Verificar se já existe resposta
+  const [existing] = await db
+    .select()
+    .from(mapeamentoResponses)
+    .where(
+      and(
+        eq(mapeamentoResponses.respondentId, respondent.id),
+        eq(mapeamentoResponses.processId, processId)
+      )
+    );
+
+  const data = {
+    organizationId: respondent.organizationId,
+    respondentId: respondent.id,
+    processId,
+    dataCategories: responseData.dataCategories || [],
+    titularCategories: responseData.titularCategories || [],
+    legalBase: responseData.legalBase,
+    sharing: responseData.sharing || [],
+    consentObtained: responseData.consentObtained ? 1 : 0,
+    retentionPeriod: responseData.retentionPeriod,
+    storageLocation: responseData.storageLocation,
+    securityMeasures: responseData.securityMeasures || [],
+    internationalTransfer: responseData.internationalTransfer ? 1 : 0,
+    internationalCountries: responseData.internationalCountries || [],
+    riskLevel: riskResult.level,
+    riskScore: riskResult.score,
+    requiresAction: riskResult.level === "alta" || riskResult.level === "extrema" ? 1 : 0,
+    notes: responseData.notes,
+    completed: options?.completed ? 1 : 0,
+    completedAt: options?.completed ? new Date().toISOString() : null,
+  };
+
+  if (existing) {
+    await db
+      .update(mapeamentoResponses)
+      .set(data as any)
+      .where(eq(mapeamentoResponses.id, existing.id));
+  } else {
+    await db.insert(mapeamentoResponses).values(data as any);
+  }
+
+  return { success: true, riskLevel: riskResult.level };
+}
+
+export async function finalizeInterview(token: string) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  const respondent = await getRespondentByToken(token);
+  if (!respondent) return { success: false };
+
+  // 1) Buscar processos ativos da área do respondente
+  const processes = await db
+    .select()
+    .from(mapeamentoProcesses)
+    .where(
+      and(
+        eq(mapeamentoProcesses.organizationId, respondent.organizationId),
+        eq(mapeamentoProcesses.areaId, respondent.areaId),
+        eq(mapeamentoProcesses.isActive, 1)
+      )
+    );
+
+  // 2) Buscar respostas do respondente
+  const responses = await db
+    .select()
+    .from(mapeamentoResponses)
+    .where(eq(mapeamentoResponses.respondentId, respondent.id));
+
+  const responseByProcess = new Map<number, any>();
+  for (const r of responses) responseByProcess.set(r.processId, r);
+
+  const missing = processes
+    .filter(p => {
+      const r = responseByProcess.get(p.id);
+      return !r || Number(r.completed || 0) !== 1;
+    })
+    .map(p => ({ processId: p.id, title: p.title }));
+
+  if (missing.length > 0) {
+    return { success: false, reason: 'incomplete', missing };
+  }
+
+  // 3) Resolver um usuário "sistema" para auditoria (createdById / GED)
+  const [sysUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      and(
+        eq(users.organizationId, respondent.organizationId),
+        eq(users.isActive, 1)
+      )
+    )
+    .orderBy(users.id)
+    .limit(1);
+
+  const systemUserId = Number(sysUser?.id || 1);
+
+  // 4) Buscar nome da área para preencher department
+  const [area] = await db
+    .select()
+    .from(mapeamentoAreas)
+    .where(and(eq(mapeamentoAreas.id, respondent.areaId), eq(mapeamentoAreas.organizationId, respondent.organizationId)));
+
+  const departmentName = area?.name || null;
+
+  // 5) Gerar 1 ROT por processo (Modelo 2) + salvar ROT/POP no GED + agendar revisão
+  const { saveDocumentToGed } = await import('./mapeamentoGedService');
+  const { scheduleReviewForRot } = await import('./reviewScheduleService');
+
+  let createdRots = 0;
+  let documentsSaved = 0;
+  let schedulesCreated = 0;
+  let actionPlansGenerated = 0;
+
+  for (const p of processes) {
+    const resp = responseByProcess.get(p.id);
+    if (!resp) continue;
+
+    // Se já existe ROT vinculado, pula (idempotência)
+    if (resp.rotId) continue;
+
+    const titularCategories = Array.isArray(resp.titularCategories) ? resp.titularCategories : [];
+    const dataCategories = Array.isArray(resp.dataCategories) ? resp.dataCategories : [];
+    const sharing = Array.isArray(resp.sharing) ? resp.sharing : [];
+    const securityMeasures = Array.isArray(resp.securityMeasures) ? resp.securityMeasures : [];
+    const intlCountries = Array.isArray(resp.internationalCountries) ? resp.internationalCountries : [];
+
+    const rotInsert = await db.insert(rotOperations).values({
+      organizationId: respondent.organizationId,
+      createdById: systemUserId,
+      title: p.title,
+      description: p.description || null,
+      department: departmentName || undefined,
+      titularCategory: titularCategories.join(', ') || 'Não especificado',
+      dataCategories: dataCategories,
+      purpose: p.purpose || p.description || 'Não especificado',
+      legalBase: resp.legalBase || 'execucao_contrato',
+      requiresConsent: (resp.legalBase === 'consentimento') ? 1 : 0,
+      status: 'rascunho',
+    } as any);
+
+    const rotId = Number((rotInsert as any).insertId || 0);
+    createdRots++;
+
+    // Vincular response -> rot
+    await db
+      .update(mapeamentoResponses)
+      .set({ rotId } as any)
+      .where(eq(mapeamentoResponses.id, resp.id));
+
+    // Gerar documentos em Markdown (determinístico) e salvar no GED
+    const rotDoc = generateROTDocument({
+      title: p.title,
+      department: departmentName,
+      purpose: p.purpose || p.description || 'Não especificado',
+      legalBase: resp.legalBase || 'execucao_contrato',
+      requiresConsent: (resp.legalBase === 'consentimento'),
+      dataCategories,
+      titularCategories,
+      sharing,
+      internationalTransfer: Number(resp.internationalTransfer || 0) === 1,
+      internationalCountries: intlCountries,
+      retentionPeriod: resp.retentionPeriod,
+      securityMeasures,
+      riskAssessment: {
+        level: resp.riskLevel,
+        factors: [],
+        mitigations: []
+      },
+      recommendations: [],
+    });
+
+    const popDoc = generatePOPDocument({
+      title: `POP - ${p.title}`,
+      objective: "Descrever o procedimento operacional para execução do tratamento de dados pessoais com conformidade à LGPD.",
+      scope: `Aplicável ao processo: ${p.title}.`,
+      responsibilities: [
+        { role: "DPO / Encarregado", description: "Validar conformidade, orientar e revisar periodicamente." },
+        { role: "Gestor da Área", description: "Garantir execução do procedimento e evidências." },
+        { role: "Operação", description: "Executar as etapas e registrar evidências." },
+      ],
+      steps: [
+        { order: 1, title: "Coleta e tratamento", responsible: "Operação", description: `Executar o processo conforme descrito e registrar evidências. Finalidade: ${p.purpose || p.description || "Não especificada"}.` },
+        { order: 2, title: "Segurança e controles", responsible: "Gestor da Área", description: `Aplicar medidas de segurança: ${(securityMeasures || []).join(", ") || "não informadas"}.` },
+        { order: 3, title: "Revisão e melhoria", responsible: "DPO / Encarregado", description: "Revisar riscos, base legal e adequação do processo; atualizar ROT/POP quando necessário." },
+      ],
+      documents: ["ROT", "POP", "Política de Privacidade (se aplicável)"],
+      records: ["Evidências de execução do processo", "Logs / registros de acesso (quando aplicável)"],
+      indicators: ["Percentual de processos revisados no período", "Incidentes / não conformidades associadas"],
+      revision: { frequency: "Anual", criteria: ["Mudanças no processo", "Mudanças regulatórias", "Incidentes relevantes"] }
+    });
+
+    const rotLinked = await saveDocumentToGed({
+      organizationId: respondent.organizationId,
+      userId: systemUserId,
+      rotId,
+      documentType: 'rot',
+      title: `ROT - ${p.title}`,
+      description: `ROT gerado automaticamente a partir da entrevista de mapeamento (Modelo 2).`,
+      content: rotDoc,
+    });
+
+    const popLinked = await saveDocumentToGed({
+      organizationId: respondent.organizationId,
+      userId: systemUserId,
+      rotId,
+      documentType: 'pop',
+      title: `POP - ${p.title}`,
+      description: `POP gerado automaticamente a partir da entrevista de mapeamento (Modelo 2).`,
+      content: popDoc,
+    });
+
+    documentsSaved += 2;
+
+    // Persistir fileKeys no ROT
+    await db
+      .update(rotOperations)
+      .set({
+        rotFileKey: rotLinked?.gedDocument?.fileKey,
+        popFileKey: popLinked?.gedDocument?.fileKey,
+        updatedAt: new Date().toISOString(),
+      } as any)
+      .where(eq(rotOperations.id, rotId));
+
+    // Agendar revisão
+    const schedId = await scheduleReviewForRot(rotId, respondent.organizationId);
+    if (schedId) schedulesCreated++;
+
+    // Gerar análise de risco + ações se necessário
+    if (Number(resp.requiresAction || 0) === 1) {
+      const analysisResult = await db.insert(riskAnalyses).values({
+        organizationId: respondent.organizationId,
+        sourceType: "rot",
+        sourceId: rotId,
+        riskLevel: resp.riskLevel,
+        riskScore: resp.riskScore,
+        riskFactors: [],
+        analyzedById: systemUserId,
+        status: "pendente",
+      } as any);
+
+      const analysisId = Number((analysisResult as any).insertId || 0);
+
+      const actions = generateActionPlans(resp, analysisId, respondent.organizationId);
+      for (const action of actions) {
+        await db.insert(riskActionPlans).values(action as any);
+        actionPlansGenerated++;
+      }
+    }
+  }
+
+  // 6) Atualizar status do respondente
+  await db
+    .update(mapeamentoRespondents)
+    .set({
+      status: "concluiu",
+      completedAt: new Date().toISOString(),
+    } as any)
+    .where(eq(mapeamentoRespondents.id, respondent.id));
+
+  return { success: true, createdRots, documentsSaved, schedulesCreated, actionPlansGenerated };
+}
+
+// ==========================
+// CÁLCULO DE RISCO
+// ==========================
+
+function calculateRiskScore(data: {
+  dataCategories?: { name: string; sensivel: boolean }[];
+  consentObtained?: boolean;
+  internationalTransfer?: boolean;
+  securityMeasures?: string[];
+}): { level: "baixa" | "media" | "alta" | "extrema"; score: number } {
+  let score = 0;
+
+  // Dados sensíveis (+0.3)
+  const hasSensitive = data.dataCategories?.some(d => d.sensivel);
+  if (hasSensitive) score += 0.3;
+
+  // Sem consentimento (+0.25)
+  if (!data.consentObtained) score += 0.25;
+
+  // Transferência internacional (+0.2)
+  if (data.internationalTransfer) score += 0.2;
+
+  // Poucas medidas de segurança (+0.15)
+  if (!data.securityMeasures || data.securityMeasures.length < 2) score += 0.15;
+
+  // Volume de dados (+0.1)
+  if (data.dataCategories && data.dataCategories.length > 5) score += 0.1;
+
+  let level: "baixa" | "media" | "alta" | "extrema";
+  if (score >= 0.6) level = "extrema";
+  else if (score >= 0.4) level = "alta";
+  else if (score >= 0.2) level = "media";
+  else level = "baixa";
+
+  return { level, score: Math.round(score * 100) / 100 };
+}
+
+function generateActionPlans(
+  response: any,
+  analysisId: number,
+  organizationId: number
+): any[] {
+  const actions: any[] = [];
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 15);
+
+  // Ação para consentimento
+  if (!response.consentObtained) {
+    actions.push({
+      organizationId,
+      analysisId,
+      title: "Obter consentimento para tratamento de dados",
+      description: "Implementar mecanismo de coleta de consentimento conforme art. 7º da LGPD",
+      priority: "alta",
+      assigneeRole: "titular",
+      dueDate,
+      estimatedEffortHours: 4,
+      status: "pendente",
+    });
+  }
+
+  // Ação para transferência internacional
+  if (response.internationalTransfer) {
+    const dueDateIntl = new Date();
+    dueDateIntl.setDate(dueDateIntl.getDate() + 30);
+    actions.push({
+      organizationId,
+      analysisId,
+      title: "Avaliar adequação para transferência internacional",
+      description: "Verificar se países de destino possuem nível adequado de proteção (art. 33 da LGPD)",
+      priority: "alta",
+      assigneeRole: "dpo",
+      dueDate: dueDateIntl,
+      estimatedEffortHours: 8,
+      status: "pendente",
+    });
+  }
+
+  // Ação genérica de revisão
+  if (response.riskLevel === "alta" || response.riskLevel === "extrema") {
+    const dueDateReview = new Date();
+    dueDateReview.setDate(dueDateReview.getDate() + 7);
+    actions.push({
+      organizationId,
+      analysisId,
+      title: "Revisão pelo DPO",
+      description: "Validar processo e plano de mitigação com o Encarregado de Proteção de Dados",
+      priority: "media",
+      assigneeRole: "dpo",
+      dueDate: dueDateReview,
+      estimatedEffortHours: 2,
+      status: "pendente",
+    });
+  }
+
+  return actions;
+}
+
+// ==========================
+// ESTATÍSTICAS
+// ==========================
+
+export async function getMapeamentoStats(organizationId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [context] = await db
+    .select()
+    .from(mapeamentoContexts)
+    .where(eq(mapeamentoContexts.organizationId, organizationId));
+
+  const areas = await db
+    .select()
+    .from(mapeamentoAreas)
+    .where(eq(mapeamentoAreas.organizationId, organizationId));
+
+  const respondents = await db
+    .select()
+    .from(mapeamentoRespondents)
+    .where(eq(mapeamentoRespondents.organizationId, organizationId));
+
+  const responses = await db
+    .select()
+    .from(mapeamentoResponses)
+    .where(eq(mapeamentoResponses.organizationId, organizationId));
+
+  const pendingActions = await db
+    .select()
+    .from(riskActionPlans)
+    .where(
+      and(
+        eq(riskActionPlans.organizationId, organizationId),
+        eq(riskActionPlans.status, "pendente")
+      )
+    );
+
+  return {
+    hasContext: !!context,
+    contextStatus: context?.status || null,
+    areasCount: areas.length,
+    respondentsCount: respondents.length,
+    respondentsCompleted: respondents.filter(r => r.status === "concluiu").length,
+    responsesCount: responses.length,
+    responsesWithRisk: responses.filter(r => r.requiresAction).length,
+    pendingActionsCount: pendingActions.length,
+    phase: !context ? 0 : context.status === "em_andamento" ? 0 : respondents.length === 0 ? 1 : 2,
+  };
+}
+
+// ==========================
+// PLANOS DE AÇÃO
+// ==========================
+
+export async function listActionPlans(organizationId: number, status?: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (status) {
+    return db
+      .select()
+      .from(riskActionPlans)
+      .where(
+        and(
+          eq(riskActionPlans.organizationId, organizationId),
+          eq(riskActionPlans.status, status as any)
+        )
+      )
+      .orderBy(riskActionPlans.dueDate);
+  }
+
+  return db
+    .select()
+    .from(riskActionPlans)
+    .where(eq(riskActionPlans.organizationId, organizationId))
+    .orderBy(riskActionPlans.dueDate);
+}
+
+export async function updateActionPlan(
+  id: number,
+  data: {
+    status?: string;
+    completedAt?: Date;
+    completedById?: number;
+    evidence?: string;
+    evidenceFileKey?: string;
+  }
+) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  await db
+    .update(riskActionPlans)
+    .set(data as any)
+    .where(eq(riskActionPlans.id, id));
+}
+
+export async function getOverdueActions(organizationId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const threeDaysFromNow = new Date();
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+
+  return db
+    .select()
+    .from(riskActionPlans)
+    .where(
+      and(
+        eq(riskActionPlans.organizationId, organizationId),
+        eq(riskActionPlans.status, "pendente"),
+        lte(riskActionPlans.dueDate, threeDaysFromNow.toISOString())
+      )
+    )
+    .orderBy(riskActionPlans.dueDate);
+}
+
+
+// ==========================
+// GERAÇÃO DE ROT COM IA
+// ==========================
+
+export async function generateROTFromResponse(
+  organizationId: number,
+  responseId: number
+) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Buscar a resposta
+  const [response] = await db
+    .select()
+    .from(mapeamentoResponses)
+    .where(eq(mapeamentoResponses.id, responseId));
+
+  if (!response) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Resposta não encontrada' });
+
+  // Buscar o processo
+  const [process] = await db
+    .select()
+    .from(mapeamentoProcesses)
+    .where(eq(mapeamentoProcesses.id, response.processId));
+
+  if (!process) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Processo não encontrado' });
+
+  // Preparar dados para a IA
+  const dataCategories = response.dataCategories ? JSON.parse(response.dataCategories as string) : [];
+  const titularCategories = response.titularCategories ? JSON.parse(response.titularCategories as string) : [];
+  const securityMeasures = response.securityMeasures ? JSON.parse(response.securityMeasures as string) : [];
+  const sharing = response.sharing ? JSON.parse(response.sharing as string) : [];
+
+  // Gerar ROT com IA
+  const prompt = `Você é um especialista em LGPD e proteção de dados. Gere um Registro de Operações de Tratamento (ROT) completo em formato JSON para o seguinte processo:
+
+PROCESSO: ${process.title}
+DESCRIÇÃO: ${process.description || process.purpose || "Não informada"}
+
+DADOS COLETADOS:
+${dataCategories.map((d: any) => `- ${d.name} ${d.sensivel ? "(SENSÍVEL)" : ""}`).join("\n")}
+
+CATEGORIAS DE TITULARES:
+${titularCategories.join(", ")}
+
+BASE LEGAL INFORMADA: ${response.legalBase || "Não informada"}
+
+MEDIDAS DE SEGURANÇA:
+${securityMeasures.join(", ")}
+
+COMPARTILHAMENTO: ${sharing.length > 0 ? sharing.join(", ") : "Não informado"}
+
+TRANSFERÊNCIA INTERNACIONAL: ${response.internationalTransfer ? "Sim" : "Não"}
+
+PERÍODO DE RETENÇÃO: ${response.retentionPeriod || "Não informado"}
+
+LOCAL DE ARMAZENAMENTO: ${response.storageLocation || "Não informado"}
+
+Gere um JSON com a seguinte estrutura:
+{
+  "title": "Título do ROT",
+  "purpose": "Finalidade detalhada do tratamento",
+  "legalBase": "Base legal completa com artigo da LGPD",
+  "requiresConsent": true/false,
+  "alternativeBases": ["bases legais alternativas se aplicável"],
+  "risksIfNoConsent": ["riscos identificados"],
+  "recommendations": ["recomendações de conformidade"],
+  "retentionJustification": "justificativa para o período de retenção",
+  "securityRecommendations": ["medidas de segurança adicionais recomendadas"],
+  "riskAssessment": {
+    "level": "baixa|media|alta|extrema",
+    "factors": ["fatores de risco identificados"],
+    "mitigations": ["ações de mitigação sugeridas"]
+  }
+}
+
+Responda APENAS com o JSON, sem explicações adicionais.`;
+
+  try {
+    const llmResponse = await invokeLLM({
+      messages: [
+        { role: "system", content: "Você é um especialista em LGPD. Responda apenas em JSON válido." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const rawContent = llmResponse.choices[0]?.message?.content || "{}";
+    const content = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+    
+    // Extrair JSON da resposta
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Resposta da IA não contém JSON válido' });
+    
+    const rotData = JSON.parse(jsonMatch[0]);
+
+    return {
+      success: true,
+      rot: {
+        title: rotData.title || process.title,
+        description: process.description || process.purpose,
+        purpose: rotData.purpose,
+        legalBase: rotData.legalBase,
+        requiresConsent: rotData.requiresConsent,
+        alternativeBases: rotData.alternativeBases,
+        risksIfNoConsent: rotData.risksIfNoConsent,
+        recommendations: rotData.recommendations,
+        retentionJustification: rotData.retentionJustification,
+        securityRecommendations: rotData.securityRecommendations,
+        riskAssessment: rotData.riskAssessment,
+        dataCategories,
+        titularCategories,
+        securityMeasures,
+        sharing,
+        retentionPeriod: response.retentionPeriod,
+        storageLocation: response.storageLocation,
+        internationalTransfer: !!response.internationalTransfer,
+        sourceResponseId: responseId,
+      },
+    };
+  } catch (error) {
+    logger.error("Erro ao gerar ROT com IA:", error);
+    return {
+      success: false,
+      error: "Falha ao gerar ROT com IA",
+    };
+  }
+}
+
+// ==========================
+// GERAÇÃO DE POP COM IA
+// ==========================
+
+export async function generatePOPFromROT(
+  organizationId: number,
+  rotId: number
+) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Buscar o ROT (usando a tabela existente de rots)
+  const { rotOperations } = await import("../drizzle/schema");
+  const [rot] = await db
+    .select()
+    .from(rotOperations)
+    .where(eq(rotOperations.id, rotId));
+
+  if (!rot) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'ROT não encontrado' });
+
+  const prompt = `Você é um especialista em LGPD e proteção de dados. Gere um Procedimento Operacional Padrão (POP) detalhado para o seguinte Registro de Operações de Tratamento:
+
+TÍTULO: ${rot.title}
+FINALIDADE: ${rot.purpose}
+BASE LEGAL: ${rot.legalBase}
+REQUER CONSENTIMENTO: ${rot.requiresConsent ? "Sim" : "Não"}
+
+Gere um JSON com a seguinte estrutura de POP:
+{
+  "title": "Título do POP",
+  "objective": "Objetivo do procedimento",
+  "scope": "Abrangência do procedimento",
+  "responsibilities": [
+    {"role": "Cargo/Função", "description": "Responsabilidades"}
+  ],
+  "steps": [
+    {"order": 1, "title": "Título do passo", "description": "Descrição detalhada", "responsible": "Responsável"}
+  ],
+  "documents": ["Documentos relacionados"],
+  "records": ["Registros a serem mantidos"],
+  "indicators": ["Indicadores de controle"],
+  "revision": {
+    "frequency": "Frequência de revisão",
+    "criteria": ["Critérios para revisão"]
+  }
+}
+
+Responda APENAS com o JSON, sem explicações adicionais.`;
+
+  try {
+    const llmResponse = await invokeLLM({
+      messages: [
+        { role: "system", content: "Você é um especialista em LGPD. Responda apenas em JSON válido." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const rawContent2 = llmResponse.choices[0]?.message?.content || "{}";
+    const content2 = typeof rawContent2 === 'string' ? rawContent2 : JSON.stringify(rawContent2);
+    
+    const jsonMatch = content2.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Resposta da IA não contém JSON válido' });
+    
+    const popData = JSON.parse(jsonMatch[0]);
+
+    return {
+      success: true,
+      pop: {
+        ...popData,
+        sourceRotId: rotId,
+        organizationId,
+      },
+    };
+  } catch (error) {
+    logger.error("Erro ao gerar POP com IA:", error);
+    return {
+      success: false,
+      error: "Falha ao gerar POP com IA",
+    };
+  }
+}
+
+// ==========================
+// EXPORTAÇÃO DE DOCUMENTOS
+// ==========================
+
+export function generateROTDocument(rot: any): string {
+  const hasSensitiveData = rot.dataCategories?.some((d: any) => d.sensivel);
+  
+  return `
+# REGISTRO DE OPERAÇÕES DE TRATAMENTO (ROT)
+
+## Identificação
+- **Título:** ${rot.title}
+- **Departamento:** ${rot.department || "Não especificado"}
+- **Data de Criação:** ${new Date().toLocaleDateString("pt-BR")}
+- **Versão:** 1.0
+
+---
+
+## 1. Finalidade do Tratamento
+${rot.purpose}
+
+---
+
+## 2. Base Legal
+**Base Legal Principal:** ${rot.legalBase}
+
+${rot.alternativeBases?.length > 0 ? `**Bases Alternativas:**
+${rot.alternativeBases.map((b: string) => `- ${b}`).join("\n")}` : ""}
+
+${rot.requiresConsent ? `
+> ⚠️ **ATENÇÃO:** Este tratamento requer consentimento do titular.
+` : ""}
+
+---
+
+## 3. Categorias de Dados Pessoais
+${rot.dataCategories?.map((d: any) => `- ${d.name} ${d.sensivel ? "🔴 **SENSÍVEL**" : ""}`).join("\n")}
+
+${hasSensitiveData ? `
+> ⚠️ **DADOS SENSÍVEIS IDENTIFICADOS**
+> Este tratamento envolve dados sensíveis conforme art. 5º, II da LGPD.
+> Medidas adicionais de proteção são obrigatórias.
+` : ""}
+
+---
+
+## 4. Categorias de Titulares
+${rot.titularCategories?.map((t: string) => `- ${t}`).join("\n")}
+
+---
+
+## 5. Compartilhamento de Dados
+${rot.sharing?.length > 0 ? rot.sharing.map((s: string) => `- ${s}`).join("\n") : "Não há compartilhamento externo."}
+
+---
+
+## 6. Transferência Internacional
+${rot.internationalTransfer ? `
+**Sim** - Dados são transferidos para fora do Brasil.
+${rot.internationalCountries?.length > 0 ? `Países de destino: ${rot.internationalCountries.join(", ")}` : ""}
+
+> Verificar adequação conforme art. 33 da LGPD.
+` : "Não há transferência internacional de dados."}
+
+---
+
+## 7. Retenção de Dados
+- **Período:** ${rot.retentionPeriod || "Não definido"}
+- **Justificativa:** ${rot.retentionJustification || "Não informada"}
+
+---
+
+## 8. Medidas de Segurança
+${rot.securityMeasures?.map((m: string) => `- ${m}`).join("\n")}
+
+${rot.securityRecommendations?.length > 0 ? `
+### Recomendações Adicionais
+${rot.securityRecommendations.map((r: string) => `- ${r}`).join("\n")}
+` : ""}
+
+---
+
+## 9. Análise de Risco
+${rot.riskAssessment ? `
+- **Nível de Risco:** ${rot.riskAssessment.level?.toUpperCase()}
+- **Fatores de Risco:**
+${rot.riskAssessment.factors?.map((f: string) => `  - ${f}`).join("\n")}
+- **Ações de Mitigação:**
+${rot.riskAssessment.mitigations?.map((m: string) => `  - ${m}`).join("\n")}
+` : "Análise de risco não realizada."}
+
+---
+
+## 10. Recomendações de Conformidade
+${rot.recommendations?.map((r: string) => `- ${r}`).join("\n") || "Nenhuma recomendação adicional."}
+
+---
+
+## Histórico de Revisões
+| Versão | Data | Responsável | Alterações |
+|--------|------|-------------|------------|
+| 1.0 | ${new Date().toLocaleDateString("pt-BR")} | Sistema | Criação inicial |
+
+---
+
+*Documento gerado automaticamente pelo Sistema Seusdados Due Diligence*
+*Este documento deve ser revisado periodicamente conforme política de governança.*
+`;
+}
+
+export function generatePOPDocument(pop: any): string {
+  return `
+# PROCEDIMENTO OPERACIONAL PADRÃO (POP)
+
+## Identificação
+- **Título:** ${pop.title}
+- **Código:** POP-${Date.now().toString(36).toUpperCase()}
+- **Data de Criação:** ${new Date().toLocaleDateString("pt-BR")}
+- **Versão:** 1.0
+
+---
+
+## 1. Objetivo
+${pop.objective}
+
+---
+
+## 2. Abrangência
+${pop.scope}
+
+---
+
+## 3. Responsabilidades
+
+| Cargo/Função | Responsabilidades |
+|--------------|-------------------|
+${pop.responsibilities?.map((r: any) => `| ${r.role} | ${r.description} |`).join("\n")}
+
+---
+
+## 4. Procedimento
+
+${pop.steps?.map((step: any) => `
+### ${step.order}. ${step.title}
+**Responsável:** ${step.responsible}
+
+${step.description}
+`).join("\n")}
+
+---
+
+## 5. Documentos Relacionados
+${pop.documents?.map((d: string) => `- ${d}`).join("\n") || "Nenhum documento relacionado."}
+
+---
+
+## 6. Registros
+${pop.records?.map((r: string) => `- ${r}`).join("\n") || "Nenhum registro especificado."}
+
+---
+
+## 7. Indicadores de Controle
+${pop.indicators?.map((i: string) => `- ${i}`).join("\n") || "Nenhum indicador definido."}
+
+---
+
+## 8. Revisão
+- **Frequência:** ${pop.revision?.frequency || "Anual"}
+- **Critérios para Revisão:**
+${pop.revision?.criteria?.map((c: string) => `  - ${c}`).join("\n") || "  - Mudanças regulatórias\n  - Alterações no processo"}
+
+---
+
+## Histórico de Revisões
+| Versão | Data | Responsável | Alterações |
+|--------|------|-------------|------------|
+| 1.0 | ${new Date().toLocaleDateString("pt-BR")} | Sistema | Criação inicial |
+
+---
+
+*Documento gerado automaticamente pelo Sistema Seusdados Due Diligence*
+*Este procedimento deve ser seguido por todos os colaboradores envolvidos.*
+`;
+}
+
+
+// ==========================
+// NOTIFICAÇÕES DE ENTREVISTA
+// ==========================
+
+import { organizations } from "../drizzle/schema";
+import { ENV } from "./_core/env";
+
+export async function sendInterviewInvitation(
+  respondentId: number,
+  baseUrl: string
+): Promise<{ success: boolean; message: string }> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Buscar o respondente
+  const [respondent] = await db
+    .select()
+    .from(mapeamentoRespondents)
+    .where(eq(mapeamentoRespondents.id, respondentId));
+
+  if (!respondent) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Respondente não encontrado' });
+  }
+
+  // Buscar a área
+  const [area] = await db
+    .select()
+    .from(mapeamentoAreas)
+    .where(eq(mapeamentoAreas.id, respondent.areaId));
+
+  if (!area) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Área não encontrada' });
+  }
+
+  // Buscar o contexto
+  const [context] = await db
+    .select()
+    .from(mapeamentoContexts)
+    .where(eq(mapeamentoContexts.id, area.contextId));
+
+  if (!context) {
+    throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Contexto não encontrado' });
+  }
+
+  // Buscar a organização
+  const [org] = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, context.organizationId));
+
+  const interviewLink = `${baseUrl}/entrevista/${respondent.inviteToken}`;
+  const organizationName = org?.name || "Organização";
+
+  const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convite para Entrevista de Mapeamento de Dados</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #6B21A8 0%, #3B82F6 100%); padding: 40px 40px 30px; text-align: center;">
+              <h1 style="color: #ffffff; font-size: 24px; font-weight: 300; margin: 0;">
+                Seusdados Consultoria
+              </h1>
+              <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 10px 0 0;">
+                Mapeamento de Processos e Dados Pessoais
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="color: #1f2937; font-size: 20px; font-weight: 500; margin: 0 0 20px;">
+                Olá, ${respondent.name}!
+              </h2>
+              
+              <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
+                Você foi designado(a) como responsável pela área <strong>${area.name}</strong> 
+                no processo de mapeamento de dados pessoais da <strong>${organizationName}</strong>.
+              </p>
+              
+              <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
+                Precisamos que você responda a uma entrevista digital sobre os processos e dados 
+                pessoais tratados na sua área. Suas respostas são essenciais para garantir a 
+                conformidade com a LGPD (Lei Geral de Proteção de Dados).
+              </p>
+              
+              <div style="background-color: #f9fafb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                <p style="color: #6b7280; font-size: 13px; margin: 0 0 5px;">Sua área:</p>
+                <p style="color: #1f2937; font-size: 16px; font-weight: 500; margin: 0;">${area.name}</p>
+                <p style="color: #6b7280; font-size: 13px; margin: 15px 0 5px;">Seu cargo:</p>
+                <p style="color: #1f2937; font-size: 16px; font-weight: 500; margin: 0;">${respondent.role || "Não informado"}</p>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${interviewLink}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #6B21A8 0%, #3B82F6 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 500;">
+                  Iniciar Entrevista
+                </a>
+              </div>
+              
+              <p style="color: #6b7280; font-size: 13px; line-height: 1.6; margin: 20px 0 0;">
+                Se o botão não funcionar, copie e cole este link no seu navegador:
+              </p>
+              <p style="color: #6B21A8; font-size: 12px; word-break: break-all; margin: 5px 0 0;">
+                ${interviewLink}
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 25px 40px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #9ca3af; font-size: 12px; line-height: 1.5; margin: 0; text-align: center;">
+                Este e-mail foi enviado automaticamente pelo sistema Seusdados Due Diligence.<br>
+                Em caso de dúvidas, entre em contato com o DPO da sua organização.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+  try {
+    // Notifica o owner sobre o convite gerado
+    if (ENV.forgeApiUrl && ENV.forgeApiKey) {
+      const endpoint = `${ENV.forgeApiUrl.endsWith('/') ? ENV.forgeApiUrl : ENV.forgeApiUrl + '/'}webdevtoken.v1.WebDevService/SendNotification`;
+      
+      await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${ENV.forgeApiKey}`,
+          "content-type": "application/json",
+          "connect-protocol-version": "1",
+        },
+        body: JSON.stringify({
+          title: `📋 Convite de Entrevista - ${respondent.name}`,
+          content: `Um convite de entrevista foi gerado para ${respondent.name} (${respondent.email}) da área ${area.name}.\n\nLink: ${interviewLink}\n\nEnvie este link por e-mail ou WhatsApp para o responsável.`,
+        }),
+      });
+    }
+
+    // Atualizar status do respondente para "convidado"
+    await db
+      .update(mapeamentoRespondents)
+      .set({
+        status: "convidado",
+        inviteSentAt: new Date().toISOString(),
+      })
+      .where(eq(mapeamentoRespondents.id, respondentId));
+
+    return { success: true, message: `Link de entrevista gerado com sucesso para ${respondent.email}. O link foi registrado e pode ser enviado manualmente.` };
+  } catch (error) {
+    logger.error("Erro ao enviar convite:", error);
+    return { success: false, message: `Erro ao processar convite: ${error}` };
+  }
+}
+
+export async function sendBulkInterviewInvitations(
+  contextId: number,
+  baseUrl: string
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Buscar todas as áreas do contexto
+  const areas = await db
+    .select()
+    .from(mapeamentoAreas)
+    .where(eq(mapeamentoAreas.contextId, contextId));
+
+  const areaIds = areas.map(a => a.id);
+  if (areaIds.length === 0) {
+    return { sent: 0, failed: 0, errors: ["Nenhuma área encontrada"] };
+  }
+
+  // Buscar todos os respondentes pendentes
+  const respondents = await db
+    .select()
+    .from(mapeamentoRespondents)
+    .where(
+      and(
+        inArray(mapeamentoRespondents.areaId, areaIds),
+        eq(mapeamentoRespondents.status, "pendente")
+      )
+    );
+
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const respondent of respondents) {
+    try {
+      const result = await sendInterviewInvitation(respondent.id, baseUrl);
+      if (result.success) {
+        sent++;
+      } else {
+        failed++;
+        errors.push(`${respondent.name}: ${result.message}`);
+      }
+    } catch (error) {
+      failed++;
+      errors.push(`${respondent.name}: ${error}`);
+    }
+  }
+
+  return { sent, failed, errors };
+}
+
+
+// ==========================
+// LEMBRETES AUTOMÁTICOS
+// ==========================
+
+export interface ReminderConfig {
+  id?: number;
+  organizationId: number;
+  daysBeforeReminder: number;
+  reminderFrequencyDays: number;
+  maxReminders: number;
+  emailTemplate?: string;
+  isActive: boolean;
+}
+
+export async function getReminderConfig(organizationId: number): Promise<ReminderConfig | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.execute(
+    sql`SELECT * FROM mapeamento_reminder_config WHERE organizationId = ${organizationId}`
+  );
+  
+  const rows = (result as any)[0] || [];
+  if (rows.length === 0) return null;
+
+  const row = rows[0];
+  return {
+    id: row.id,
+    organizationId: row.organizationId,
+    daysBeforeReminder: row.daysBeforeReminder,
+    reminderFrequencyDays: row.reminderFrequencyDays,
+    maxReminders: row.maxReminders,
+    emailTemplate: row.emailTemplate,
+    isActive: row.isActive === 1,
+  };
+}
+
+export async function saveReminderConfig(config: ReminderConfig): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  await db.execute(
+    sql`INSERT INTO mapeamento_reminder_config 
+        (organizationId, daysBeforeReminder, reminderFrequencyDays, maxReminders, emailTemplate, isActive)
+        VALUES (${config.organizationId}, ${config.daysBeforeReminder}, ${config.reminderFrequencyDays}, 
+                ${config.maxReminders}, ${config.emailTemplate || null}, ${config.isActive ? 1 : 0})
+        ON DUPLICATE KEY UPDATE
+        daysBeforeReminder = ${config.daysBeforeReminder},
+        reminderFrequencyDays = ${config.reminderFrequencyDays},
+        maxReminders = ${config.maxReminders},
+        emailTemplate = ${config.emailTemplate || null},
+        isActive = ${config.isActive ? 1 : 0}`
+  );
+}
+
+export interface PendingReminder {
+  respondentId: number;
+  respondentName: string;
+  respondentEmail: string;
+  areaName: string;
+  organizationId: number;
+  organizationName: string;
+  invitedAt: string;
+  remindersSent: number;
+  lastReminderAt?: string;
+}
+
+export async function getPendingReminders(organizationId: number): Promise<PendingReminder[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(
+    sql`SELECT 
+          r.id as respondentId,
+          r.name as respondent_name,
+          r.email as respondent_email,
+          a.name as area_name,
+          r.organizationId,
+          o.name as organization_name,
+          r.createdAt as invited_at,
+          COALESCE(h.reminderCount, 0) as reminders_sent,
+          h.sentAt as last_reminder_at
+        FROM mapeamento_respondents r
+        LEFT JOIN mapeamento_areas a ON r.areaId = a.id
+        LEFT JOIN organizations o ON r.organizationId = o.id
+        LEFT JOIN (
+          SELECT respondentId, MAX(reminderCount) as reminderCount, MAX(sentAt) as sentAt
+          FROM mapeamento_reminder_history
+          GROUP BY respondentId
+        ) h ON r.id = h.respondentId
+        WHERE r.organizationId = ${organizationId}
+        AND r.status = 'pendente'
+        ORDER BY r.createdAt ASC`
+  );
+
+  const rows = (result as any)[0] || [];
+  return rows.map((row: any) => ({
+    respondentId: row.respondentId,
+    respondentName: row.respondent_name,
+    respondentEmail: row.respondent_email,
+    areaName: row.area_name || "Não especificada",
+    organizationId: row.organizationId,
+    organizationName: row.organization_name || "Organização",
+    invitedAt: row.invited_at,
+    remindersSent: row.reminders_sent || 0,
+    lastReminderAt: row.last_reminder_at,
+  }));
+}
+
+export async function sendReminder(
+  respondentId: number,
+  organizationId: number,
+  email: string,
+  name: string,
+  areaName: string
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    const config = await getReminderConfig(organizationId);
+    
+    const historyResult = await db.execute(
+      sql`SELECT MAX(reminderCount) as count FROM mapeamento_reminder_history 
+          WHERE respondentId = ${respondentId}`
+    );
+    const currentCount = ((historyResult as any)[0]?.[0]?.count || 0) + 1;
+
+    if (config && currentCount > config.maxReminders) {
+      return false;
+    }
+
+    await db.execute(
+      sql`INSERT INTO mapeamento_reminder_history 
+          (respondentId, organizationId, reminderCount, emailSentTo, status)
+          VALUES (${respondentId}, ${organizationId}, ${currentCount}, ${email}, 'sent')`
+    );
+
+    logger.info(`[Reminder] Lembrete #${currentCount} enviado para ${email} (${name}) - Área: ${areaName}`);
+
+    return true;
+  } catch (error) {
+    logger.error("[Reminder] Erro ao enviar lembrete:", error);
+    return false;
+  }
+}
+
+export async function getReminderHistory(organizationId: number): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.execute(
+    sql`SELECT 
+          h.*,
+          r.name as respondent_name,
+          r.email as respondent_email,
+          a.name as area_name
+        FROM mapeamento_reminder_history h
+        LEFT JOIN mapeamento_respondents r ON h.respondentId = r.id
+        LEFT JOIN mapeamento_areas a ON r.areaId = a.id
+        WHERE h.organizationId = ${organizationId}
+        ORDER BY h.sentAt DESC
+        LIMIT 100`
+  );
+
+  return (result as any)[0] || [];
+}
+
+
+// ==========================
+// GESTÃO DE RESPONDENTES
+// ==========================
+
+/**
+ * Renova o token de um respondente, gerando novo token e estendendo a validade
+ */
+export async function renewRespondentToken(respondentId: number): Promise<{ success: boolean; newToken: string; expiresAt: Date }> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Verificar se o respondente existe
+  const [respondent] = await db
+    .select()
+    .from(mapeamentoRespondents)
+    .where(eq(mapeamentoRespondents.id, respondentId));
+
+  if (!respondent) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Respondente não encontrado' });
+  }
+
+  // Não renovar se já concluiu
+  if (respondent.status === "concluiu") {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Não é possível renovar token de entrevista já concluída' });
+  }
+
+  // Gerar novo token
+  const newToken = crypto.randomBytes(32).toString("hex");
+  
+  // Nova validade: 30 dias a partir de agora
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30);
+
+  await db
+    .update(mapeamentoRespondents)
+    .set({
+      inviteToken: newToken,
+      inviteExpiresAt: expiresAt,
+    } as any)
+    .where(eq(mapeamentoRespondents.id, respondentId));
+
+  return { success: true, newToken, expiresAt };
+}
+
+/**
+ * Reenvia o convite por email para um respondente
+ */
+export async function resendInvite(respondentId: number): Promise<{ success: boolean; message: string }> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Verificar se o respondente existe
+  const [respondent] = await db
+    .select()
+    .from(mapeamentoRespondents)
+    .where(eq(mapeamentoRespondents.id, respondentId));
+
+  if (!respondent) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Respondente não encontrado' });
+  }
+
+  // Não reenviar se já concluiu
+  if (respondent.status === "concluiu") {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Não é possível reenviar convite para entrevista já concluída' });
+  }
+
+  // Se o token estiver expirado, renovar primeiro
+  if (respondent.inviteExpiresAt && new Date(respondent.inviteExpiresAt) < new Date()) {
+    await renewRespondentToken(respondentId);
+  }
+
+  // Determinar a URL base
+  const baseUrl = process.env.VITE_APP_URL || `https://${ENV.appId}.manus.space`;
+
+  // Enviar o convite
+  const result = await sendInterviewInvitation(respondentId, baseUrl);
+
+  return result;
+}
+
+/**
+ * Exclui um respondente (apenas se não tiver respostas)
+ */
+export async function deleteRespondent(respondentId: number): Promise<{ success: boolean; message: string }> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+  // Verificar se o respondente existe
+  const [respondent] = await db
+    .select()
+    .from(mapeamentoRespondents)
+    .where(eq(mapeamentoRespondents.id, respondentId));
+
+  if (!respondent) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Respondente não encontrado' });
+  }
+
+  // Verificar se tem respostas
+  const responses = await db
+    .select({ id: mapeamentoResponses.id })
+    .from(mapeamentoResponses)
+    .where(eq(mapeamentoResponses.respondentId, respondentId))
+    .limit(1);
+
+  if (responses.length > 0) {
+    throw new TRPCError({ 
+      code: 'BAD_REQUEST', 
+      message: 'Não é possível excluir respondente que já possui respostas. Considere arquivar em vez de excluir.' 
+    });
+  }
+
+  // Excluir o respondente
+  await db
+    .delete(mapeamentoRespondents)
+    .where(eq(mapeamentoRespondents.id, respondentId));
+
+  return { success: true, message: 'Respondente excluído com sucesso' };
+}

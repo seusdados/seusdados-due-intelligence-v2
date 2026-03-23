@@ -1,0 +1,1 @@
+ALTER TABLE `user_invites` MODIFY COLUMN `role` enum('admin_global','pmo','consultor','consultor_par','sponsor','dpo_interno','comite','lider_processo','gestor_area','usuario','terceiro') NOT NULL DEFAULT 'usuario';

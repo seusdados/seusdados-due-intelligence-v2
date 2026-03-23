@@ -1,0 +1,272 @@
+/* =============================================
+   SEUSDADOS DESIGN SYSTEM v6.1
+   CSS TOKENS / DESIGN VARIABLES
+   ============================================= */
+
+:root {
+  /* === BACKGROUNDS === */
+  --bg-canvas: #f0f2f5;
+  --bg-white: #ffffff;
+  --bg-subtle: #f8f9fa;
+  --bg-dark: #1a1d21;
+  --bg-darker: #0f1114;
+  
+  /* === BORDERS === */
+  --border-default: #e2e5e9;
+  --border-hover: #c8ccd2;
+  --border-focus: #16a34a;
+  
+  /* === TEXT === */
+  --text-primary: #1a1d21;
+  --text-secondary: #5c6370;
+  --text-muted: #9ca3af;
+  --text-inverse: #ffffff;
+  
+  /* === BRAND (Accent Green) === */
+  --brand-accent: #16a34a;
+  --brand-accent-light: #dcfce7;
+  --brand-accent-dark: #15803d;
+  --brand-accent-darker: #166534;
+  
+  /* === SEMANTIC COLORS === */
+  --semantic-success: #16a34a;
+  --semantic-success-light: #dcfce7;
+  --semantic-success-dark: #166534;
+  
+  --semantic-warning: #f59e0b;
+  --semantic-warning-light: #fef3c7;
+  --semantic-warning-dark: #d97706;
+  
+  --semantic-danger: #dc2626;
+  --semantic-danger-light: #fee2e2;
+  --semantic-danger-dark: #b91c1c;
+  
+  --semantic-info: #3b82f6;
+  --semantic-info-light: #dbeafe;
+  --semantic-info-dark: #2563eb;
+  
+  /* === PROFILE COLORS (9 perfis) === */
+  --profile-admin: #7c3aed;
+  --profile-admin-light: #ede9fe;
+  
+  --profile-pmo: #8b5cf6;
+  --profile-pmo-light: #f3e8ff;
+  
+  --profile-consultor: #3b82f6;
+  --profile-consultor-light: #dbeafe;
+  
+  --profile-consultor-par: #06b6d4;
+  --profile-consultor-par-light: #cffafe;
+  
+  --profile-sponsor: #ec4899;
+  --profile-sponsor-light: #fce7f3;
+  
+  --profile-dpo-interno: #f59e0b;
+  --profile-dpo-interno-light: #fef3c7;
+  
+  --profile-comite: #f97316;
+  --profile-comite-light: #ffedd5;
+  
+  --profile-usuario: #10b981;
+  --profile-usuario-light: #d1fae5;
+  
+  --profile-terceiro: #6366f1;
+  --profile-terceiro-light: #e0e7ff;
+  
+  /* === MODULE COLORS (6 módulos) === */
+  --module-conformidade: #7c3aed;
+  --module-duediligence: #14b8a6;
+  --module-contratos: #6366f1;
+  --module-governanca: #f59e0b;
+  --module-meudpo: #ec4899;
+  --module-ged: #64748b;
+  
+  /* === TYPOGRAPHY === */
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Typography Scale (+20% from standard) */
+  --text-xs: 0.8125rem;    /* 13px */
+  --text-sm: 0.9375rem;    /* 15px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.375rem;     /* 22px */
+  --text-2xl: 1.75rem;     /* 28px */
+  --text-3xl: 2.25rem;     /* 36px */
+  --text-4xl: 3rem;        /* 48px */
+  
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  
+  /* === SPACING === */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  
+  /* === BORDER RADIUS === */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+  
+  /* === SHADOWS === */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04);
+  --shadow-glow-accent: 0 0 20px rgba(22, 163, 74, 0.3);
+  --shadow-glow-info: 0 0 20px rgba(59, 130, 246, 0.3);
+  --shadow-glow-danger: 0 0 20px rgba(220, 38, 38, 0.3);
+  
+  /* === TRANSITIONS === */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+  
+  /* === Z-INDEX === */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+}
+
+/* Dark mode overrides */
+.dark {
+  --bg-canvas: #0f1114;
+  --bg-white: #1a1d21;
+  --bg-subtle: #22262b;
+  --bg-dark: #0a0c0f;
+  
+  --border-default: #2d3139;
+  --border-hover: #3d424a;
+  
+  --text-primary: #f5f5f5;
+  --text-secondary: #a1a7b3;
+  --text-muted: #6b7280;
+}
+
+
+/* =============================================
+   ANIMAÇÕES CUSTOMIZADAS - TIMELINE PREMIUM
+   ============================================= */
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+  70% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+@keyframes aurora {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes neon-pulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(236, 72, 153, 0.5); }
+  50% { box-shadow: 0 0 25px rgba(236, 72, 153, 0.7); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Animation utility classes */
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.animate-aurora {
+  animation: aurora 4s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-neon-pulse {
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+}
+
+/* =============================================
+   UTILITY CLASSES - DESIGN SYSTEM v6.1
+   ============================================= */
+
+/* Background utilities */
+.bg-canvas { background-color: var(--bg-canvas); }
+.bg-subtle { background-color: var(--bg-subtle); }
+
+/* Text utilities */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+/* Brand accent utilities */
+.text-accent { color: var(--brand-accent); }
+.bg-accent { background-color: var(--brand-accent); }
+.bg-accent-light { background-color: var(--brand-accent-light); }
+.border-accent { border-color: var(--brand-accent); }
+
+/* Profile color utilities */
+.bg-profile-admin { background-color: var(--profile-admin); }
+.bg-profile-pmo { background-color: var(--profile-pmo); }
+.bg-profile-consultor { background-color: var(--profile-consultor); }
+.bg-profile-consultor-par { background-color: var(--profile-consultor-par); }
+.bg-profile-sponsor { background-color: var(--profile-sponsor); }
+.bg-profile-dpo-interno { background-color: var(--profile-dpo-interno); }
+.bg-profile-comite { background-color: var(--profile-comite); }
+.bg-profile-usuario { background-color: var(--profile-usuario); }
+.bg-profile-terceiro { background-color: var(--profile-terceiro); }
+
+/* Module color utilities */
+.bg-module-conformidade { background-color: var(--module-conformidade); }
+.bg-module-duediligence { background-color: var(--module-duediligence); }
+.bg-module-contratos { background-color: var(--module-contratos); }
+.bg-module-governanca { background-color: var(--module-governanca); }
+.bg-module-meudpo { background-color: var(--module-meudpo); }
+.bg-module-ged { background-color: var(--module-ged); }
+
+/* Semantic color utilities */
+.text-success { color: var(--semantic-success); }
+.text-warning { color: var(--semantic-warning); }
+.text-danger { color: var(--semantic-danger); }
+.text-info { color: var(--semantic-info); }
+
+.bg-success-light { background-color: var(--semantic-success-light); }
+.bg-warning-light { background-color: var(--semantic-warning-light); }
+.bg-danger-light { background-color: var(--semantic-danger-light); }
+.bg-info-light { background-color: var(--semantic-info-light); }
+
+/* Shadow utilities */
+.shadow-glow-accent { box-shadow: var(--shadow-glow-accent); }
+.shadow-glow-info { box-shadow: var(--shadow-glow-info); }
+.shadow-glow-danger { box-shadow: var(--shadow-glow-danger); }
+
+/* Typography with DM Sans */
+.font-dm-sans { font-family: var(--font-sans); }
+.font-mono { font-family: var(--font-mono); }

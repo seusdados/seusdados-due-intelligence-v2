@@ -1,0 +1,1 @@
+ALTER TABLE `contract_analyses` ADD `governanceMetadata` json;

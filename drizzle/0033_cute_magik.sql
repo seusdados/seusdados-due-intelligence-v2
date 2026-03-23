@@ -1,0 +1,1 @@
+ALTER TABLE `mapeamento_respondents` ADD `processId` int;

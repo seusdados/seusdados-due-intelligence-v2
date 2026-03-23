@@ -1,0 +1,772 @@
+{
+  "version": "seusdados-maturidade-lgpd-v1",
+  "title": "Questionário de Maturidade - Privacidade, Segurança e IA (5 níveis)",
+  "maturity_model": {
+    "levels": [
+      { "level": 1, "code": "NAO_INICIADO", "label": "Nível 1 - Não Iniciado" },
+      { "level": 2, "code": "INICIADO", "label": "Nível 2 - Iniciado" },
+      { "level": 3, "code": "EMERGENTE", "label": "Nível 3 - Emergente" },
+      { "level": 4, "code": "DESENVOLVIDO", "label": "Nível 4 - Desenvolvido" },
+      { "level": 5, "code": "OTIMIZADO", "label": "Nível 5 - Otimizado" }
+    ],
+    "scoring": {
+      "method": "level_value",
+      "min": 1,
+      "max": 5
+    }
+  },
+  "domains": [
+    {
+      "id": "DOM-CO",
+      "code": "CULTURA_ORGANIZACIONAL",
+      "label": "Cultura Organizacional",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "CO-01",
+          "index": 1,
+          "prompt": "O CPPD (Comitê de Privacidade e Proteção de Dados) é tratado pela alta gestão como órgão estratégico, e as ações de privacidade/proteção de dados são acompanhadas de forma recorrente e continuada?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27701-PIMS", "27001-Governanca"], "topics": ["governanca", "papel_da_alta_gestao", "accountability"] },
+            "nist_privacy": { "functions": ["GV-P"], "categories": ["GV.PO-P", "GV.MT-P", "GV.OV-P"] },
+            "lgpd": { "topics": ["prestacao_de_contas", "governanca", "seguranca"] }
+          },
+          "options": [
+            { "id": "CO-01-L1", "level": 1, "text": "Privacidade e proteção de dados não fazem parte dos objetivos estratégicos." },
+            { "id": "CO-01-L2", "level": 2, "text": "Privacidade e proteção de dados são discutidas pontualmente, sem acompanhamento estruturado pela alta gestão." },
+            { "id": "CO-01-L3", "level": 3, "text": "Privacidade e proteção de dados fazem parte dos objetivos estratégicos, porém as ações não são acompanhadas." },
+            { "id": "CO-01-L4", "level": 4, "text": "Privacidade e segurança fazem parte dos objetivos estratégicos e o órgão decisor acompanha a execução das ações, de forma esporádica." },
+            { "id": "CO-01-L5", "level": 5, "text": "Privacidade e segurança fazem parte dos objetivos estratégicos e o órgão decisor acompanha a execução das ações de forma recorrente e continuada, com métricas e revisão periódica." }
+          ]
+        },
+        {
+          "id": "CO-02",
+          "index": 2,
+          "prompt": "A Política de Proteção de Dados (ou Código de Conduta com capítulo de privacidade) foi divulgada às partes aplicáveis e existe registro de ciência?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27701-PIMS", "27002-Politicas"], "topics": ["politicas", "conscientizacao", "comunicacao"] },
+            "nist_privacy": { "functions": ["GV-P", "CT-P"], "categories": ["GV.PO-P", "CT.PO-P"] },
+            "lgpd": { "topics": ["transparencia", "prestacao_de_contas", "seguranca"] }
+          },
+          "options": [
+            { "id": "CO-02-L1", "level": 1, "text": "A organização não possui política de proteção de dados." },
+            { "id": "CO-02-L2", "level": 2, "text": "A política existe, mas não foi disponibilizada/divulgada às partes aplicáveis." },
+            { "id": "CO-02-L3", "level": 3, "text": "A política foi disponibilizada às partes aplicáveis, porém sem registro de disponibilização/ciência." },
+            { "id": "CO-02-L4", "level": 4, "text": "A política foi disponibilizada às partes aplicáveis e há registro de disponibilização/ciência." },
+            { "id": "CO-02-L5", "level": 5, "text": "A política foi disponibilizada, há registro auditável de ciência, revisões periódicas e mecanismos de verificação de entendimento/aderência." }
+          ]
+        },
+        {
+          "id": "CO-03",
+          "index": 3,
+          "prompt": "A organização possui NDA (Termo de Confidencialidade) vigente para partes internas e externas, com controle de ciência?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-RH", "27701-Relacionamento_com_terceiros"], "topics": ["confidencialidade", "contratos", "terceiros"] },
+            "nist_privacy": { "functions": ["GV-P", "CT-P"], "categories": ["GV.PO-P", "CT.PO-P"] },
+            "lgpd": { "topics": ["seguranca", "confidencialidade", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "CO-03-L1", "level": 1, "text": "Não existe termo de confidencialidade." },
+            { "id": "CO-03-L2", "level": 2, "text": "Existe termo, porém não é aplicado de forma consistente a todas as partes (internas e externas) e não há controle de ciência." },
+            { "id": "CO-03-L3", "level": 3, "text": "Existe termo vigente e está em fase de disponibilização." },
+            { "id": "CO-03-L4", "level": 4, "text": "Existe termo vigente, disponibilizado às partes internas e externas, com registro de ciência." },
+            { "id": "CO-03-L5", "level": 5, "text": "Existe termo vigente com registro auditável, revisão periódica, trilhas por categoria de acesso e gestão de exceções." }
+          ]
+        },
+        {
+          "id": "CO-04",
+          "index": 4,
+          "prompt": "A organização implementou, nos contratos de trabalho e na integração de novos colaboradores, regras e orientações para conformidade com a LGPD?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-RH", "27701-PIMS"], "topics": ["treinamento", "requisitos_contratuais", "onboarding"] },
+            "nist_privacy": { "functions": ["GV-P", "CT-P"], "categories": ["GV.PO-P", "CT.PO-P"] },
+            "lgpd": { "topics": ["prestacao_de_contas", "seguranca", "governanca"] }
+          },
+          "options": [
+            { "id": "CO-04-L1", "level": 1, "text": "Não existe referência à LGPD nos contratos de trabalho e integração." },
+            { "id": "CO-04-L2", "level": 2, "text": "A organização está em processo inicial de adequação dos contratos dos colaboradores." },
+            { "id": "CO-04-L3", "level": 3, "text": "A organização possui contrato adaptado à LGPD, porém não possui ação no processo de integração." },
+            { "id": "CO-04-L4", "level": 4, "text": "A organização tem contrato de trabalho e integração de colaboradores já adaptados à LGPD." },
+            { "id": "CO-04-L5", "level": 5, "text": "Além de contratos e integração adaptados, existe trilha de onboarding recorrente, checagem de entendimento e atualização contínua conforme mudanças internas." }
+          ]
+        },
+        {
+          "id": "CO-05",
+          "index": 5,
+          "prompt": "A capacitação dos colaboradores sobre LGPD, tratamento de dados pessoais e boas práticas de segurança da informação ocorre de forma periódica e recorrente?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Conscientizacao", "27701-PIMS"], "topics": ["treinamento", "conscientizacao"] },
+            "nist_privacy": { "functions": ["GV-P"], "categories": ["GV.AT-P", "GV.MT-P"] },
+            "lgpd": { "topics": ["seguranca", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "CO-05-L1", "level": 1, "text": "Não são realizados treinamentos." },
+            { "id": "CO-05-L2", "level": 2, "text": "Ocorre ocasionalmente, sem periodicidade definida." },
+            { "id": "CO-05-L3", "level": 3, "text": "Ocorre ao menos uma capacitação anual." },
+            { "id": "CO-05-L4", "level": 4, "text": "Ocorre de forma recorrente por meio de plano de conscientização." },
+            { "id": "CO-05-L5", "level": 5, "text": "Plano recorrente com métricas, simulações/avaliações, trilhas por perfil e melhoria contínua baseada em incidentes e auditorias." }
+          ]
+        },
+        {
+          "id": "CO-06",
+          "index": 6,
+          "prompt": "O CPPD atua de forma efetiva no desenvolvimento das ações de conformidade com a LGPD junto às áreas, além das reuniões de governança com a DPO?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27701-PIMS", "27001-Governanca"], "topics": ["governanca", "comite", "accountability"] },
+            "nist_privacy": { "functions": ["GV-P"], "categories": ["GV.OV-P", "GV.MT-P"] },
+            "lgpd": { "topics": ["prestacao_de_contas", "governanca"] }
+          },
+          "options": [
+            { "id": "CO-06-L1", "level": 1, "text": "O CPPD não tem atuado efetivamente." },
+            { "id": "CO-06-L2", "level": 2, "text": "A atuação é limitada a reuniões de governança com a DPO, sem desdobramento nas áreas." },
+            { "id": "CO-06-L3", "level": 3, "text": "O CPPD atua além das reuniões, porém com pouca efetividade nas ações." },
+            { "id": "CO-06-L4", "level": 4, "text": "O CPPD cumpre sua função e seus membros disseminam a cultura de proteção de dados em todas as áreas." },
+            { "id": "CO-06-L5", "level": 5, "text": "Atuação efetiva com metas por área, indicadores, ritos de acompanhamento e integração com gestão de riscos e estratégia organizacional." }
+          ]
+        },
+        {
+          "id": "CO-07",
+          "index": 7,
+          "prompt": "A organização possui procedimento formalizado para elaboração do RIPD e Avaliação do Legítimo Interesse (LIA), e as áreas estão capacitadas para utilizá-lo?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27701-Avaliacao_de_impacto", "27001-Riscos"], "topics": ["ripd", "lia", "avaliacao_de_risco"] },
+            "nist_privacy": { "functions": ["ID-P", "GV-P"], "categories": ["ID.RA-P", "GV.RM-P"] },
+            "lgpd": { "topics": ["ripd", "legitimo_interesse", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "CO-07-L1", "level": 1, "text": "A organização não possui procedimento." },
+            { "id": "CO-07-L2", "level": 2, "text": "Existe intenção ou discussão inicial, sem procedimento formal e sem treinamento." },
+            { "id": "CO-07-L3", "level": 3, "text": "O procedimento existe, mas não houve treinamento e as áreas não estão aptas a preenchê-lo." },
+            { "id": "CO-07-L4", "level": 4, "text": "O procedimento existe, houve treinamento, mas as áreas ainda não se consideram aptas a preenchê-lo com segurança." },
+            { "id": "CO-07-L5", "level": 5, "text": "O procedimento existe, houve treinamento e as áreas estão aptas; há revisão, qualidade, trilha de aprovação e reuso de lições aprendidas." }
+          ]
+        },
+        {
+          "id": "CO-08",
+          "index": 8,
+          "prompt": "O CPPD estimula e cobra as áreas para realização de RIPD/LIA em novos processos ou desenvolvimentos, e as áreas atendem à demanda?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27701-Avaliacao_de_impacto", "27001-Governanca"], "topics": ["governanca", "mudancas", "avaliacao_de_impacto"] },
+            "nist_privacy": { "functions": ["GV-P", "ID-P"], "categories": ["GV.RM-P", "ID.RA-P"] },
+            "lgpd": { "topics": ["ripd", "legitimo_interesse", "privacy_by_design", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "CO-08-L1", "level": 1, "text": "A organização não possui procedimento." },
+            { "id": "CO-08-L2", "level": 2, "text": "O CPPD não atua para orientar a necessidade de realização de RIPD/LIA." },
+            { "id": "CO-08-L3", "level": 3, "text": "O CPPD realiza ações nesse sentido, mas as áreas não atuam para o preenchimento." },
+            { "id": "CO-08-L4", "level": 4, "text": "O CPPD realiza ações nesse sentido e as áreas têm atendido à demanda." },
+            { "id": "CO-08-L5", "level": 5, "text": "A exigência de RIPD/LIA está integrada ao fluxo de mudança/projeto, com governança, evidências, SLAs e auditoria." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "DOM-PN",
+      "code": "PROCESSOS_DE_NEGOCIO",
+      "label": "Processos de Negócio",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "PN-01",
+          "index": 1,
+          "prompt": "A organização possui e divulga política/norma de gerenciamento de documentos físicos cobrindo todas as etapas do ciclo de vida do dado pessoal (coleta, guarda, consulta, empréstimo, compartilhamento, eliminação)?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Gestao_de_ativos_informacao", "27701-Gestao_de_informacao"], "topics": ["gestao_documental", "retencao", "eliminacao"] },
+            "nist_privacy": { "functions": ["ID-P", "CT-P"], "categories": ["ID.IM-P", "CT.PO-P"] },
+            "lgpd": { "topics": ["necessidade", "seguranca", "prestacao_de_contas", "ciclo_de_vida"] }
+          },
+          "options": [
+            { "id": "PN-01-L1", "level": 1, "text": "Não existem diretrizes para a gestão de documentos físicos." },
+            { "id": "PN-01-L2", "level": 2, "text": "Existem diretrizes, porém não são divulgadas e fiscalizadas." },
+            { "id": "PN-01-L3", "level": 3, "text": "Existem diretrizes divulgadas, porém sem fiscalização." },
+            { "id": "PN-01-L4", "level": 4, "text": "Existem diretrizes divulgadas e fiscalizadas para a gestão de documentos físicos." },
+            { "id": "PN-01-L5", "level": 5, "text": "Diretrizes divulgadas, fiscalizadas e integradas a controles de retenção, descarte, auditoria e gestão de risco." }
+          ]
+        },
+        {
+          "id": "PN-02",
+          "index": 2,
+          "prompt": "Os locais de guarda de documentação possuem controle de acesso efetivo com registro individualizado, monitoramento do acervo e proibição/controle de dispositivos que permitam reprodução de documentos físicos?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Seguranca_fisica", "27002-Controle_de_acesso"], "topics": ["seguranca_fisica", "controle_acesso", "monitoramento"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.AC-P", "PR.PO-P"] },
+            "lgpd": { "topics": ["seguranca", "prevencao"] }
+          },
+          "options": [
+            { "id": "PN-02-L1", "level": 1, "text": "Não atende às condições anteriores ou não atende com a aderência esperada." },
+            { "id": "PN-02-L2", "level": 2, "text": "Possui controle de acesso ou monitoramento parcial, de forma incompleta." },
+            { "id": "PN-02-L3", "level": 3, "text": "Possui, no mínimo, controle de acesso e monitoramento do acervo." },
+            { "id": "PN-02-L4", "level": 4, "text": "Possui controle de acesso, monitoramento do acervo e não permite acesso com dispositivos eletrônicos que permitam reprodução." },
+            { "id": "PN-02-L5", "level": 5, "text": "Além do nível 4, há trilhas auditáveis, gestão de exceções, revisões periódicas e testes de efetividade dos controles." }
+          ]
+        },
+        {
+          "id": "PN-03",
+          "index": 3,
+          "prompt": "A eliminação de documentos físicos ocorre conforme Procedimento Institucional Formalizado e Tabela de Temporalidade validada juridicamente?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Retencao", "27701-Eliminacao"], "topics": ["retencao", "descarte_seguro", "conformidade"] },
+            "nist_privacy": { "functions": ["CT-P", "PR-P"], "categories": ["CT.DM-P", "PR.DS-P"] },
+            "lgpd": { "topics": ["necessidade", "adequacao", "eliminacao", "seguranca"] }
+          },
+          "options": [
+            { "id": "PN-03-L1", "level": 1, "text": "A eliminação não ocorre de acordo com procedimento e nem com Tabela de Temporalidade." },
+            { "id": "PN-03-L2", "level": 2, "text": "Existe procedimento ou tabela, mas de forma não integrada e com baixa aderência." },
+            { "id": "PN-03-L3", "level": 3, "text": "Há procedimento, mas não há descarte via Tabela de Temporalidade validada juridicamente." },
+            { "id": "PN-03-L4", "level": 4, "text": "A eliminação ocorre de acordo com procedimento e Tabela de Temporalidade validada juridicamente." },
+            { "id": "PN-03-L5", "level": 5, "text": "Além do nível 4, há evidências, rastreabilidade, auditoria periódica e revisão jurídica recorrente da Tabela de Temporalidade." }
+          ]
+        },
+        {
+          "id": "PN-04",
+          "index": 4,
+          "prompt": "A organização possui Procedimento Institucional Formalizado para determinar o nível de sensibilidade das informações (ex.: pública, uso interno, restrita), e ele está em uso?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Classificacao", "27701-Politicas"], "topics": ["classificacao_informacao", "rotulagem", "governanca"] },
+            "nist_privacy": { "functions": ["ID-P"], "categories": ["ID.IM-P"] },
+            "lgpd": { "topics": ["seguranca", "governanca"] }
+          },
+          "options": [
+            { "id": "PN-04-L1", "level": 1, "text": "A organização não possui procedimento para determinar o nível de sensibilidade das informações." },
+            { "id": "PN-04-L2", "level": 2, "text": "A organização está desenvolvendo procedimento para determinar o nível de sensibilidade." },
+            { "id": "PN-04-L3", "level": 3, "text": "A organização possui procedimento em uso há menos de seis (6) meses." },
+            { "id": "PN-04-L4", "level": 4, "text": "A organização possui procedimento em uso nos últimos seis (6) meses." },
+            { "id": "PN-04-L5", "level": 5, "text": "Além do uso contínuo, há treinamento, auditoria de aplicação, rotulagem consistente e integração com controles de acesso e retenção." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "DOM-GTI",
+      "code": "GOVERNANCA_DE_TI",
+      "label": "Governança de TI",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "GTI-01",
+          "index": 1,
+          "prompt": "Foi estabelecida uma Política de Segurança da Informação (PSI), aprovada pelo órgão decisor da organização?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Politicas", "27002-Politicas"], "topics": ["psi", "governanca"] },
+            "nist_privacy": { "functions": ["GV-P"], "categories": ["GV.PO-P"] },
+            "lgpd": { "topics": ["seguranca", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "GTI-01-L1", "level": 1, "text": "Não há PSI, nem políticas individuais." },
+            { "id": "GTI-01-L2", "level": 2, "text": "Existem políticas individuais, porém não existe uma PSI." },
+            { "id": "GTI-01-L3", "level": 3, "text": "A PSI existe e está em processo de aprovação pelo órgão decisor." },
+            { "id": "GTI-01-L4", "level": 4, "text": "Sim, foi estabelecida e assinada." },
+            { "id": "GTI-01-L5", "level": 5, "text": "PSI aprovada, revisada periodicamente, com ciclo de melhoria contínua e indicadores de aderência." }
+          ]
+        },
+        {
+          "id": "GTI-02",
+          "index": 2,
+          "prompt": "A PSI foi divulgada, os colaboradores foram conscientizados e sua aplicação é fiscalizada/auditada?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Conscientizacao", "27002-Conformidade"], "topics": ["divulgacao", "treinamento", "auditoria"] },
+            "nist_privacy": { "functions": ["GV-P", "PR-P"], "categories": ["GV.MT-P", "PR.PO-P"] },
+            "lgpd": { "topics": ["seguranca", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "GTI-02-L1", "level": 1, "text": "Não foram divulgadas ou não existem." },
+            { "id": "GTI-02-L2", "level": 2, "text": "Foi divulgada, porém os colaboradores não foram treinados." },
+            { "id": "GTI-02-L3", "level": 3, "text": "Foi divulgada e os colaboradores foram treinados, mas não ocorrem fiscalizações/auditorias." },
+            { "id": "GTI-02-L4", "level": 4, "text": "Foi divulgada, os colaboradores treinados e regularmente ocorrem fiscalizações ou auditoria." },
+            { "id": "GTI-02-L5", "level": 5, "text": "Além do nível 4, há auditoria baseada em risco, testes de efetividade e ações corretivas rastreáveis." }
+          ]
+        },
+        {
+          "id": "GTI-03",
+          "index": 3,
+          "prompt": "A organização formalizou requisitos técnicos de segurança e privacidade (privacy by design) para novos projetos/produtos/serviços desde a concepção?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27701-Privacy_by_design", "27001-Mudancas"], "topics": ["privacy_by_design", "requisitos", "avaliacao_de_projetos"] },
+            "nist_privacy": { "functions": ["CT-P", "GV-P"], "categories": ["CT.PO-P", "GV.RM-P"] },
+            "lgpd": { "topics": ["prevencao", "seguranca", "privacy_by_design"] }
+          },
+          "options": [
+            { "id": "GTI-03-L1", "level": 1, "text": "Não há avaliação ou a avaliação não segue requisitos previamente formalizados e estabelecidos." },
+            { "id": "GTI-03-L2", "level": 2, "text": "Há avaliação para novos projetos, mas sem requisitos formais e sem procedimento/fluxo." },
+            { "id": "GTI-03-L3", "level": 3, "text": "Há avaliação, embora os requisitos formais ainda estejam em fase de desenvolvimento." },
+            { "id": "GTI-03-L4", "level": 4, "text": "Os novos projetos são avaliados conforme fluxo/procedimento, utilizando os requisitos estabelecidos." },
+            { "id": "GTI-03-L5", "level": 5, "text": "Além do nível 4, há gates formais, evidências, revisão por risco e melhoria contínua baseada em lições aprendidas." }
+          ]
+        },
+        {
+          "id": "GTI-04",
+          "index": 4,
+          "prompt": "A organização possui NDA (Termo de Confidencialidade) para partes internas e externas, com controle de ciência?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-RH", "27701-Relacionamento_com_terceiros"], "topics": ["confidencialidade", "contratos"] },
+            "nist_privacy": { "functions": ["GV-P", "CT-P"], "categories": ["GV.PO-P", "CT.PO-P"] },
+            "lgpd": { "topics": ["seguranca", "confidencialidade"] }
+          },
+          "options": [
+            { "id": "GTI-04-L1", "level": 1, "text": "Não existe termo de confidencialidade." },
+            { "id": "GTI-04-L2", "level": 2, "text": "Existe termo, porém aplicado parcialmente (apenas internas ou externas) e sem registro de ciência." },
+            { "id": "GTI-04-L3", "level": 3, "text": "Existe termo vigente e está em fase de disponibilização." },
+            { "id": "GTI-04-L4", "level": 4, "text": "Existe termo vigente, disponibilizado às partes internas e externas, com registro de ciência." },
+            { "id": "GTI-04-L5", "level": 5, "text": "Além do nível 4, há auditoria de aderência, revisão periódica e gestão de exceções." }
+          ]
+        },
+        {
+          "id": "GTI-05",
+          "index": 5,
+          "prompt": "A Diretoria Executiva está diretamente envolvida na definição e estabelecimento das estratégias de TI (PDTI/PETI) alinhadas às estratégias organizacionais?",
+          "framework_tags": ["ISO", "NIST"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Governanca", "27001-Planejamento"], "topics": ["alinhamento_estrategico", "planejamento_ti"] },
+            "nist_privacy": { "functions": ["GV-P"], "categories": ["GV.OV-P", "GV.PO-P"] },
+            "lgpd": { "topics": ["governanca"] }
+          },
+          "options": [
+            { "id": "GTI-05-L1", "level": 1, "text": "Não existem estratégias formalmente estabelecidas ou não são alinhadas com as da organização." },
+            { "id": "GTI-05-L2", "level": 2, "text": "Existem estratégias, mas não há interação com a diretoria ou com o planejamento estratégico." },
+            { "id": "GTI-05-L3", "level": 3, "text": "Existem estratégias parcialmente alinhadas com as estratégias da organização." },
+            { "id": "GTI-05-L4", "level": 4, "text": "As estratégias são documentadas e fazem parte do planejamento estratégico da organização." },
+            { "id": "GTI-05-L5", "level": 5, "text": "Além do nível 4, há governança contínua, KPIs, revisão periódica e integração com riscos e prioridades de negócio." }
+          ]
+        },
+        {
+          "id": "GTI-06",
+          "index": 6,
+          "prompt": "A organização possui Plano de Resposta a Incidentes de Segurança (incluindo incidentes de privacidade), formalizado por órgão decisor?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Incidentes", "27002-Resposta_a_incidentes"], "topics": ["incidentes", "resposta", "papel_dos_atores"] },
+            "nist_privacy": { "functions": ["PR-P", "GV-P"], "categories": ["PR.PO-P", "GV.RM-P"] },
+            "lgpd": { "topics": ["seguranca", "incidentes", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "GTI-06-L1", "level": 1, "text": "A organização não possui nenhuma prática nesse sentido." },
+            { "id": "GTI-06-L2", "level": 2, "text": "Há práticas implementadas, mas não existe plano estabelecido." },
+            { "id": "GTI-06-L3", "level": 3, "text": "Existe plano estabelecido, porém não aprovado formalmente pelo órgão decisor." },
+            { "id": "GTI-06-L4", "level": 4, "text": "Existe plano formalizado e estabelecido." },
+            { "id": "GTI-06-L5", "level": 5, "text": "Além do nível 4, há testes/simulações, lições aprendidas, SLAs, playbooks e melhoria contínua." }
+          ]
+        },
+        {
+          "id": "GTI-07",
+          "index": 7,
+          "prompt": "O CPPD está capacitado para atuar em incidentes e colocar em prática o plano de resposta?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Conscientizacao", "27002-Resposta_a_incidentes"], "topics": ["papel_do_cppd", "capacitacao"] },
+            "nist_privacy": { "functions": ["GV-P", "PR-P"], "categories": ["GV.AT-P", "PR.PO-P"] },
+            "lgpd": { "topics": ["incidentes", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "GTI-07-L1", "level": 1, "text": "Nenhuma das anteriores." },
+            { "id": "GTI-07-L2", "level": 2, "text": "Não, houve alteração relevante no CPPD e os membros não estão capacitados para o plano de resposta." },
+            { "id": "GTI-07-L3", "level": 3, "text": "Há práticas implementadas, mas sem plano plenamente estruturado e sem capacitação consistente." },
+            { "id": "GTI-07-L4", "level": 4, "text": "Sim, o CPPD está capacitado e atualizado." },
+            { "id": "GTI-07-L5", "level": 5, "text": "Além do nível 4, há exercícios regulares, avaliação de desempenho, atualização contínua e coordenação com TI/negócio/jurídico." }
+          ]
+        },
+        {
+          "id": "GTI-08",
+          "index": 8,
+          "prompt": "A organização possui inventário centralizado dos ativos de hardware e software, e os controles relativos foram implementados?",
+          "framework_tags": ["ISO", "NIST"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Gestao_de_ativos"], "topics": ["inventario", "ativos", "controle"] },
+            "nist_privacy": { "functions": ["ID-P"], "categories": ["ID.IM-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "GTI-08-L1", "level": 1, "text": "Não há inventário centralizado de ativos." },
+            { "id": "GTI-08-L2", "level": 2, "text": "Há inventário centralizado apenas de parte dos ativos." },
+            { "id": "GTI-08-L3", "level": 3, "text": "Há inventário completo e centralizado, mas nem todos os controles relativos foram implementados." },
+            { "id": "GTI-08-L4", "level": 4, "text": "Há inventário completo e centralizado e os controles relativos foram implementados." },
+            { "id": "GTI-08-L5", "level": 5, "text": "Além do nível 4, há atualização contínua integrada a mudanças, auditoria e correlação com riscos/criticidade." }
+          ]
+        },
+        {
+          "id": "GTI-09",
+          "index": 9,
+          "prompt": "Existe procedimento operacional padrão (ou processo formalizado) para gerenciamento de problemas de infraestrutura de TI visando evitar recorrência?",
+          "framework_tags": ["ISO", "NIST"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Operacao", "27002-Continuidade"], "topics": ["gestao_de_problemas", "melhoria_continua"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.PO-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "GTI-09-L1", "level": 1, "text": "Nenhuma das anteriores." },
+            { "id": "GTI-09-L2", "level": 2, "text": "A organização está estruturando práticas, mas não é processo implementado e não há procedimento formal." },
+            { "id": "GTI-09-L3", "level": 3, "text": "Existe processo de gestão de problemas, porém não está formalizado." },
+            { "id": "GTI-09-L4", "level": 4, "text": "Existe Procedimento Operacional Padrão formalizado e estabelecido." },
+            { "id": "GTI-09-L5", "level": 5, "text": "Além do nível 4, há métricas de recorrência, RCA padronizado, base de conhecimento e melhoria contínua." }
+          ]
+        },
+        {
+          "id": "GTI-10",
+          "index": 10,
+          "prompt": "A organização estabeleceu processo formal de avaliação de riscos de segurança e privacidade em fornecedores, com evidências e atualização periódica?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Relacionamento_com_fornecedores", "27701-Terceiros"], "topics": ["due_diligence", "terceiros", "riscos"] },
+            "nist_privacy": { "functions": ["GV-P", "ID-P"], "categories": ["GV.RM-P", "ID.RA-P"] },
+            "lgpd": { "topics": ["operadores", "compartilhamento", "seguranca", "prestacao_de_contas"] }
+          },
+          "options": [
+            { "id": "GTI-10-L1", "level": 1, "text": "Não há processo formalizado e não há prática de avaliação de riscos em fornecedores." },
+            { "id": "GTI-10-L2", "level": 2, "text": "Há processo com etapas, porém não formalizado." },
+            { "id": "GTI-10-L3", "level": 3, "text": "O processo de avaliação de fornecedores está em desenvolvimento." },
+            { "id": "GTI-10-L4", "level": 4, "text": "Existe processo formalizado com metodologia, periodicidade e método de acompanhamento do nível de risco." },
+            { "id": "GTI-10-L5", "level": 5, "text": "Além do nível 4, há reavaliação contínua, SLAs, auditorias, gestão de incidentes e plano de saída." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "DOM-SI",
+      "code": "SEGURANCA_DA_INFORMACAO",
+      "label": "Segurança da Informação",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "SI-01",
+          "index": 1,
+          "prompt": "Existe processo formalizado para criação, alteração, revogação e revisão (no mínimo anual) de acessos?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Controle_de_acesso"], "topics": ["iam", "revisao_de_acessos"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.AC-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "SI-01-L1", "level": 1, "text": "Não há procedimentos ou diretrizes definidas." },
+            { "id": "SI-01-L2", "level": 2, "text": "Há procedimentos definidos, porém incompletos (não contemplam todas as etapas de forma consistente)." },
+            { "id": "SI-01-L3", "level": 3, "text": "Há diretrizes e procedimentos formalizados, mas ainda não contemplam todos os sistemas utilizados." },
+            { "id": "SI-01-L4", "level": 4, "text": "Há diretrizes e procedimentos formalizados para todas as etapas, contemplando todos os sistemas utilizados." },
+            { "id": "SI-01-L5", "level": 5, "text": "Além do nível 4, há automação, trilha auditável, revisões por risco e controles de exceção com aprovação." }
+          ]
+        },
+        {
+          "id": "SI-02",
+          "index": 2,
+          "prompt": "A organização possui política documentada e aprovada para backup/restore, incluindo procedimentos detalhados (cronogramas, retenção, RTO/RPO, armazenamento protegido etc.)?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Backup", "27002-Continuidade"], "topics": ["backup", "restore", "continuidade"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.DS-P"] },
+            "lgpd": { "topics": ["seguranca", "prevencao"] }
+          },
+          "options": [
+            { "id": "SI-02-L1", "level": 1, "text": "Nenhuma das alternativas." },
+            { "id": "SI-02-L2", "level": 2, "text": "Existem diretrizes informais para backup/restore, mas não documentadas ou aprovadas." },
+            { "id": "SI-02-L3", "level": 3, "text": "Política documentada e aprovada, mas falta elemento essencial (ex.: cronogramas, retenção, RTO/RPO)." },
+            { "id": "SI-02-L4", "level": 4, "text": "Política documentada e aprovada com diretrizes detalhadas (cronogramas, retenção, armazenamento protegido, RTO/RPO etc.)." },
+            { "id": "SI-02-L5", "level": 5, "text": "Além do nível 4, há testes periódicos de restore, evidências, monitoramento, e melhoria contínua baseada em resultados." }
+          ]
+        },
+        {
+          "id": "SI-03",
+          "index": 3,
+          "prompt": "A organização possui firewall atualizado regularmente para proteção contra acessos externos indevidos, com monitoramento e regras bem definidas?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Seguranca_de_rede"], "topics": ["firewall", "monitoramento", "regras_de_rede"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.AC-P", "PR.DS-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "SI-03-L1", "level": 1, "text": "Não há firewall ou não existe processo de monitoramento e atualização." },
+            { "id": "SI-03-L2", "level": 2, "text": "Há firewall, mas sem atualização regular e com regras básicas, sem processo formal de revisão." },
+            { "id": "SI-03-L3", "level": 3, "text": "Há firewall com regras, mas sem monitoramento constante e com atrasos nas atualizações." },
+            { "id": "SI-03-L4", "level": 4, "text": "Firewall com regras bem definidas, monitoramento constante e atualizações regulares." },
+            { "id": "SI-03-L5", "level": 5, "text": "Além do nível 4, há revisão por risco, testes, alertas, correlação com incidentes e melhoria contínua." }
+          ]
+        },
+        {
+          "id": "SI-04",
+          "index": 4,
+          "prompt": "Existem diretrizes formalizadas e implementadas com critérios de qualidade e segurança para senhas (incluindo complexidade, rotação, bloqueio etc.)?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Controle_de_acesso"], "topics": ["senhas", "autenticacao"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.AC-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "SI-04-L1", "level": 1, "text": "Nenhuma das alternativas." },
+            { "id": "SI-04-L2", "level": 2, "text": "Critérios existem parcialmente e/ou não são aplicados de forma consistente." },
+            { "id": "SI-04-L3", "level": 3, "text": "Diretrizes existem, mas não foram definidas para todos os sistemas ou faltam critérios essenciais (tamanho, complexidade, rotação, bloqueio etc.)." },
+            { "id": "SI-04-L4", "level": 4, "text": "Diretrizes presentes em todos os sistemas, inclusive não administrados pela TI, com critérios definidos (mínimo, complexidade, rotação e bloqueio)." },
+            { "id": "SI-04-L5", "level": 5, "text": "Além do nível 4, há MFA onde aplicável, monitoramento de credenciais expostas e revisão periódica de aderência." }
+          ]
+        },
+        {
+          "id": "SI-05",
+          "index": 5,
+          "prompt": "Existem diretrizes formalizadas para gerenciamento de dispositivos móveis (pessoais e corporativos), incluindo termo de ciência e regras de uso?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Dispositivos_moveis"], "topics": ["mdm", "byod", "termo_de_ciencia"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.AC-P", "PR.DS-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "SI-05-L1", "level": 1, "text": "Não há diretrizes neste sentido." },
+            { "id": "SI-05-L2", "level": 2, "text": "Há diretrizes apenas para dispositivos corporativos, sem orientações para dispositivos pessoais." },
+            { "id": "SI-05-L3", "level": 3, "text": "Há diretrizes para corporativos; pessoais não são aceitos para fins corporativos, mas também não são vedados explicitamente." },
+            { "id": "SI-05-L4", "level": 4, "text": "Há diretrizes para uso de dispositivos pessoais e corporativos, com termo de ciência e, quando aplicável, vedação explícita de uso para fins corporativos." },
+            { "id": "SI-05-L5", "level": 5, "text": "Além do nível 4, há MDM/controles técnicos, inventário, segregação e auditoria de aderência." }
+          ]
+        },
+        {
+          "id": "SI-06",
+          "index": 6,
+          "prompt": "Existem diretrizes formalizadas para gestão de registros de eventos (logs)?",
+          "framework_tags": ["ISO", "NIST"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Logging_monitoramento"], "topics": ["logs", "monitoramento", "auditoria"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.PO-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "SI-06-L1", "level": 1, "text": "Nenhuma das alternativas." },
+            { "id": "SI-06-L2", "level": 2, "text": "Controle de registros é efetuado em parte do ambiente, com ou sem documentação." },
+            { "id": "SI-06-L3", "level": 3, "text": "Gestão de registros executada no ambiente, mas não documentada." },
+            { "id": "SI-06-L4", "level": 4, "text": "Gestão de registros documentada e executada em todos os softwares do ambiente." },
+            { "id": "SI-06-L5", "level": 5, "text": "Além do nível 4, há retenção definida, correlação, alertas, revisão periódica e auditoria de efetividade." }
+          ]
+        },
+        {
+          "id": "SI-07",
+          "index": 7,
+          "prompt": "Existem diretrizes formalizadas para gerenciamento de atualizações de sistemas operacionais e aplicações, com regularidade na execução?",
+          "framework_tags": ["ISO", "NIST"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Gestao_de_vulnerabilidades", "27002-Atualizacoes"], "topics": ["patching", "atualizacoes"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.MA-P"] },
+            "lgpd": { "topics": ["seguranca"] }
+          },
+          "options": [
+            { "id": "SI-07-L1", "level": 1, "text": "Não há diretrizes e nem projeto para desenvolvê-las." },
+            { "id": "SI-07-L2", "level": 2, "text": "Diretrizes estão sendo desenvolvidas." },
+            { "id": "SI-07-L3", "level": 3, "text": "Há diretrizes formalizadas, no entanto, não há regularidade na execução." },
+            { "id": "SI-07-L4", "level": 4, "text": "Há diretrizes formalizadas e há regularidade na execução dos procedimentos." },
+            { "id": "SI-07-L5", "level": 5, "text": "Além do nível 4, há gestão por criticidade/risco, SLAs, evidências e monitoramento de compliance de patch." }
+          ]
+        },
+        {
+          "id": "SI-08",
+          "index": 8,
+          "prompt": "Existem diretrizes formalizadas que garantam o uso exclusivo de soluções corporativas (e-mail, mensagens, videoconferência etc.) para transacionar informações organizacionais, com controles?",
+          "framework_tags": ["ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Uso_aceitavel", "27002-Protecao_de_dados"], "topics": ["ferramentas_corporativas", "controle_de_canais"] },
+            "nist_privacy": { "functions": ["PR-P", "CT-P"], "categories": ["PR.AC-P", "CT.PO-P"] },
+            "lgpd": { "topics": ["seguranca", "prevencao"] }
+          },
+          "options": [
+            { "id": "SI-08-L1", "level": 1, "text": "Nenhuma das alternativas." },
+            { "id": "SI-08-L2", "level": 2, "text": "Ferramentas são padronizadas e disponibilizadas, mas não existem diretrizes nem controles." },
+            { "id": "SI-08-L3", "level": 3, "text": "Existem diretrizes formalizadas, no entanto, não há controles que garantam a aplicação." },
+            { "id": "SI-08-L4", "level": 4, "text": "Existem diretrizes formalizadas e há controles que garantem a aplicação." },
+            { "id": "SI-08-L5", "level": 5, "text": "Além do nível 4, há DLP/controles avançados, auditoria, gestão de exceções e melhorias contínuas." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "DOM-IA",
+      "code": "INTELIGENCIA_ARTIFICIAL",
+      "label": "Inteligência Artificial",
+      "weight": 1.0,
+      "questions": [
+        {
+          "id": "IA-01",
+          "index": 1,
+          "prompt": "A organização utiliza IA (incluindo GenAI, modelos preditivos, decisão automatizada, automações inteligentes) em piloto e/ou produção?",
+          "framework_tags": ["IA", "ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Governanca", "27701-Privacidade"], "topics": ["inventario_ia", "riscos", "controles"] },
+            "nist_privacy": { "functions": ["ID-P", "GV-P"], "categories": ["ID.IM-P", "GV.RM-P"] },
+            "lgpd": { "topics": ["transparencia", "seguranca", "decisao_automatizada"] },
+            "ia": { "topics": ["governanca_ia", "monitoramento"] }
+          },
+          "options": [
+            { "id": "IA-01-L1", "level": 1, "text": "Não utiliza IA." },
+            { "id": "IA-01-L2", "level": 2, "text": "Há intenção/experimentação pontual, sem piloto estruturado." },
+            { "id": "IA-01-L3", "level": 3, "text": "Utiliza IA apenas em piloto/POC (sem produção)." },
+            { "id": "IA-01-L4", "level": 4, "text": "Utiliza IA em produção (com ou sem pilotos)." },
+            { "id": "IA-01-L5", "level": 5, "text": "Utiliza IA em produção com governança formal, gestão de risco, monitoramento e melhoria contínua." }
+          ]
+        },
+        {
+          "id": "IA-02",
+          "index": 2,
+          "prompt": "A IA utilizada é predominantemente de qual tipo?",
+          "framework_tags": ["IA"],
+          "framework_metadata": {
+            "ia": { "topics": ["classificacao_de_sistemas", "tipologia_de_ia"] }
+          },
+          "options": [
+            { "id": "IA-02-L1", "level": 1, "text": "Não se aplica (não utiliza IA)." },
+            { "id": "IA-02-L2", "level": 2, "text": "Regras + ML (híbrida) / automação inteligente." },
+            { "id": "IA-02-L3", "level": 3, "text": "Preditiva / classificatória." },
+            { "id": "IA-02-L4", "level": 4, "text": "GenAI (chat, geração de texto, resumo, assistentes)." },
+            { "id": "IA-02-L5", "level": 5, "text": "Portfólio misto (GenAI + preditiva + automações), com classificação formal por caso de uso." }
+          ]
+        },
+        {
+          "id": "IA-03",
+          "index": 3,
+          "prompt": "Existe contrato/licenciamento vigente com fornecedor de IA (plataforma, API, solução, consultoria que fornece modelo/serviço)?",
+          "framework_tags": ["IA", "ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Fornecedores", "27701-Terceiros"], "topics": ["contratos", "terceiros", "subcontratacao"] },
+            "nist_privacy": { "functions": ["GV-P"], "categories": ["GV.PO-P"] },
+            "lgpd": { "topics": ["operadores", "compartilhamento", "responsabilizacao"] },
+            "ia": { "topics": ["gestao_de_fornecedores_ia"] }
+          },
+          "options": [
+            { "id": "IA-03-L1", "level": 1, "text": "Não (não utiliza IA e/ou não há contrato/licenciamento)." },
+            { "id": "IA-03-L2", "level": 2, "text": "Sim, mas de forma informal/sem controle de versões e responsabilidades." },
+            { "id": "IA-03-L3", "level": 3, "text": "Sim, existe contrato/licenciamento vigente." },
+            { "id": "IA-03-L4", "level": 4, "text": "Sim, existe contrato/licenciamento com cláusulas mínimas de segurança e privacidade." },
+            { "id": "IA-03-L5", "level": 5, "text": "Sim, existe contrato com SLAs, auditoria, regras de subcontratação, local de processamento e plano de saída." }
+          ]
+        },
+        {
+          "id": "IA-04",
+          "index": 4,
+          "prompt": "A organização mantém inventário completo e atualizado de todos os usos de IA (incluindo automações inteligentes, modelos preditivos e GenAI)?",
+          "framework_tags": ["IA", "ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Ativos", "27701-Registro_de_atividades"], "topics": ["inventario", "rastreabilidade"] },
+            "nist_privacy": { "functions": ["ID-P"], "categories": ["ID.IM-P"] },
+            "lgpd": { "topics": ["prestacao_de_contas", "governanca"] },
+            "ia": { "topics": ["inventario_de_ia"] }
+          },
+          "options": [
+            { "id": "IA-04-L1", "level": 1, "text": "Não existe inventário." },
+            { "id": "IA-04-L2", "level": 2, "text": "Existe lista parcial e manual, sem padrão e sem atualização definida." },
+            { "id": "IA-04-L3", "level": 3, "text": "Inventário padronizado com campos mínimos e atualização definida (ex.: trimestral)." },
+            { "id": "IA-04-L4", "level": 4, "text": "Inventário integrado ao fluxo de mudança/projetos (ninguém coloca IA em produção sem cadastrar)." },
+            { "id": "IA-04-L5", "level": 5, "text": "Inventário integrado, com auditoria, dono por sistema, criticidade, evidências e dashboards de risco/uso." }
+          ]
+        },
+        {
+          "id": "IA-05",
+          "index": 5,
+          "prompt": "Cada sistema de IA é classificado por risco/impacto (baixo/médio/alto) com critérios objetivos?",
+          "framework_tags": ["IA", "ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Riscos"], "topics": ["classificacao_de_risco", "controles_por_risco"] },
+            "nist_privacy": { "functions": ["GV-P", "ID-P"], "categories": ["GV.RM-P", "ID.RA-P"] },
+            "lgpd": { "topics": ["seguranca", "prestacao_de_contas"] },
+            "ia": { "topics": ["classificacao_de_risco_de_ia"] }
+          },
+          "options": [
+            { "id": "IA-05-L1", "level": 1, "text": "Não há classificação." },
+            { "id": "IA-05-L2", "level": 2, "text": "Classificação informal por percepção (sem critérios)." },
+            { "id": "IA-05-L3", "level": 3, "text": "Critérios documentados e aplicados ao inventário." },
+            { "id": "IA-05-L4", "level": 4, "text": "Classificação vinculada a exigências (testes, aprovações, monitoramento) e revisada periodicamente." },
+            { "id": "IA-05-L5", "level": 5, "text": "Além do nível 4, há métricas, revisão por incidente, auditorias e recalibração contínua dos critérios." }
+          ]
+        },
+        {
+          "id": "IA-06",
+          "index": 6,
+          "prompt": "A organização controla proveniência, qualidade e adequação dos dados usados para treinar/ajustar/operar IA?",
+          "framework_tags": ["IA", "ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Gestao_de_dados", "27701-Privacidade"], "topics": ["lineage", "qualidade", "retencao_eliminacao"] },
+            "nist_privacy": { "functions": ["ID-P", "CT-P"], "categories": ["ID.IM-P", "CT.DM-P"] },
+            "lgpd": { "topics": ["adequacao", "necessidade", "qualidade_dos_dados", "seguranca"] },
+            "ia": { "topics": ["datasheets", "data_governance"] }
+          },
+          "options": [
+            { "id": "IA-06-L1", "level": 1, "text": "Sem controle." },
+            { "id": "IA-06-L2", "level": 2, "text": "Controle pontual por equipe (sem governança)." },
+            { "id": "IA-06-L3", "level": 3, "text": "Processo definido (dataset datasheet, critérios de qualidade, rotinas de validação)." },
+            { "id": "IA-06-L4", "level": 4, "text": "Lineage end-to-end (origem → transformação → treino → produção), com auditoria e retenção/eliminação definidas." },
+            { "id": "IA-06-L5", "level": 5, "text": "Além do nível 4, há monitoramento contínuo de drift, governança de versionamento e controles por criticidade." }
+          ]
+        },
+        {
+          "id": "IA-07",
+          "index": 7,
+          "prompt": "Para decisões de alto impacto, existe supervisão humana com critérios claros e trilha?",
+          "framework_tags": ["IA", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Governanca"], "topics": ["supervisao", "auditabilidade"] },
+            "nist_privacy": { "functions": ["CT-P", "CM-P"], "categories": ["CT.PO-P", "CM.AW-P"] },
+            "lgpd": { "topics": ["decisao_automatizada", "transparencia", "prestacao_de_contas"] },
+            "ia": { "topics": ["human_in_the_loop", "alto_impacto"] }
+          },
+          "options": [
+            { "id": "IA-07-L1", "level": 1, "text": "Não existe." },
+            { "id": "IA-07-L2", "level": 2, "text": "Revisão humana ocorre, mas sem critérios e sem trilha." },
+            { "id": "IA-07-L3", "level": 3, "text": "Critérios definidos (quando revisar, amostragem, exceções) e logging básico." },
+            { "id": "IA-07-L4", "level": 4, "text": "Supervisão humana integrada ao sistema (fila, SLA, auditoria, re-treinamento baseado em feedback)." },
+            { "id": "IA-07-L5", "level": 5, "text": "Além do nível 4, há métricas de revisão, avaliação de vieses/erros e melhoria contínua baseada em outcomes." }
+          ]
+        },
+        {
+          "id": "IA-08",
+          "index": 8,
+          "prompt": "A organização avalia e controla fornecedores de IA (modelos, APIs, plataformas) com due diligence e requisitos técnicos?",
+          "framework_tags": ["IA", "ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27001-Fornecedores", "27701-Terceiros"], "topics": ["due_diligence", "auditoria", "plano_de_saida"] },
+            "nist_privacy": { "functions": ["GV-P"], "categories": ["GV.RM-P", "GV.PO-P"] },
+            "lgpd": { "topics": ["operadores", "compartilhamento", "seguranca", "responsabilizacao"] },
+            "ia": { "topics": ["vendor_management"] }
+          },
+          "options": [
+            { "id": "IA-08-L1", "level": 1, "text": "Não avalia." },
+            { "id": "IA-08-L2", "level": 2, "text": "Avalia apenas preço/funcionalidade." },
+            { "id": "IA-08-L3", "level": 3, "text": "Due diligence (segurança, privacidade, subcontratação, local de processamento, auditoria)." },
+            { "id": "IA-08-L4", "level": 4, "text": "Gestão contínua (reavaliação periódica, SLAs, auditorias, incidentes e plano de saída)." },
+            { "id": "IA-08-L5", "level": 5, "text": "Além do nível 4, há avaliação por risco, testes técnicos, monitoramento contínuo e governança contratual avançada." }
+          ]
+        },
+        {
+          "id": "IA-09",
+          "index": 9,
+          "prompt": "Existem controles de segurança específicos para IA (ex.: prompt injection, data leakage, abuso de API/modelo), quando aplicável?",
+          "framework_tags": ["IA", "ISO", "NIST", "LGPD"],
+          "framework_metadata": {
+            "iso": { "family": ["27002-Seguranca_de_aplicacoes", "27002-Gestao_de_vulnerabilidades"], "topics": ["ameaças_ia", "seguranca_de_modelos", "controles_de_abuso"] },
+            "nist_privacy": { "functions": ["PR-P"], "categories": ["PR.AC-P", "PR.DS-P"] },
+            "lgpd": { "topics": ["seguranca", "prevencao"] },
+            "ia": { "topics": ["prompt_injection", "data_leakage", "abuse_cases"] }
+          },
+          "options": [
+            { "id": "IA-09-L1", "level": 1, "text": "Não considera ameaças específicas." },
+            { "id": "IA-09-L2", "level": 2, "text": "Controles básicos genéricos (sem foco em IA)." },
+            { "id": "IA-09-L3", "level": 3, "text": "Controles e testes direcionados (red teaming/abuse cases, validação de entradas, rate limit)." },
+            { "id": "IA-09-L4", "level": 4, "text": "Programa contínuo (ameaças mapeadas, testes recorrentes, correções rastreadas)." },
+            { "id": "IA-09-L5", "level": 5, "text": "Além do nível 4, há governança de prompts, avaliação contínua, monitoramento de exfiltração e hardening específico por caso de uso." }
+          ]
+        }
+      ]
+    }
+  ]
+}
