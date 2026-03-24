@@ -370,25 +370,11 @@ export async function checkDeadlineSeverityChanges(): Promise<{
 
 // ===== Inicialização e controle do serviço =====
 export function startDeadlineNotificationService(): void {
-  if (checkInterval) {
-    clearInterval(checkInterval);
-  }
-
-  logger.info('[DeadlineNotify] Iniciando serviço de notificações de prazos (intervalo: 6h)');
-
-  // Executar primeira verificação após 2 minutos (dar tempo do servidor estabilizar)
-  setTimeout(() => {
-    checkDeadlineSeverityChanges().catch(e => {
-      logger.error('[DeadlineNotify] Erro na verificação inicial', { error: e.message });
-    });
-  }, 2 * 60 * 1000);
-
-  // Configurar intervalo regular
-  checkInterval = setInterval(() => {
-    checkDeadlineSeverityChanges().catch(e => {
-      logger.error('[DeadlineNotify] Erro na verificação periódica', { error: e.message });
-    });
-  }, CHECK_INTERVAL_MS);
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // E-mails de alerta de prazo/vencimento desativados por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  logger.info('[DeadlineNotify] Serviço de notificações de prazos DESATIVADO permanentemente.');
+  return;
 }
 
 export function stopDeadlineNotificationService(): void {

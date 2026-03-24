@@ -247,6 +247,14 @@ export async function getSLAMetrics(organizationId?: number, periodDays: number 
  * Envia alertas para tickets críticos
  */
 export async function sendSLAAlerts(): Promise<{ sent: number; errors: number }> {
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // Alertas de SLA/prazo/vencimento desativados por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  logger.info('Alertas de SLA DESATIVADOS permanentemente.');
+  return { sent: 0, errors: 0 };
+}
+
+async function _DISABLED_sendSLAAlerts(): Promise<{ sent: number; errors: number }> {
   logger.info('Iniciando envio de alertas de SLA');
   
   try {

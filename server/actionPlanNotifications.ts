@@ -38,6 +38,18 @@ export async function checkAndNotifyUpcomingDeadlines(daysThreshold: number = 7)
   notified: number;
   results: NotificationResult[];
 }> {
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // Notificações de prazo/vencimento do plano de ação desativadas por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  console.log('[ActionPlanNotifications] Notificações de prazo DESATIVADAS permanentemente.');
+  return { checked: 0, notified: 0, results: [] };
+}
+
+export async function _DISABLED_checkAndNotifyUpcomingDeadlines(daysThreshold: number = 7): Promise<{
+  checked: number;
+  notified: number;
+  results: NotificationResult[];
+}> {
   const results: NotificationResult[] = [];
   let notifiedCount = 0;
 

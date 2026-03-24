@@ -215,14 +215,9 @@ export async function triggerManualCheck(): Promise<{
 
 // Exportar função para inicialização no servidor
 export function initializeActionPlanCronJob(): void {
-  // Verificar se deve iniciar automaticamente
-  // Por padrão, inicia com intervalo de 24 horas
-  console.log('[ActionPlanCron] Inicializando serviço de verificação de prazos...');
-  
-  // Iniciar com configuração padrão
-  startActionPlanCronJob({
-    intervalMs: DEFAULT_INTERVAL_MS,
-    daysThreshold: 7,
-    enabled: true,
-  });
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // E-mails de alerta de prazo/vencimento do plano de ação desativados por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  console.log('[ActionPlanCron] Serviço de verificação de prazos DESATIVADO permanentemente.');
+  return;
 }

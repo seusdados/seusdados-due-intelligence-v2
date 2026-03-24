@@ -325,28 +325,11 @@ export async function runCppdOverdueCheck(): Promise<{
  * Inicia a rotina diária de verificação de ações vencidas.
  */
 export function initializeCppdOverdueJob(intervalMs?: number): void {
-  if (overdueInterval) {
-    clearInterval(overdueInterval);
-    overdueInterval = null;
-  }
-
-  const interval = intervalMs || DEFAULT_INTERVAL_MS;
-
-  logger.info(`[CPPD Overdue] Iniciando rotina com intervalo de ${interval / 1000 / 60 / 60}h`);
-
-  // Executar a primeira verificação após 5 minutos (para não sobrecarregar o startup)
-  setTimeout(() => {
-    runCppdOverdueCheck().catch(err => {
-      logger.error('[CPPD Overdue] Falha na primeira execução', { error: String(err) });
-    });
-  }, 5 * 60 * 1000);
-
-  // Agendar execuções subsequentes
-  overdueInterval = setInterval(() => {
-    runCppdOverdueCheck().catch(err => {
-      logger.error('[CPPD Overdue] Falha na execução agendada', { error: String(err) });
-    });
-  }, interval);
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // E-mails de alerta de ações vencidas do CPPD desativados por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  logger.info('[CPPD Overdue] Rotina de verificação de ações vencidas DESATIVADA permanentemente.');
+  return;
 }
 
 /**

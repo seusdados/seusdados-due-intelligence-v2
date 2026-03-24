@@ -564,7 +564,9 @@ export async function sendWelcomeUserEmail(data: {
 }
 
 export async function sendActionPlanAlertEmail(data: any): Promise<{ success: boolean; message: string }> {
-  return { success: true, message: 'Alerta de plano de ação enviado' };
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // E-mails de alerta de prazo/vencimento do plano de ação desativados por solicitação.
+  return { success: false, message: 'Alerta de plano de ação DESATIVADO permanentemente.' };
 }
 
 

@@ -338,6 +338,13 @@ Acesse o sistema para ver os resultados.
  * Envia resumo diário de SLA
  */
 export async function sendDailySLASummary(): Promise<void> {
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // Resumo diário de SLA/prazo/vencimento desativado por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  return;
+}
+
+async function _DISABLED_sendDailySLASummary(): Promise<void> {
   try {
     const db = await getDb();
     

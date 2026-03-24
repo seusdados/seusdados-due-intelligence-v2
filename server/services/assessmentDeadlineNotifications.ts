@@ -262,46 +262,11 @@ export async function getUpcomingDeadlines(): Promise<DeadlineAlert[]> {
  * Processa e envia notificações de prazo
  */
 export async function processDeadlineNotifications(): Promise<{ sent: number; errors: number }> {
-  const alerts = await getUpcomingDeadlines();
-  let sent = 0;
-  let errors = 0;
-
-  for (const alert of alerts) {
-    try {
-      const { html, text } = generateDeadlineEmailTemplate(alert);
-
-      // Notificar owner sobre prazos críticos
-      const notificationTitle = `${alert.urgencyEmoji} Prazo ${alert.urgencyLevel.toUpperCase()} - ${alert.assessmentCode}`;
-      const notificationContent = `
-Avaliação ${alert.assessmentCode} vence em ${alert.daysRemaining} dia(s).
-
-Respondentes pendentes: ${alert.assignedUsers.length}
-${alert.assignedUsers.map(u => `• ${u.userName} (${u.domainId})`).join('\n')}
-
-Acesse: https://dll.seusdados.com/avaliacoes
-      `.trim();
-
-      await notifyOwner({
-        title: notificationTitle,
-        content: notificationContent,
-      });
-
-      logger.info('Notificação de prazo enviada', {
-        assessmentCode: alert.assessmentCode,
-        daysRemaining: alert.daysRemaining,
-        urgencyLevel: alert.urgencyLevel,
-      });
-
-      sent++;
-    } catch (error) {
-      logger.error('Erro ao enviar notificação de prazo', error as Error, {
-        assessmentCode: alert.assessmentCode,
-      });
-      errors++;
-    }
-  }
-
-  return { sent, errors };
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // E-mails de alerta de prazo de avaliações desativados por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  logger.info('[AssessmentDeadline] Notificações de prazo de avaliações DESATIVADAS permanentemente.');
+  return { sent: 0, errors: 0 };
 }
 
 /**

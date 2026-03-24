@@ -89,29 +89,11 @@ async function checkAndSendDailySummary(): Promise<void> {
  * Inicia o scheduler de verificação de SLA
  */
 export function startSLAScheduler(): void {
-  if (schedulerInterval) {
-    logger.warn('Scheduler de SLA já está ativo');
-    return;
-  }
-
-  logger.info('Iniciando scheduler de verificação de SLA', {
-    interval: `${SLA_CHECK_INTERVAL_MS / 1000 / 60} minutos`,
-    dailySummaryTime: `${DAILY_SUMMARY_HOUR}:${DAILY_SUMMARY_MINUTE.toString().padStart(2, '0')}`
-  });
-
-  // Executar imediatamente na primeira vez
-  runSLACheck();
-
-  // Agendar execuções periódicas
-  schedulerInterval = setInterval(runSLACheck, SLA_CHECK_INTERVAL_MS);
-  
-  // Agendar verificação do resumo diário a cada minuto
-  dailySummaryInterval = setInterval(checkAndSendDailySummary, 60 * 1000);
-  
-  // Verificar se deve enviar o resumo agora
-  checkAndSendDailySummary();
-  
-  logger.info('Scheduler de SLA iniciado com sucesso');
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // E-mails de alerta de SLA/prazo/vencimento desativados por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  logger.info('Scheduler de SLA DESATIVADO permanentemente (bloqueio de e-mails de prazo/vencimento).');
+  return;
 }
 
 /**

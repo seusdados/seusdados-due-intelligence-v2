@@ -571,18 +571,11 @@ async function createReviewTaskIdempotent(db: any, params: {
  * Deve ser chamado na inicialização do servidor
  */
 export function initializeReviewCron(): void {
-  const enableCron = process.env.ENABLE_REVIEW_CRON === 'true';
-  
-  if (enableCron) {
-    console.log('[ReviewCron] ENABLE_REVIEW_CRON=true detectado, iniciando cron automático...');
-    startReviewCronJob({ enabled: true });
-    
-    // Log do status após inicialização
-    const status = getCronJobStatus();
-    console.log(`[ReviewCron] Status após inicialização: isRunning=${status.isRunning}, enabled=${status.enabled}, nextRun=${status.nextRun}`);
-  } else {
-    console.log('[ReviewCron] ENABLE_REVIEW_CRON não está definido ou é false, cron não iniciado automaticamente');
-  }
+  // === BLOQUEADO DEFINITIVAMENTE ===
+  // E-mails de alerta de revisão periódica/prazo desativados por solicitação.
+  // Nenhum perfil deve receber e-mails de prazo/vencimento.
+  console.log('[ReviewCron] Cron de revisão DESATIVADO permanentemente (bloqueio de e-mails de prazo).');
+  return;
 }
 
 
