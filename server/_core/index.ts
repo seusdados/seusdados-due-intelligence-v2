@@ -78,12 +78,21 @@ const allowedOrigins = [
   "https://seusdados-due-diligence.manus.space",
   "https://dll.seusdados.com",
   "https://due-intelligence-2zorf.ondigitalocean.app",
+  "https://sea-turtle-app-l53fc.ondigitalocean.app",
 ];
 
 // Add dynamic origins from environment
 if (process.env.ALLOWED_ORIGINS) {
   allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(","));
 }
+
+// Add FRONTEND_URL from environment if set
+if (process.env.FRONTEND_URL && !allowedOrigins.includes(process.env.FRONTEND_URL)) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
+// Allow all *.ondigitalocean.app subdomains dynamically
+const isDigitalOceanApp = (origin: string) => origin.endsWith(".ondigitalocean.app");
 
 const corsConfig = cors({
   origin: (origin, callback) => {
@@ -101,7 +110,7 @@ const corsConfig = cors({
     
     // CRITICAL FIX: Never throw error in CORS callback
     // Return false instead to let middleware handle 403
-    if (isAllowed || origin.endsWith(".manus.computer") || origin.endsWith(".manus.space")) {
+    if (isAllowed || origin.endsWith(".manus.computer") || origin.endsWith(".manus.space") || isDigitalOceanApp(origin)) {
       callback(null, true);
     } else {
       callback(null, false);
@@ -199,7 +208,7 @@ async function startServer() {
           return allowed === origin;
         });
         
-        if (!isAllowed && !origin.endsWith(".manus.computer") && !origin.endsWith(".manus.space")) {
+        if (!isAllowed && !origin.endsWith(".manus.computer") && !origin.endsWith(".manus.space") && !isDigitalOceanApp(origin)) {
           return res.status(403).json({
             error: {
               code: 'FORBIDDEN',
