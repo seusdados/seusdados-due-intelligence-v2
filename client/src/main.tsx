@@ -23,7 +23,21 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   // Avoid redirect loop on public pages
   const loginUrl = getLoginUrl();
-  if (window.location.pathname === loginUrl) return;
+  const publicPaths = [
+    loginUrl,
+    '/primeiro-acesso',
+    '/convite',
+    '/avaliacao',
+    '/definir-senha',
+    '/direitos-titular',
+    '/dpa-approval',
+    '/entrevista',
+    '/govbr/callback',
+    '/doc',
+  ];
+  const currentPath = window.location.pathname;
+  const isPublicPage = publicPaths.some(p => currentPath === p || currentPath.startsWith(p + '/'));
+  if (isPublicPage) return;
 
   window.location.href = loginUrl;
 };
