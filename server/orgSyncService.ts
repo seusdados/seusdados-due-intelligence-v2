@@ -183,6 +183,22 @@ export async function createUserQuick(organizationId: number, input: {
   const result = await db.insert(users).values(insertData).returning({ id: users.id });
   const id = Number(result[0].id);
 
+  // Gerar token de primeiro acesso (válido por 30 dias)
+  const setupToken = Array.from({ length: 48 }, () => 
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.charAt(
+      Math.floor(Math.random() * 62)
+    )
+  ).join('');
+  const setupTokenExpiresAt = new Date();
+  setupTokenExpiresAt.setDate(setupTokenExpiresAt.getDate() + 30);
+  
+  await db.execute(sql`
+    UPDATE users 
+    SET setup_token = ${setupToken},
+        setup_token_expires_at = ${setupTokenExpiresAt.toISOString()}
+    WHERE id = ${id}
+  `);
+
   const { eq } = await import('drizzle-orm');
   const [newUser] = await db.select({
     id: users.id,
@@ -191,11 +207,14 @@ export async function createUserQuick(organizationId: number, input: {
     role: users.role,
   }).from(users).where(eq(users.id, id)).limit(1);
 
-  // Enviar e-mail de boas-vindas ao novo usuário
+  // Enviar e-mail de boas-vindas ao novo usuário com link de primeiro acesso
   try {
     // Buscar nome da organização
     const { rows: orgRows } = await db.execute(sql`SELECT name FROM organizations WHERE id=${organizationId} LIMIT 1`);
     const orgName = (orgRows as AnyRow[])[0]?.name || '';
+    
+    const baseUrl = process.env.VITE_OAUTH_PORTAL_URL || 'https://sea-turtle-app-l53fc.ondigitalocean.app';
+    const setupUrl = `${baseUrl}/primeiro-acesso/${setupToken}`;
 
     const { sendWelcomeUserEmail } = await import('./emailService');
     await sendWelcomeUserEmail({
@@ -203,7 +222,7 @@ export async function createUserQuick(organizationId: number, input: {
       userEmail: input.email,
       role: input.role || 'sponsor',
       organizationName: orgName,
-      loginUrl: process.env.VITE_OAUTH_PORTAL_URL || 'https://app.seusdados.com',
+      loginUrl: setupUrl,
       createdByName: createdByName || 'Administrador',
     });
   } catch (e) {

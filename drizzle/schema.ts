@@ -1579,7 +1579,9 @@ export const users = pgTable("users", {
 		passwordExpiresAt: timestamp("password_expires_at", { mode: 'string' }),
 		mustChangePassword: boolean("must_change_password").default(false),
 		passwordHash: varchar("password_hash", { length: 255 }),
-		clientRoles: json().$type<('sponsor' | 'comite' | 'lider_processo' | 'gestor_area')[]>().default([]).notNull(), // Múltiplos papéis de cliente
+			clientRoles: json().$type<('sponsor' | 'comite' | 'lider_processo' | 'gestor_area')[]>().default([]).notNull(), // Múltiplos papéis de cliente
+			setupToken: varchar("setup_token", { length: 100 }),
+			setupTokenExpiresAt: timestamp("setup_token_expires_at", { mode: 'string' }),
 },
 (table) => [
 	uniqueIndex("users_openId_unique").on(table.openId),

@@ -527,6 +527,15 @@ const userRouter = router({
         // Gerar um openId único para o usuário (necessário pois é NOT NULL)
         const openId = `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
+        // Gerar token de primeiro acesso (válido por 30 dias)
+        const setupToken = Array.from({ length: 48 }, () => 
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.charAt(
+            Math.floor(Math.random() * 62)
+          )
+        ).join('');
+        const setupTokenExpiresAt = new Date();
+        setupTokenExpiresAt.setDate(setupTokenExpiresAt.getDate() + 30);
+        
         const id = await db.createUser({
           openId,
           name: input.name,
@@ -534,8 +543,17 @@ const userRouter = router({
           phone: input.phone || null,
           role: input.role,
           organizationId: input.organizationId || null,
-          isActive: true, // tinyint espera número, não boolean
+          isActive: true,
         });
+        
+        // Salvar o setupToken no usuário recém-criado
+        const dbInstance = await db.getDb();
+        await dbInstance.execute(sql`
+          UPDATE users 
+          SET setup_token = ${setupToken},
+              setup_token_expires_at = ${setupTokenExpiresAt.toISOString()}
+          WHERE id = ${id}
+        `);
         
         // Buscar nome da organização se houver
         let organizationName: string | undefined;
@@ -544,8 +562,9 @@ const userRouter = router({
           organizationName = org?.name;
         }
         
-        // Enviar e-mail de boas-vindas (não bloqueia a criação em caso de falha)
+        // Enviar e-mail de boas-vindas com link de primeiro acesso
         const baseUrl = getAppBaseUrl();
+        const setupUrl = `${baseUrl}/primeiro-acesso/${setupToken}`;
         
         try {
           await sendWelcomeUserEmail({
@@ -553,7 +572,7 @@ const userRouter = router({
             userEmail: input.email,
             role: input.role,
             organizationName,
-            loginUrl: baseUrl,
+            loginUrl: setupUrl,
             createdByName: ctx.user.name || ctx.user.email || 'Administrador',
           });
         } catch (emailErr) {

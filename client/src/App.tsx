@@ -13,6 +13,7 @@ import DireitosTitular from "./pages/DireitosTitular";
 import DpaApprovalPublic from "./pages/DpaApprovalPublic";
 import AceitarConvite from "./pages/AceitarConvite";
 import DefinirSenha from "./pages/DefinirSenha";
+import PrimeiroAcesso from "./pages/PrimeiroAcesso";
 import EntrevistaDigital from "./pages/EntrevistaDigital";
 import EntrevistaPublica from "./pages/EntrevistaPublica";
 import GovbrCallback from "./pages/GovbrCallback";
@@ -141,6 +142,7 @@ function Router() {
       {/* Public - Login Page */}
       <Route path="/login" component={Login} />
       <Route path="/definir-senha" component={DefinirSenha} />
+      <Route path="/primeiro-acesso/:token" component={PrimeiroAcesso} />
 
       {/* Public - Third Party Assessment via Link */}
       <Route path="/avaliacao/:token" component={TerceiroAvaliacao} />

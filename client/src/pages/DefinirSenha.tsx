@@ -26,7 +26,7 @@ export default function DefinirSenha() {
 
     if (!storedEmail || !storedPassword) {
       // Sem dados de primeiro acesso, redirecionar para login
-      window.location.href = "/login-local";
+      window.location.href = "/login";
       return;
     }
 
@@ -57,7 +57,7 @@ export default function DefinirSenha() {
       sessionStorage.removeItem("firstAccess_name");
       // Redirecionar para login após 2 segundos
       setTimeout(() => {
-        window.location.href = "/login-local";
+        window.location.href = "/login";
       }, 2000);
     },
     onError: (err) => {

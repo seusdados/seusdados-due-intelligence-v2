@@ -56,7 +56,7 @@ export async function validateLocalCredentials(
   if (!user.passwordHash) {
     return {
       success: false,
-      error: 'Este usuário não possui login local configurado. Use o login via OAuth.'
+      error: 'Sua conta ainda não possui senha definida. Verifique seu e-mail para o link de primeiro acesso, ou entre em contato com o administrador.'
     };
   }
   
