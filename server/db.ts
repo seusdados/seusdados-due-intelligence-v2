@@ -251,6 +251,10 @@ export async function getAllUsers() {
   return result.map(u => ({
     ...u,
     clientRoles: typeof u.clientRoles === 'string' ? JSON.parse(u.clientRoles) : (u.clientRoles || []),
+    // Não expor o hash real da senha - apenas indicar se existe
+    passwordHash: u.passwordHash ? '__SET__' : null,
+    // Não expor o token de setup
+    setupToken: u.setupToken ? '__SET__' : null,
   }));
 }
 
@@ -261,6 +265,10 @@ export async function getUsersByOrganization(organizationId: number) {
   return result.map(u => ({
     ...u,
     clientRoles: typeof u.clientRoles === 'string' ? JSON.parse(u.clientRoles) : (u.clientRoles || []),
+    // Não expor o hash real da senha - apenas indicar se existe
+    passwordHash: u.passwordHash ? '__SET__' : null,
+    // Não expor o token de setup
+    setupToken: u.setupToken ? '__SET__' : null,
   }));
 }
 

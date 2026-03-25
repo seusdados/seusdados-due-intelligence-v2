@@ -261,8 +261,9 @@ export const localAuthRouter = router({
         });
       }
       
-      // Definir a senha e limpar o token
+      // Definir a senha, limpar o token e atualizar openId para indicar primeiro acesso concluído
       const passwordHash = await hashPassword(input.newPassword);
+      const newOpenId = `local_${user.id}_${Date.now()}`;
       
       await db.execute(sql`
         UPDATE users 
@@ -272,12 +273,14 @@ export const localAuthRouter = router({
             temporary_password = NULL,
             password_expires_at = NULL,
             setup_token = NULL,
-            setup_token_expires_at = NULL
+            setup_token_expires_at = NULL,
+            "openId" = ${newOpenId},
+            "lastSignedIn" = NOW()
         WHERE id = ${user.id}
       `);
       
-      // Criar sessão automaticamente após definir senha
-      const sessionToken = await sdk.createSessionToken(user.openId, {
+      // Criar sessão automaticamente após definir senha (usar o novo openId)
+      const sessionToken = await sdk.createSessionToken(newOpenId, {
         name: user.name || user.email || "Usuário",
       });
       

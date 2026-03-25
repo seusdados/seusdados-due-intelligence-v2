@@ -70,12 +70,27 @@ export async function validateLocalCredentials(
     };
   }
   
-  // Atualizar último login
-  await db.execute(sql`
-    UPDATE users 
-    SET "lastSignedIn" = NOW() 
-    WHERE id = ${user.id}
-  `);
+  // Atualizar último login e limpar indicadores de primeiro acesso
+  const needsOpenIdUpdate = user.openId?.startsWith('manual_');
+  if (needsOpenIdUpdate) {
+    // Gerar novo openId sem prefixo 'manual_' para indicar que o primeiro login foi realizado
+    const newOpenId = `local_${user.id}_${Date.now()}`;
+    await db.execute(sql`
+      UPDATE users 
+      SET "lastSignedIn" = NOW(),
+          "openId" = ${newOpenId},
+          setup_token = NULL,
+          setup_token_expires_at = NULL
+      WHERE id = ${user.id}
+    `);
+    user.openId = newOpenId;
+  } else {
+    await db.execute(sql`
+      UPDATE users 
+      SET "lastSignedIn" = NOW() 
+      WHERE id = ${user.id}
+    `);
+  }
   
   return {
     success: true,
