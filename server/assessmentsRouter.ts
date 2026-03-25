@@ -2450,12 +2450,12 @@ export const assessmentsRouter = router({
       const { rows: evidRows } = await db.execute(sql`
         SELECT 
           e.id, e."actionPlanId", e."documentId", e.description, e."addedById", e."createdAt",
-          COALESCE(gd.name, d.name) as documentName,
-          COALESCE(gd."fileUrl", d."fileUrl") as fileUrl,
-          COALESCE(gd."mimeType", d."mimeType") as mimeType,
-          COALESCE(gd."fileSize", d."fileSize") as fileSize,
-          COALESCE(gd."fileName", gd.name, d.name) as fileName,
-          u2.name as addedByName
+          COALESCE(gd.name, d.name) as "documentName",
+          COALESCE(gd."fileUrl", d."fileUrl") as "fileUrl",
+          COALESCE(gd."mimeType", d."mimeType") as "mimeType",
+          COALESCE(gd."fileSize", d."fileSize") as "fileSize",
+          COALESCE(gd."fileName", gd.name, d.name) as "fileName",
+          u2.name as "addedByName"
         FROM action_plan_evidence e
         LEFT JOIN ged_documents gd ON e."documentId" = gd.id
         LEFT JOIN documents d ON e."documentId" = d.id
@@ -2465,7 +2465,7 @@ export const assessmentsRouter = router({
       `) as any;
       // Buscar histórico
       const { rows: histRows } = await db.execute(sql`
-        SELECT h.*, u.name as changedByName
+         SELECT h.*, u.name as "changedByName"
         FROM action_plan_history h
         LEFT JOIN users u ON h."changedById" = u.id
         WHERE h."actionPlanId" = ${input.actionId}
@@ -2477,7 +2477,6 @@ export const assessmentsRouter = router({
         history: Array.isArray(histRows) ? histRows : [],
       };
     }),
-
   /**
    * Transferir validação para outro consultor
    */
@@ -2761,12 +2760,12 @@ export const assessmentsRouter = router({
       const { rows: evidRows } = await db.execute(sql`
         SELECT 
           e.id, e."actionPlanId", e."documentId", e.description, e."addedById", e."createdAt",
-          COALESCE(gd.name, d.name) as documentName,
-          COALESCE(gd."fileUrl", d."fileUrl") as fileUrl,
-          COALESCE(gd."mimeType", d."mimeType") as mimeType,
-          COALESCE(gd."fileSize", d."fileSize") as fileSize,
-          COALESCE(gd."fileName", gd.name, d.name) as fileName,
-          u2.name as addedByName
+          COALESCE(gd.name, d.name) as "documentName",
+          COALESCE(gd."fileUrl", d."fileUrl") as "fileUrl",
+          COALESCE(gd."mimeType", d."mimeType") as "mimeType",
+          COALESCE(gd."fileSize", d."fileSize") as "fileSize",
+          COALESCE(gd."fileName", gd.name, d.name) as "fileName",
+          u2.name as "addedByName"
         FROM action_plan_evidence e
         LEFT JOIN ged_documents gd ON e."documentId" = gd.id
         LEFT JOIN documents d ON e."documentId" = d.id
@@ -2775,7 +2774,7 @@ export const assessmentsRouter = router({
         ORDER BY e."createdAt" DESC
       `) as any;
       const { rows: histRows } = await db.execute(sql`
-        SELECT h.*, u.name as changedByName
+        SELECT h.*, u.name as "changedByName"
         FROM action_plan_history h
         LEFT JOIN users u ON h."changedById" = u.id
         WHERE h."actionPlanId" = ${input.actionId}

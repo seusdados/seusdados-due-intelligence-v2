@@ -2811,12 +2811,12 @@ export async function getActionPlanEvidences(actionPlanId: number): Promise<any[
   const result = await db.execute(sql`
     SELECT 
       e.id, e."actionPlanId", e."documentId", e.description, e."addedById", e."createdAt",
-      COALESCE(gd.name, d.name) as documentName,
-      COALESCE(gd."fileUrl", d."fileUrl") as fileUrl,
-      COALESCE(gd."mimeType", d."mimeType") as mimeType,
-      COALESCE(gd."fileSize", d."fileSize") as fileSize,
-      COALESCE(gd."fileName", gd.name, d.name) as fileName,
-      u.name as addedByName
+      COALESCE(gd.name, d.name) as "documentName",
+      COALESCE(gd."fileUrl", d."fileUrl") as "fileUrl",
+      COALESCE(gd."mimeType", d."mimeType") as "mimeType",
+      COALESCE(gd."fileSize", d."fileSize") as "fileSize",
+      COALESCE(gd."fileName", gd.name, d.name) as "fileName",
+      u.name as "addedByName"
     FROM action_plan_evidence e
     LEFT JOIN ged_documents gd ON e."documentId" = gd.id
     LEFT JOIN documents d ON e."documentId" = d.id
