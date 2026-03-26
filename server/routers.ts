@@ -2319,9 +2319,7 @@ ID da Avaliação: ${input.assessmentId}`,
       const org = await db.getOrganizationById(action.organizationId);
       try {
         const { sendActionPlanResponsibleEmail } = await import('./emailService');
-        const baseUrl = process.env.NODE_ENV === 'production'
-          ? 'https://dll.seusdados.com'
-          : 'http://localhost:3000';
+        const baseUrl = getAppBaseUrl();
 
         await sendActionPlanResponsibleEmail({
           responsibleName: responsible.name || responsible.email,
@@ -2573,7 +2571,7 @@ ID da Avaliação: ${input.assessmentId}`,
       try {
         const org = await db.getOrganizationById(action.organizationId);
         const { sendActionPlanResponsibleEmail } = await import('./emailService');
-        const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+        const baseUrl = getAppBaseUrl();
         await sendActionPlanResponsibleEmail({
           responsibleName: newResponsible.name || newResponsible.email,
           responsibleEmail: newResponsible.email,

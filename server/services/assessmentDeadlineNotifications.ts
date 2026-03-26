@@ -13,6 +13,7 @@ import { unifiedAssessments, assessmentAssignments, users } from '../../drizzle/
 import { eq, and, lt, gt, sql, inArray } from 'drizzle-orm';
 import { notifyOwner } from '../_core/notification';
 import { logger } from '../_core/logger';
+import { getAppBaseUrl } from '../appUrl';
 
 interface DeadlineAlert {
   assessmentId: number;
@@ -121,7 +122,7 @@ function generateDeadlineEmailTemplate(alert: DeadlineAlert): { html: string; te
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top: 24px;">
                 <tr>
                   <td align="center">
-                    <a href="https://dll.seusdados.com/avaliacoes" 
+                    <a href="${getAppBaseUrl()}/avaliacoes" 
                        style="display: inline-block; background: ${alert.urgencyColor}; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                       Acessar Avaliações
                     </a>
@@ -158,7 +159,7 @@ Dias restantes: ${alert.daysRemaining}
 Respondentes Pendentes:
 ${alert.assignedUsers.map(u => `- ${u.userName} (${u.userEmail}) - ${u.domainId}`).join('\n')}
 
-Acesse: https://dll.seusdados.com/avaliacoes
+Acesse: ${getAppBaseUrl()}/avaliacoes
 
 ---
 Seusdados Due Diligence

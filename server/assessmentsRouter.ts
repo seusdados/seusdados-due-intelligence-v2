@@ -1,3 +1,4 @@
+import { getAppBaseUrl } from "./appUrl";
 import { router, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -286,9 +287,7 @@ export const assessmentsRouter = router({
       const emailResults: { email: string; success: boolean }[] = [];
       try {
         const { sendAssessmentEmail } = await import("./emailService");
-        const baseUrl = process.env.NODE_ENV === "production"
-          ? "https://dll.seusdados.com"
-          : "http://localhost:3000";
+        const baseUrl = getAppBaseUrl();
 
         for (const [email, userData] of Object.entries(userAssignments)) {
           try {
@@ -863,9 +862,7 @@ export const assessmentsRouter = router({
 
       try {
         const { sendAssessmentEmail } = await import("./emailService");
-        const baseUrl = process.env.NODE_ENV === "production"
-          ? "https://dll.seusdados.com"
-          : "http://localhost:3000";
+        const baseUrl = getAppBaseUrl();
 
         await sendAssessmentEmail({
           to: assignment.assignedToEmail,
@@ -1436,9 +1433,7 @@ export const assessmentsRouter = router({
         ) as any;
 
         const { sendAssessmentEmailLegacy } = await import("./emailService");
-        const baseUrl = process.env.NODE_ENV === "production"
-          ? "https://dll.seusdados.com"
-          : "http://localhost:3000";
+        const baseUrl = getAppBaseUrl();
 
         const emailPromises = respondentRows.map((respondent: any) => {
           const assessmentLink = `${baseUrl}/avaliacoes/${input.assessmentId}`;
@@ -1848,9 +1843,7 @@ export const assessmentsRouter = router({
         const { rows: consultorRows } = await db.execute(
           sql`SELECT id, name, email FROM users WHERE role IN ('consultor', 'admin_global') AND email IS NOT NULL`
         ) as any;
-        const baseUrl = process.env.NODE_ENV === 'production'
-          ? 'https://dll.seusdados.com'
-          : 'http://localhost:3000';
+        const baseUrl = getAppBaseUrl();
         const actionUrl = `${baseUrl}/plano-acao/maturidade?assessmentId=${action.assessmentId}&validacao=1`;
         for (const c of (consultorRows || [])) {
           await sendGenericEmail({
@@ -1951,7 +1944,7 @@ export const assessmentsRouter = router({
           ) as any;
           const responsible = responsibleRows?.[0];
           if (responsible?.email) {
-            const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+            const baseUrl = getAppBaseUrl();
             await sendGenericEmail({
               to: responsible.email,
               subject: `Ação aprovada: ${action.title || 'Ação do Plano'}`,
@@ -2014,7 +2007,7 @@ export const assessmentsRouter = router({
           ) as any;
           const responsible = responsibleRows?.[0];
           if (responsible?.email) {
-            const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+            const baseUrl = getAppBaseUrl();
             await sendGenericEmail({
               to: responsible.email,
               subject: `Ajustes solicitados: ${action.title || 'Ação do Plano'}`,
@@ -2265,7 +2258,7 @@ export const assessmentsRouter = router({
         const { rows: consultorRows } = await db.execute(
           sql`SELECT id, name, email FROM users WHERE role IN ('consultor', 'admin_global') AND email IS NOT NULL`
         ) as any;
-        const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+        const baseUrl = getAppBaseUrl();
         for (const c of (consultorRows || [])) {
           await sendGenericEmail({
             to: c.email,
@@ -2356,7 +2349,7 @@ export const assessmentsRouter = router({
       try {
         if (action.responsibleEmail) {
           const { sendGenericEmail } = await import('./emailService');
-          const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+          const baseUrl = getAppBaseUrl();
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ação aprovada: ${action.title}`,
@@ -2411,7 +2404,7 @@ export const assessmentsRouter = router({
       try {
         if (action.responsibleEmail) {
           const { sendGenericEmail } = await import('./emailService');
-          const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+          const baseUrl = getAppBaseUrl();
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ajustes solicitados: ${action.title}`,
@@ -2530,7 +2523,7 @@ export const assessmentsRouter = router({
       try {
         if (newValidator.email) {
           const { sendGenericEmail } = await import('./emailService');
-          const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+          const baseUrl = getAppBaseUrl();
           await sendGenericEmail({
             to: newValidator.email,
             subject: `Validação transferida para você: ${action.title}`,
@@ -2603,7 +2596,7 @@ export const assessmentsRouter = router({
       try {
         const { sendGenericEmail } = await import('./emailService');
         const { rows: consultorRows } = await db.execute(sql`SELECT id, name, email FROM users WHERE role IN ('consultor', 'admin_global') AND email IS NOT NULL`) as any;
-        const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+        const baseUrl = getAppBaseUrl();
         for (const c of (consultorRows || [])) {
           await sendGenericEmail({
             to: c.email,
@@ -2687,7 +2680,7 @@ export const assessmentsRouter = router({
       try {
         if (action.responsibleEmail) {
           const { sendGenericEmail } = await import('./emailService');
-          const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+          const baseUrl = getAppBaseUrl();
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ação aprovada: ${action.title}`,
@@ -2736,7 +2729,7 @@ export const assessmentsRouter = router({
       try {
         if (action.responsibleEmail) {
           const { sendGenericEmail } = await import('./emailService');
-          const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+          const baseUrl = getAppBaseUrl();
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ajustes solicitados: ${action.title}`,
@@ -2830,7 +2823,7 @@ export const assessmentsRouter = router({
       try {
         if (newValidator.email) {
           const { sendGenericEmail } = await import('./emailService');
-          const baseUrl = process.env.NODE_ENV === 'production' ? 'https://dll.seusdados.com' : 'http://localhost:3000';
+          const baseUrl = getAppBaseUrl();
           await sendGenericEmail({
             to: newValidator.email,
             subject: `Validação transferida para você: ${action.title}`,

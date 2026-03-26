@@ -1,3 +1,4 @@
+import { getAppBaseUrl } from "./appUrl";
 import { protectedProcedure } from './_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
@@ -315,7 +316,7 @@ export const complianceEndpointsExtra = {
                   return d?.titulo || `Domínio ${a.domainId}`;
                 });
 
-              const assessmentUrl = `https://dll.seusdados.com/avaliacoes/${input.assessmentId}`;
+              const assessmentUrl = `${getAppBaseUrl()}/avaliacoes/${input.assessmentId}`;
 
               const emailResult = await sendAssessmentEmail({
                 to: userData[0].email,
@@ -396,7 +397,7 @@ export const complianceEndpointsExtra = {
         .where(eq(complianceAssessments.id, data.assessmentId)).limit(1);
       
       const domain = dominiosConformidade.find(d => d.id === data.domainId);
-      const assessmentUrl = `https://dll.seusdados.com/avaliacoes/${data.assessmentId}`;
+      const assessmentUrl = `${getAppBaseUrl()}/avaliacoes/${data.assessmentId}`;
 
       const emailResult = await sendAssessmentEmail({
         to: data.userEmail,
@@ -664,7 +665,7 @@ export const complianceEndpointsExtra = {
           const userData = await db.select().from(users).where(eq(users.id, assignment.userId)).limit(1);
           if (userData.length && userData[0].email) {
             const domain = dominiosConformidade.find(d => d.id === assignment.domainId);
-            const assessmentUrl = `https://dll.seusdados.com/avaliacoes/${input.assessmentId}`;
+            const assessmentUrl = `${getAppBaseUrl()}/avaliacoes/${input.assessmentId}`;
 
             await sendAssessmentEmail({
               to: userData[0].email,
