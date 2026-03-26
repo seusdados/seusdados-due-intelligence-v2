@@ -164,7 +164,7 @@ function ActionRow({ action, onOpen }: { action: any; onOpen: (a: any) => void }
         </div>
       </td>
       <td className="px-4 py-3">
-        <div className="text-xs text-gray-400">{formatDate(action.submittedForValidationAt)}</div>
+        <div className="text-xs text-gray-400">{formatDateTime(action.submittedForValidationAt)}</div>
       </td>
       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
         <Button
@@ -665,13 +665,13 @@ export default function GlobalActionPanel() {
       <div className="px-6 py-6 space-y-6">
         {/* Indicadores de resumo */}
         {loadingStats ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            {Array.from({ length: 7 }).map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-20 rounded-xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             <StatCard
               label="Aguardando Validação"
               value={stats?.aguardando_validacao || 0}
@@ -680,6 +680,15 @@ export default function GlobalActionPanel() {
               bg="bg-amber-50 border-amber-200"
               active={activeTab === "aguardando_validacao"}
               onClick={() => handleTabChange("aguardando_validacao")}
+            />
+            <StatCard
+              label="Nova Validação"
+              value={stats?.aguardando_nova_validacao || 0}
+              icon={RotateCcw}
+              color="text-indigo-600"
+              bg="bg-indigo-50 border-indigo-200"
+              active={activeTab === "aguardando_nova_validacao"}
+              onClick={() => handleTabChange("aguardando_nova_validacao")}
             />
             <StatCard
               label="Em Validação"

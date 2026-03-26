@@ -2136,6 +2136,8 @@ export const assessmentsRouter = router({
           a.title?.toLowerCase().includes(q) ||
           a.assessmentCode?.toLowerCase().includes(q) ||
           a.organizationName?.toLowerCase().includes(q) ||
+          a.responsibleName?.toLowerCase().includes(q) ||
+          a.validatorName?.toLowerCase().includes(q) ||
           String(a.id).includes(q)
         );
       }
