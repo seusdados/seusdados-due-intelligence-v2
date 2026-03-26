@@ -2,7 +2,7 @@
  * Serviço de Geração de PDF para RIPD
  * 
  * Desenvolvido por: Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ: 33.899.116/0001-63 | www.seusdados.com
+ * CNPJ: 33.899.116/0001-63 | seusdados.com
  * Responsabilidade Técnica: Marcelo Fattori
  */
 import puppeteer from 'puppeteer';
@@ -320,8 +320,8 @@ export function generateFullPdfHtml(data: {
   <!-- RODAPÉ -->
   <div class="footer">
     <p>Documento gerado automaticamente pelo sistema Seusdados Due Diligence</p>
-    <p>Seusdados Consultoria em Gestão de Dados Limitada | CNPJ: 33.899.116/0001-63 | www.seusdados.com</p>
-    <p>Responsabilidade Técnica: Marcelo Fattori</p>
+    <p>Seusdados Consultoria em Gestão de Dados Limitada | CNPJ: 33.899.116/0001-63 | seusdados.com</p>
+    <p>Responsável Técnico: Marcelo Fattori</p>
   </div>
 </body>
 </html>`;
@@ -433,7 +433,7 @@ export function generateSimplifiedPdfHtml(data: {
   <div class="footer">
     <p>Documento simplificado gerado pelo sistema Seusdados Due Diligence</p>
     <p>Para informações detalhadas, consulte o relatório completo.</p>
-    <p>Seusdados Consultoria em Gestão de Dados Limitada | CNPJ: 33.899.116/0001-63 | www.seusdados.com</p>
+    <p>Seusdados Consultoria em Gestão de Dados Limitada | CNPJ: 33.899.116/0001-63 | seusdados.com</p>
   </div>
 </body>
 </html>`;

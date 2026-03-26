@@ -327,11 +327,12 @@ export default function DashboardLayout({
         {/* Footer */}
         <div className="absolute bottom-6 left-0 right-0 flex justify-between px-8 text-white/50 text-xs font-light">
           <div>
-            <p>Seusdados Consultoria em Gestão de Dados Ltda.</p>
-            <p>CNPJ 33.898.116/0001-63 | Responsável Técnico: Marcelo Fattori</p>
+            <p>Seusdados Consultoria em Gestão de Dados Limitada</p>
+            <p>CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori</p>
+            <p>Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP</p>
           </div>
           <div className="text-right">
-            <p>www.seusdados.com | dpo@seusdados.com</p>
+            <p>seusdados.com | dpo@seusdados.com</p>
             <p>+55 11 4040 5552</p>
           </div>
         </div>

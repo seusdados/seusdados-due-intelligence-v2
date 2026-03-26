@@ -2,7 +2,7 @@
  * Visualizador de Rastreabilidade de Evidências (Termo 1)
  * ========================================================
  * Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ 33.899.116/0001-63 | www.seusdados.com
+ * CNPJ 33.899.116/0001-63 | seusdados.com
  * Responsabilidade técnica: Marcelo Fattori
  *
  * Exibe de forma visual e interativa:

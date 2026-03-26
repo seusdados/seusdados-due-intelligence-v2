@@ -634,8 +634,8 @@ export function generateTicketReportHTML(data: TicketReportData): string {
     </div>
     
     <div class="footer">
-      <p>Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63</p>
-      <p>www.seusdados.com | dpo@seusdados.com | +55 11 4040 5552</p>
+      <p>Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63</p>
+      <p>seusdados.com | dpo@seusdados.com | +55 11 4040 5552</p>
     </div>
   </div>
 </body>

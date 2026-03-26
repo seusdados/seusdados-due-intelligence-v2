@@ -1849,7 +1849,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: c.email,
             subject: `Nova ação aguardando validação: ${action.title || 'Ação do Plano'}`,
-            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Ação:</strong> ${action.title || 'Sem título'}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${actionUrl}">Acessar painel de validação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Ação:</strong> ${action.title || 'Sem título'}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${actionUrl}">Acessar painel de validação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(err => console.error('Erro ao notificar consultor:', err));
         }
       } catch (err) {
@@ -1948,7 +1948,7 @@ export const assessmentsRouter = router({
             await sendGenericEmail({
               to: responsible.email,
               subject: `Ação aprovada: ${action.title || 'Ação do Plano'}`,
-              html: `<p>Olá, ${responsible.name || 'Responsável'},</p><p>Sua ação foi <strong>aprovada</strong> pelo consultor <strong>${ctx.user.name || ctx.user.email}</strong>.</p>${input.validationNotes ? `<p><strong>Observações:</strong> ${input.validationNotes}</p>` : ''}<p><a href="${baseUrl}/plano-acao/maturidade?assessmentId=${action.assessmentId}">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+              html: `<p>Olá, ${responsible.name || 'Responsável'},</p><p>Sua ação foi <strong>aprovada</strong> pelo consultor <strong>${ctx.user.name || ctx.user.email}</strong>.</p>${input.validationNotes ? `<p><strong>Observações:</strong> ${input.validationNotes}</p>` : ''}<p><a href="${baseUrl}/plano-acao/maturidade?assessmentId=${action.assessmentId}">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
             }).catch(err => console.error('Erro ao notificar:', err));
           }
         }
@@ -2011,7 +2011,7 @@ export const assessmentsRouter = router({
             await sendGenericEmail({
               to: responsible.email,
               subject: `Ajustes solicitados: ${action.title || 'Ação do Plano'}`,
-              html: `<p>Olá, ${responsible.name || 'Responsável'},</p><p>O consultor <strong>${ctx.user.name || ctx.user.email}</strong> solicitou ajustes na sua ação.</p><p><strong>Motivo:</strong> ${input.rejectionReason}</p><p>Por favor, realize os ajustes e reenvie para validação.</p><p><a href="${baseUrl}/plano-acao/maturidade?assessmentId=${action.assessmentId}">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+              html: `<p>Olá, ${responsible.name || 'Responsável'},</p><p>O consultor <strong>${ctx.user.name || ctx.user.email}</strong> solicitou ajustes na sua ação.</p><p><strong>Motivo:</strong> ${input.rejectionReason}</p><p>Por favor, realize os ajustes e reenvie para validação.</p><p><a href="${baseUrl}/plano-acao/maturidade?assessmentId=${action.assessmentId}">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
             }).catch(err => console.error('Erro ao notificar:', err));
           }
         }
@@ -2263,7 +2263,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: c.email,
             subject: `Nova ação aguardando validação: ${action.title}`,
-            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Cliente:</strong> ${action.organizationName}</p><p><strong>Ação:</strong> ${action.title}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${baseUrl}/painel-global">Acessar Central Global</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Cliente:</strong> ${action.organizationName}</p><p><strong>Ação:</strong> ${action.title}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${baseUrl}/painel-global">Acessar Central Global</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}
@@ -2353,7 +2353,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ação aprovada: ${action.title}`,
-            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>Sua ação foi <strong>aprovada</strong> pelo consultor <strong>${validatorName}</strong>.</p>${input.validationNotes ? `<p><strong>Observações:</strong> ${input.validationNotes}</p>` : ''}<p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>Sua ação foi <strong>aprovada</strong> pelo consultor <strong>${validatorName}</strong>.</p>${input.validationNotes ? `<p><strong>Observações:</strong> ${input.validationNotes}</p>` : ''}<p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}
@@ -2408,7 +2408,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ajustes solicitados: ${action.title}`,
-            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>O consultor <strong>${validatorName}</strong> solicitou ajustes na sua ação.</p><p><strong>Motivo:</strong> ${input.rejectionReason}</p><p>Por favor, realize os ajustes e reenvie para validação.</p><p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>O consultor <strong>${validatorName}</strong> solicitou ajustes na sua ação.</p><p><strong>Motivo:</strong> ${input.rejectionReason}</p><p>Por favor, realize os ajustes e reenvie para validação.</p><p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}
@@ -2527,7 +2527,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: newValidator.email,
             subject: `Validação transferida para você: ${action.title}`,
-            html: `<p>Olá, ${newValidator.name},</p><p>A validação da ação <strong>${action.title}</strong> foi transferida para você por <strong>${transferredByName}</strong>.</p>${input.transferReason ? `<p><strong>Motivo:</strong> ${input.transferReason}</p>` : ''}<p>Por favor, acesse o sistema para analisar e tomar uma decisão.</p><p><a href="${baseUrl}/plano-acao/validacao/${input.actionId}">Acessar validação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${newValidator.name},</p><p>A validação da ação <strong>${action.title}</strong> foi transferida para você por <strong>${transferredByName}</strong>.</p>${input.transferReason ? `<p><strong>Motivo:</strong> ${input.transferReason}</p>` : ''}<p>Por favor, acesse o sistema para analisar e tomar uma decisão.</p><p><a href="${baseUrl}/plano-acao/validacao/${input.actionId}">Acessar validação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}
@@ -2601,7 +2601,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: c.email,
             subject: `Nova ação aguardando validação: ${action.title}`,
-            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Cliente:</strong> ${action.organizationName || action.organizationLegalName || 'Organização'}</p><p><strong>Ação:</strong> ${action.title}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${baseUrl}/painel-global">Acessar Central Global</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Cliente:</strong> ${action.organizationName || action.organizationLegalName || 'Organização'}</p><p><strong>Ação:</strong> ${action.title}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${baseUrl}/painel-global">Acessar Central Global</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}
@@ -2684,7 +2684,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ação aprovada: ${action.title}`,
-            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>Sua ação foi <strong>aprovada</strong> pelo consultor <strong>${validatorName}</strong>.</p>${input.validationNotes ? `<p><strong>Observações:</strong> ${input.validationNotes}</p>` : ''}<p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>Sua ação foi <strong>aprovada</strong> pelo consultor <strong>${validatorName}</strong>.</p>${input.validationNotes ? `<p><strong>Observações:</strong> ${input.validationNotes}</p>` : ''}<p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}
@@ -2733,7 +2733,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: action.responsibleEmail,
             subject: `Ajustes solicitados: ${action.title}`,
-            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>O consultor <strong>${validatorName}</strong> solicitou ajustes na sua ação.</p><p><strong>Motivo:</strong> ${input.rejectionReason}</p><p>Por favor, realize os ajustes e reenvie para validação.</p><p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${action.responsibleUserName || 'Responsável'},</p><p>O consultor <strong>${validatorName}</strong> solicitou ajustes na sua ação.</p><p><strong>Motivo:</strong> ${input.rejectionReason}</p><p>Por favor, realize os ajustes e reenvie para validação.</p><p><a href="${baseUrl}/dashboard">Acesse o Plano de Ação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}
@@ -2827,7 +2827,7 @@ export const assessmentsRouter = router({
           await sendGenericEmail({
             to: newValidator.email,
             subject: `Validação transferida para você: ${action.title}`,
-            html: `<p>Olá, ${newValidator.name},</p><p>A validação da ação <strong>${action.title}</strong> foi transferida para você por <strong>${transferredByName}</strong>.</p>${input.transferReason ? `<p><strong>Motivo:</strong> ${input.transferReason}</p>` : ''}<p>Por favor, acesse o sistema para analisar e tomar uma decisão.</p><p><a href="${baseUrl}/plano-acao/validacao/${input.actionId}">Acessar validação</a></p><br><p>Seusdados Consultoria em Gestão de Dados</p>`,
+            html: `<p>Olá, ${newValidator.name},</p><p>A validação da ação <strong>${action.title}</strong> foi transferida para você por <strong>${transferredByName}</strong>.</p>${input.transferReason ? `<p><strong>Motivo:</strong> ${input.transferReason}</p>` : ''}<p>Por favor, acesse o sistema para analisar e tomar uma decisão.</p><p><a href="${baseUrl}/plano-acao/validacao/${input.actionId}">Acessar validação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
           }).catch(() => {});
         }
       } catch (_) {}

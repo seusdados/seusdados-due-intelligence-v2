@@ -2,7 +2,7 @@
  * PATCH-2-RIPD-AUTOMATION: Router de Relatórios ANPD para RIPD
  * 
  * Desenvolvido por: Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ: 33.899.116/0001-63 | www.seusdados.com
+ * CNPJ: 33.899.116/0001-63 | seusdados.com
  * Responsabilidade Técnica: Marcelo Fattori
  */
 import { z } from "zod";

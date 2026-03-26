@@ -154,18 +154,16 @@ export function generateAssessmentEmailTemplate(data: AssessmentEmailData): { ht
                 <tr>
                   <td>
                     <p style="color: #94a3b8; font-size: 13px; margin: 0 0 5px 0;">
-                      <strong style="color: #ffffff;">Seusdados Consultoria em Gestão de Dados Ltda.</strong>
+                      <strong style="color: #ffffff;">Seusdados Consultoria em Gestão de Dados Limitada</strong>
+                    </p>
+                    <p style="color: #64748b; font-size: 12px; margin: 0 0 3px 0;">
+                      CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori
+                    </p>
+                    <p style="color: #64748b; font-size: 12px; margin: 0 0 3px 0;">
+                      Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP
                     </p>
                     <p style="color: #64748b; font-size: 12px; margin: 0;">
-                      CNPJ 33.899.116/0001-63 | Responsável Técnico: marcelo fattori
-                    </p>
-                  </td>
-                  <td align="right">
-                    <p style="color: #94a3b8; font-size: 12px; margin: 0 0 5px 0;">
-                      www.seusdados.com | dpo@seusdados.com
-                    </p>
-                    <p style="color: #64748b; font-size: 12px; margin: 0;">
-                      +55 11 4040 5552
+                      seusdados.com | dpo@seusdados.com | +55 11 4040 5552
                     </p>
                   </td>
                 </tr>
@@ -201,9 +199,9 @@ ${expirationText}
 O processo é simples e leva aproximadamente 15 minutos.
 
 ---
-Seusdados Consultoria em Gestão de Dados Ltda.
+Seusdados Consultoria em Gestão de Dados Limitada
 CNPJ 33.899.116/0001-63
-www.seusdados.com | dpo@seusdados.com | +55 11 4040 5552
+seusdados.com | dpo@seusdados.com | +55 11 4040 5552
   `.trim();
 
   return { html, text };
@@ -417,10 +415,10 @@ export function generateUserInviteEmailTemplate(data: UserInviteEmailData): { ht
           <tr>
             <td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
               <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63
+                Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63
               </p>
               <p style="margin: 4px 0 0; color: #9ca3af; font-size: 12px;">
-                <a href="https://www.seusdados.com" style="color: #6B3FD9; text-decoration: none;">www.seusdados.com</a>
+                <a href="https://seusdados.com" style="color: #6B3FD9; text-decoration: none;">seusdados.com</a>
               </p>
             </td>
           </tr>
@@ -551,8 +549,8 @@ export async function sendWelcomeUserEmail(data: {
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
               
               <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63<br/>
-                www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+                Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63<br/>
+                seusdados.com | dpo@seusdados.com | +55 11 4040 5552
               </p>
             </td>
           </tr>
@@ -622,7 +620,7 @@ export async function notifyTicketStatusChanged(data: any, oldStatus?: string, n
       ${changedBy ? `<p>Alterado por: ${changedBy}</p>` : ''}
       <p>Acesse o ticket para mais detalhes.</p>
       <hr style="border: none; border-top: 1px solid #e5e7eb;" />
-      <p style="color: #9ca3af; font-size: 11px;">Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63</p>
+      <p style="color: #9ca3af; font-size: 11px;">Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63</p>
     `;
 
     const result = await resend.emails.send({
@@ -663,7 +661,7 @@ export async function notifyTicketComment(data: any, authorName?: string, conten
       <blockquote>${commentText}</blockquote>
       <p>Acesse o ticket para responder.</p>
       <hr style="border: none; border-top: 1px solid #e5e7eb;" />
-      <p style="color: #9ca3af; font-size: 11px;">Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63</p>
+      <p style="color: #9ca3af; font-size: 11px;">Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63</p>
     `;
 
     const result = await resend.emails.send({
@@ -703,7 +701,7 @@ export async function notifyTicketCreated(data: any) {
       <p>${emailData.message || ''}</p>
       <p>Acompanhe o andamento pela plataforma.</p>
       <hr style="border: none; border-top: 1px solid #e5e7eb;" />
-      <p style="color: #9ca3af; font-size: 11px;">Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63</p>
+      <p style="color: #9ca3af; font-size: 11px;">Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63</p>
     `;
 
     const result = await resend.emails.send({
@@ -801,8 +799,8 @@ export async function sendResponsibleAssignmentEmail(data: {
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
               
               <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63<br/>
-                www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+                Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63<br/>
+                seusdados.com | dpo@seusdados.com | +55 11 4040 5552
               </p>
             </td>
           </tr>
@@ -1065,8 +1063,8 @@ function generateCompletionRespondentTemplate(data: InterviewCompletionEmailData
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
               
               <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63<br/>
-                www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+                Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63<br/>
+                seusdados.com | dpo@seusdados.com | +55 11 4040 5552
               </p>
             </td>
           </tr>
@@ -1077,7 +1075,7 @@ function generateCompletionRespondentTemplate(data: InterviewCompletionEmailData
 </body>
 </html>`;
 
-  const text = `Olá, ${data.respondentName}!\n\nSua entrevista de mapeamento de dados pessoais foi concluída com sucesso.\n\nResumo:\n- Área: ${data.areaName}\n${data.processTitle ? `- Processo: ${data.processTitle}\n` : ''}- Organização: ${data.organizationName}\n- Categorias de dados: ${data.totalDataCategories}\n- Processos avaliados: ${data.totalProcesses}\n- Documentos gerados: ${data.createdRots}\n\nOs documentos de conformidade foram gerados automaticamente.\n\nSeusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63 | www.seusdados.com`;
+  const text = `Olá, ${data.respondentName}!\n\nSua entrevista de mapeamento de dados pessoais foi concluída com sucesso.\n\nResumo:\n- Área: ${data.areaName}\n${data.processTitle ? `- Processo: ${data.processTitle}\n` : ''}- Organização: ${data.organizationName}\n- Categorias de dados: ${data.totalDataCategories}\n- Processos avaliados: ${data.totalProcesses}\n- Documentos gerados: ${data.createdRots}\n\nOs documentos de conformidade foram gerados automaticamente.\n\nSeusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63 | seusdados.com | dpo@seusdados.com | +55 11 4040 5552`;
 
   return { html, text };
 }
@@ -1144,8 +1142,8 @@ function generateCompletionConsultantTemplate(data: InterviewCompletionEmailData
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
               
               <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63<br/>
-                www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+                Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63<br/>
+                seusdados.com | dpo@seusdados.com | +55 11 4040 5552
               </p>
             </td>
           </tr>
@@ -1156,7 +1154,7 @@ function generateCompletionConsultantTemplate(data: InterviewCompletionEmailData
 </body>
 </html>`;
 
-  const text = `Olá${data.consultantName ? `, ${data.consultantName}` : ''}!\n\nUma entrevista de mapeamento foi concluída.\n\nRespondente: ${data.respondentName} (${data.respondentEmail})\nÁrea: ${data.areaName}\n${data.processTitle ? `Processo: ${data.processTitle}\n` : ''}Organização: ${data.organizationName}\n\nDocumentos gerados: ${data.createdRots} (ROT, POP, ROPA)\n\nRevise os documentos e valide as bases legais identificadas.\n\nSeusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63 | www.seusdados.com`;
+  const text = `Olá${data.consultantName ? `, ${data.consultantName}` : ''}!\n\nUma entrevista de mapeamento foi concluída.\n\nRespondente: ${data.respondentName} (${data.respondentEmail})\nÁrea: ${data.areaName}\n${data.processTitle ? `Processo: ${data.processTitle}\n` : ''}Organização: ${data.organizationName}\n\nDocumentos gerados: ${data.createdRots} (ROT, POP, ROPA)\n\nRevise os documentos e valide as bases legais identificadas.\n\nSeusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63 | seusdados.com | dpo@seusdados.com | +55 11 4040 5552`;
 
   return { html, text };
 }
@@ -1327,8 +1325,8 @@ export async function sendActionPlanResponsibleEmail(data: ActionPlanResponsible
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
               
               <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63<br/>
-                www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+                Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63<br/>
+                seusdados.com | dpo@seusdados.com | +55 11 4040 5552
               </p>
             </td>
           </tr>
@@ -1431,8 +1429,8 @@ export async function sendPasswordResetEmail(data: {
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
               
               <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63<br/>
-                www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+                Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63<br/>
+                seusdados.com | dpo@seusdados.com | +55 11 4040 5552
               </p>
             </td>
           </tr>

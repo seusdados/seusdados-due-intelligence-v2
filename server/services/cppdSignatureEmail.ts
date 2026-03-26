@@ -169,13 +169,13 @@ function generateSignatureEmailHtml(data: SignatureEmailData): string {
                 <tr>
                   <td>
                     <p style="margin:0;font-size:12px;color:#9ca3af;">
-                      Seusdados Consultoria em Gestão de Dados Ltda.
+                      Seusdados Consultoria em Gestão de Dados Limitada
                     </p>
                     <p style="margin:4px 0 0;font-size:11px;color:#6b7280;">
-                      CNPJ 33.899.116/0001-63 | www.seusdados.com
+                      CNPJ 33.899.116/0001-63 | seusdados.com
                     </p>
                     <p style="margin:4px 0 0;font-size:11px;color:#6b7280;">
-                      Responsabilidade técnica: Marcelo Fattori
+                      Responsável Técnico: Marcelo Fattori
                     </p>
                   </td>
                 </tr>
@@ -211,9 +211,9 @@ function generateSignatureEmailText(data: SignatureEmailData): string {
     text += `Acessar na Plataforma: ${data.platformUrl}\n\n`;
   }
   text += `Por favor, revise o conteúdo da ata e, estando de acordo, proceda com a assinatura.\n\n`;
-  text += `---\nSeusdados Consultoria em Gestão de Dados Ltda.\n`;
-  text += `CNPJ 33.899.116/0001-63 | www.seusdados.com\n`;
-  text += `Responsabilidade técnica: Marcelo Fattori\n`;
+  text += `---\nSeusdados Consultoria em Gestão de Dados Limitada\n`;
+  text += `CNPJ 33.899.116/0001-63 | seusdados.com\n`;
+  text += `Responsável Técnico: Marcelo Fattori\n`;
   return text;
 }
 

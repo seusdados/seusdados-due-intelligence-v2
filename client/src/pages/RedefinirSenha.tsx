@@ -133,13 +133,14 @@ export default function RedefinirSenha() {
         <div className="absolute bottom-0 left-0 right-0 py-4 px-6" style={{ background: 'rgba(0,0,0,0.3)' }}>
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-white/50 font-light">
             <div className="mb-2 md:mb-0">
-              <span className="font-normal text-white/70">Seusdados Consultoria em Gestão de Dados Ltda.</span>
+              <span className="font-normal text-white/70">Seusdados Consultoria em Gestão de Dados Limitada</span>
               <br className="md:hidden" />
               <span className="hidden md:inline"> | </span>
               CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori
+              Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP
             </div>
             <div className="text-center md:text-right">
-              <a href="https://www.seusdados.com" className="hover:text-white/70">www.seusdados.com</a>
+              <a href="https://seusdados.com" className="hover:text-white/70">seusdados.com</a>
               <span className="mx-2">|</span>
               <a href="mailto:dpo@seusdados.com" className="hover:text-white/70">dpo@seusdados.com</a>
               <br className="md:hidden" />
@@ -308,13 +309,14 @@ export default function RedefinirSenha() {
       <div className="absolute bottom-0 left-0 right-0 py-4 px-6" style={{ background: 'rgba(0,0,0,0.3)' }}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-white/50 font-light">
           <div className="mb-2 md:mb-0">
-            <span className="font-normal text-white/70">Seusdados Consultoria em Gestão de Dados Ltda.</span>
+            <span className="font-normal text-white/70">Seusdados Consultoria em Gestão de Dados Limitada</span>
             <br className="md:hidden" />
             <span className="hidden md:inline"> | </span>
             CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori
+            Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP
           </div>
           <div className="text-center md:text-right">
-            <a href="https://www.seusdados.com" className="hover:text-white/70">www.seusdados.com</a>
+            <a href="https://seusdados.com" className="hover:text-white/70">seusdados.com</a>
             <span className="mx-2">|</span>
             <a href="mailto:dpo@seusdados.com" className="hover:text-white/70">dpo@seusdados.com</a>
             <br className="md:hidden" />

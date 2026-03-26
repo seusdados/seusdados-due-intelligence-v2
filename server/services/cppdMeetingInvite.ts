@@ -169,8 +169,8 @@ function buildInviteEmailHtml(data: MeetingInviteData, participantName: string):
         <tr>
           <td style="background:#F9FAFB;padding:20px 40px;border-top:1px solid #E5E7EB;">
             <p style="margin:0;font-size:12px;color:#9CA3AF;text-align:center;">
-              Seusdados Consultoria em Gestao de Dados Ltda. | CNPJ 33.899.116/0001-63
-              <br>www.seusdados.com | Responsabilidade tecnica: Marcelo Fattori
+              Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63
+              <br>seusdados.com | Responsabilidade Técnica: Marcelo Fattori
             </p>
           </td>
         </tr>

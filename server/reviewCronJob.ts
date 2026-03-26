@@ -311,7 +311,7 @@ function generateReviewAlertEmailHtml(data: {
     </div>
     <div class="footer">
       <p>Seusdados Consultoria em Gestão de Dados Limitada</p>
-      <p>CNPJ: 33.899.116/0001-63 | www.seusdados.com</p>
+      <p>CNPJ: 33.899.116/0001-63 | seusdados.com</p>
     </div>
   </div>
 </body>

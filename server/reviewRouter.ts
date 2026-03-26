@@ -3,7 +3,7 @@
  * 
  * Seusdados Consultoria em Gestão de Dados Limitada
  * CNPJ: 33.899.116/0001-63
- * www.seusdados.com
+ * seusdados.com
  */
 
 import { router, protectedProcedure, adminProcedure } from "./_core/trpc";

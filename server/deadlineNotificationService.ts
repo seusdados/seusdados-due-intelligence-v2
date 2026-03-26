@@ -125,7 +125,7 @@ function generateDeadlineAlertHtml(item: {
     </div>
     <div style="padding:16px;text-align:center;">
       <p style="font-size:12px;color:#94a3b8;margin:0;">
-        Seusdados Consultoria em Gestão de Dados Ltda. — CNPJ 33.899.116/0001-63
+        Seusdados Consultoria em Gestão de Dados Limitada — CNPJ 33.899.116/0001-63
       </p>
     </div>
   </div>

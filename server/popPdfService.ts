@@ -2,8 +2,8 @@
  * popPdfService.ts
  * Gera HTML Visual Law para exportação do Procedimento Operacional Padrão (POP)
  * Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ 33.899.116/0001-63 — www.seusdados.com
- * Responsabilidade técnica: Marcelo Fattori
+ * CNPJ 33.899.116/0001-63 — seusdados.com
+ * Responsável Técnico: Marcelo Fattori
  */
 
 interface PopPdfInput {
@@ -375,8 +375,8 @@ export function generatePopPdfHtml(input: PopPdfInput): string {
     <!-- Footer -->
     <div class="footer">
       Documento gerado por <strong>Seusdados Consultoria em Gest\u00e3o de Dados Limitada</strong><br>
-      CNPJ 33.899.116/0001-63 \u2014 www.seusdados.com<br>
-      Responsabilidade t\u00e9cnica: Marcelo Fattori
+      CNPJ 33.899.116/0001-63 \u2014 seusdados.com<br>
+      Responsável Técnico: Marcelo Fattori
     </div>
   </div>
 </body>

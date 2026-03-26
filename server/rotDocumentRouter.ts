@@ -255,9 +255,9 @@ export const rotDocumentRouter = router({
   <div class="header">
     <div class="header-left">
       <div style="font-size: 14px; font-weight: 500; color: #6B3FD9;">Seusdados</div>
-      <div class="header-company">Seusdados Consultoria em Gestao de Dados Ltda.</div>
-      <div class="header-company">CNPJ: 33.899.116/0001-63 | www.seusdados.com</div>
-      <div class="header-company">Responsabilidade Tecnica: Marcelo Fattori</div>
+      <div class="header-company">Seusdados Consultoria em Gestão de Dados Limitada</div>
+      <div class="header-company">CNPJ: 33.899.116/0001-63 | seusdados.com</div>
+      <div class="header-company">Responsabilidade Técnica: Marcelo Fattori</div>
     </div>
     <div class="header-right">
       <div class="doc-type">REGISTRO DE OPERACOES DE TRATAMENTO</div>
@@ -361,9 +361,9 @@ export const rotDocumentRouter = router({
   <!-- RODAPÉ -->
   <div class="footer">
     <div class="footer-left">
-      <div class="footer-brand">Seusdados Consultoria em Gestao de Dados Ltda.</div>
-      <div>CNPJ: 33.899.116/0001-63 | www.seusdados.com</div>
-      <div>Responsabilidade Tecnica: Marcelo Fattori</div>
+      <div class="footer-brand">Seusdados Consultoria em Gestão de Dados Limitada</div>
+      <div>CNPJ: 33.899.116/0001-63 | seusdados.com</div>
+      <div>Responsabilidade Técnica: Marcelo Fattori</div>
     </div>
     <div class="footer-right">
       <div>Documento gerado em ${formatDateTime(new Date().toISOString())}</div>
@@ -457,9 +457,9 @@ export const rotDocumentRouter = router({
   <div class="header">
     <div class="header-left">
       <div style="font-size: 14px; font-weight: 500; color: #10B981;">Seusdados</div>
-      <div class="header-company">Seusdados Consultoria em Gestao de Dados Ltda.</div>
-      <div class="header-company">CNPJ: 33.899.116/0001-63 | www.seusdados.com</div>
-      <div class="header-company">Responsabilidade Tecnica: Marcelo Fattori</div>
+      <div class="header-company">Seusdados Consultoria em Gestão de Dados Limitada</div>
+      <div class="header-company">CNPJ: 33.899.116/0001-63 | seusdados.com</div>
+      <div class="header-company">Responsabilidade Técnica: Marcelo Fattori</div>
     </div>
     <div class="header-right">
       <div class="doc-type">PROCEDIMENTO OPERACIONAL PADRAO</div>
@@ -495,9 +495,9 @@ export const rotDocumentRouter = router({
 
   <div class="footer">
     <div class="footer-left">
-      <div class="footer-brand">Seusdados Consultoria em Gestao de Dados Ltda.</div>
-      <div>CNPJ: 33.899.116/0001-63 | www.seusdados.com</div>
-      <div>Responsabilidade Tecnica: Marcelo Fattori</div>
+      <div class="footer-brand">Seusdados Consultoria em Gestão de Dados Limitada</div>
+      <div>CNPJ: 33.899.116/0001-63 | seusdados.com</div>
+      <div>Responsabilidade Técnica: Marcelo Fattori</div>
     </div>
     <div class="footer-right">
       <div>Documento gerado em ${formatDateTime(new Date().toISOString())}</div>

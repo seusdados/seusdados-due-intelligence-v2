@@ -2,7 +2,7 @@
  * Serviço de Análise de Contratos LGPD
  * ======================================
  * Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ 33.899.116/0001-63 | www.seusdados.com
+ * CNPJ 33.899.116/0001-63 | seusdados.com
  * Responsabilidade técnica: Marcelo Fattori
  *
  * Implementa:
@@ -847,14 +847,14 @@ export async function generateContractAnalysisPdf(input: PdfGenerationInput): Pr
     ` : ''}
     
     <div class="version-info">
-      Versão do checklist: ${CURRENT_CHECKLIST_VERSION} | Gerado por: Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ: 33.899.116/0001-63 | www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+      Versão do checklist: ${CURRENT_CHECKLIST_VERSION} | Gerado por: Seusdados Consultoria em Gestão de Dados Limitada | CNPJ: 33.899.116/0001-63 | seusdados.com | Responsável Técnico: Marcelo Fattori
     </div>
     
     <div class="footer">
       <p class="footer-text">
         Este relatório foi gerado pelo sistema Seusdados Due Diligence.<br>
         A análise foi realizada com base nos 18 blocos de regras LGPD/ANPD da instrução técnica Seusdados.<br>
-        Seusdados Consultoria em Gestão de Dados Limitada. CNPJ 33.899.116/0001-63. www.seusdados.com
+        Seusdados Consultoria em Gestão de Dados Limitada. CNPJ 33.899.116/0001-63. seusdados.com
       </p>
     </div>
   </div>

@@ -2,7 +2,7 @@
  * Visão Simplificada - Framework Seusdados (Termo 3)
  * ===================================================
  * Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ 33.899.116/0001-63 | www.seusdados.com
+ * CNPJ 33.899.116/0001-63 | seusdados.com
  * Responsabilidade técnica: Marcelo Fattori
  *
  * Traduz os resultados técnicos da análise contratual em linguagem

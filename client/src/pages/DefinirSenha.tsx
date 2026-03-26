@@ -244,9 +244,10 @@ export default function DefinirSenha() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-white/40 text-xs font-extralight">
-          <p>Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori</p>
+          <p>Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori</p>
+          <p>Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP</p>
           <div className="flex items-center justify-center gap-4 mt-2">
-            <a href="https://www.seusdados.com" className="hover:text-white/60">www.seusdados.com</a>
+            <a href="https://seusdados.com" className="hover:text-white/60">seusdados.com</a>
             <span>|</span>
             <a href="mailto:dpo@seusdados.com" className="hover:text-white/60">dpo@seusdados.com</a>
             <span>|</span>

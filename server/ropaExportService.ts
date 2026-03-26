@@ -429,7 +429,7 @@ function generateRopaHtml(ropaData: any, title: string): string {
   <pre>${escHtml(ropaData)}</pre>
   <div class="footer">
     Documento gerado automaticamente pelo Sistema Seusdados Due Diligence<br>
-    Seusdados Consultoria em Gestão de Dados Ltda. - CNPJ 33.899.116/0001-63 - www.seusdados.com
+    Seusdados Consultoria em Gestão de Dados Limitada - CNPJ 33.899.116/0001-63 - seusdados.com
   </div>
 </body>
 </html>`;
@@ -510,8 +510,8 @@ function generateRopaHtml(ropaData: any, title: string): string {
 
   <div class="footer">
     Documento gerado automaticamente pelo Sistema Seusdados Due Diligence<br>
-    Seusdados Consultoria em Gestão de Dados Ltda. - CNPJ 33.899.116/0001-63 - www.seusdados.com<br>
-    Responsabilidade técnica: Marcelo Fattori
+    Seusdados Consultoria em Gestão de Dados Limitada - CNPJ 33.899.116/0001-63 - seusdados.com<br>
+    Responsável Técnico: Marcelo Fattori
   </div>
 </body>
 </html>`;

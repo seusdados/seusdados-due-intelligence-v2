@@ -2,7 +2,7 @@
  * Serviço de Exportação em Formato Carta Simplificado
  * ====================================================
  * Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ 33.899.116/0001-63 | www.seusdados.com
+ * CNPJ 33.899.116/0001-63 | seusdados.com
  * Responsabilidade técnica: Marcelo Fattori
  *
  * Gera um documento HTML de alta qualidade visual (formato carta)
@@ -692,7 +692,7 @@ export function generateLetterHtml(input: LetterExportInput): string {
       <div class="signature-info">
         Seusdados Consultoria em Gestão de Dados Limitada<br>
         CNPJ 33.899.116/0001-63<br>
-        www.seusdados.com
+        seusdados.com
       </div>
     </div>
   </div>

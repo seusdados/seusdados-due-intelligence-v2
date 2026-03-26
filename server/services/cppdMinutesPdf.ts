@@ -145,7 +145,7 @@ export async function generateMinutesPdf(data: MinutesPdfData): Promise<Buffer> 
       // Rodapé da capa
       doc.fontSize(8).fillColor(gray).font('Helvetica');
       doc.text(
-        'Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63 | www.seusdados.com',
+        'Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63 | seusdados.com',
         50, 750, { width: pageWidth, align: 'center' }
       );
 
@@ -323,7 +323,7 @@ export async function generateMinutesPdf(data: MinutesPdfData): Promise<Buffer> 
         // Texto do rodapé
         doc.fontSize(7).fillColor(gray).font('Helvetica');
         doc.text(
-          'Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63 | www.seusdados.com',
+          'Seusdados Consultoria em Gestão de Dados Limitada | CNPJ 33.899.116/0001-63 | seusdados.com',
           50, 768, { width: pageWidth - 50, align: 'left' }
         );
         doc.text(

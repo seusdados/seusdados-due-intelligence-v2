@@ -2,7 +2,7 @@
  * Checklist Versionado e Árvore de Decisão para Análise de Contratos LGPD
  * =========================================================================
  * Seusdados Consultoria em Gestão de Dados Limitada
- * CNPJ 33.899.116/0001-63 | www.seusdados.com
+ * CNPJ 33.899.116/0001-63 | seusdados.com
  *
  * Implementa o Termo 2 (Governança Algorítmica):
  * - Checklist versionado com fontes normativas (policySources)

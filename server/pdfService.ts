@@ -511,11 +511,12 @@ export function generateComplianceReportHTML(data: ComplianceReportData): string
       <!-- Footer -->
       <div class="footer">
         <div class="footer-left">
-          Seusdados Consultoria em Gestão de Dados Ltda.<br>
-          CNPJ 33.898.116/0001-63 | Responsável Técnico: Marcelo Fattori
+          Seusdados Consultoria em Gestão de Dados Limitada<br>
+          Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP<br>
+          CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori
         </div>
         <div class="footer-right">
-          www.seusdados.com | dpo@seusdados.com<br>
+          seusdados.com | dpo@seusdados.com<br>
           +55 11 4040 5552
         </div>
       </div>
@@ -680,11 +681,12 @@ export function generateThirdPartyReportHTML(data: ThirdPartyReportData): string
       <!-- Footer -->
       <div class="footer">
         <div class="footer-left">
-          Seusdados Consultoria em Gestão de Dados Ltda.<br>
-          CNPJ 33.898.116/0001-63 | Responsável Técnico: Marcelo Fattori
+          Seusdados Consultoria em Gestão de Dados Limitada<br>
+          Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP<br>
+          CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori
         </div>
         <div class="footer-right">
-          www.seusdados.com | dpo@seusdados.com<br>
+          seusdados.com | dpo@seusdados.com<br>
           +55 11 4040 5552
         </div>
       </div>
@@ -1030,11 +1032,12 @@ export function generateActionPlanHTML(data: ActionPlanReportData): string {
       <!-- Footer -->
       <div class="footer">
         <div class="footer-left">
-          Seusdados Consultoria em Gestão de Dados Ltda.<br>
-          CNPJ 33.898.116/0001-63 | Responsável Técnico: Marcelo Fattori
+          Seusdados Consultoria em Gestão de Dados Limitada<br>
+          Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP<br>
+          CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori
         </div>
         <div class="footer-right">
-          www.seusdados.com | dpo@seusdados.com<br>
+          seusdados.com | dpo@seusdados.com<br>
           +55 11 4040 5552
         </div>
       </div>
@@ -1657,11 +1660,12 @@ export function generateActivityReportHTML(data: ActivityReportData): string {
       <!-- Footer -->
       <div class="footer">
         <div class="footer-left">
-          Seusdados Consultoria em Gestão de Dados Ltda.<br>
-          CNPJ 33.898.116/0001-63 | Responsável Técnico: Marcelo Fattori
+          Seusdados Consultoria em Gestão de Dados Limitada<br>
+          Rua Eduardo Tomanik, 121, salas 10 e 11, Chácara Urbana, Jundiaí-SP<br>
+          CNPJ 33.899.116/0001-63 | Responsável Técnico: Marcelo Fattori
         </div>
         <div class="footer-right">
-          www.seusdados.com | dpo@seusdados.com<br>
+          seusdados.com | dpo@seusdados.com<br>
           +55 11 4040 5552
         </div>
       </div>

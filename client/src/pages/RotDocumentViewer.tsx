@@ -1039,12 +1039,12 @@ export default function RotDocumentViewer() {
       <div className="border-t bg-gray-50 mt-12">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between text-xs text-gray-400 font-extralight">
           <div>
-            <span className="font-normal text-purple-600">Seusdados</span> Consultoria em Gestao de Dados Ltda.
+            <span className="font-normal text-purple-600">Seusdados</span> Consultoria em Gestão de Dados Limitada
             <br />
-            CNPJ: 33.899.116/0001-63 | www.seusdados.com
+            CNPJ: 33.899.116/0001-63 | seusdados.com
           </div>
           <div className="text-right">
-            Responsabilidade Tecnica: Marcelo Fattori
+            Responsabilidade Técnica: Marcelo Fattori
             <br />
               Documento gerado pelo sistema Seusdados Due Diligence
             {rot.status === "rascunho" && (
