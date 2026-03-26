@@ -464,9 +464,7 @@ export function ActionPlanTab({
   const [evidenceTab, setEvidenceTab] = useState<'upload' | 'ged'>('upload');
   const [gedBrowseFolderId, setGedBrowseFolderId] = useState<number | null>(null);
   const [gedBreadcrumb, setGedBreadcrumb] = useState<{ id: number | null; name: string }[]>([{ id: null, name: 'Raiz' }]);
-  const [submitValidationModalOpen, setSubmitValidationModalOpen] = useState(false);
-  const [submitValidationActionId, setSubmitValidationActionId] = useState<number | null>(null);
-  const [submitValidationObs, setSubmitValidationObs] = useState('');
+
 
   // ==================== QUERIES ====================
   const { data: orgUsers } = trpc.user.listByOrganization.useQuery(
@@ -525,8 +523,6 @@ export function ActionPlanTab({
   const submitForValidationMutation = trpc.assessments.submitActionForValidation.useMutation({
     onSuccess: () => {
       toast.success('Ação enviada para validação. Os consultores serão notificados.');
-      setSubmitValidationModalOpen(false);
-      setSubmitValidationObs('');
       onRefreshActions();
     },
     onError: (err) => toast.error(`Erro ao enviar para validação: ${err.message}`),
@@ -836,12 +832,12 @@ export function ActionPlanTab({
                                       <Button
                                         size="sm"
                                         className="bg-orange-600 hover:bg-orange-700 text-white text-xs h-7 px-3"
+                                        disabled={submitForValidationMutation.isPending}
                                         onClick={() => {
-                                          setSubmitValidationActionId(action.id);
-                                          setSubmitValidationModalOpen(true);
+                                          submitForValidationMutation.mutate({ actionId: action.id });
                                         }}
                                       >
-                                        <Check className="w-3 h-3 mr-1" /> Reenviar para Validação
+                                        {submitForValidationMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />} Reenviar para Validação
                                       </Button>
                                     )}
                                   </div>
@@ -1034,12 +1030,12 @@ export function ActionPlanTab({
                                     size="sm"
                                     variant="outline"
                                     className="w-full mt-2 border-violet-300 text-violet-700 hover:bg-violet-50 text-xs"
+                                    disabled={submitForValidationMutation.isPending}
                                     onClick={() => {
-                                      setSubmitValidationActionId(action.id);
-                                      setSubmitValidationModalOpen(true);
+                                      submitForValidationMutation.mutate({ actionId: action.id });
                                     }}
                                   >
-                                    <Check className="w-3 h-3 mr-1" /> Enviar para Validação
+                                    {submitForValidationMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />} Enviar para Validação
                                   </Button>
                                 )}
                                 {/* Reenvio após ajustes — somente quando status é ajustes_solicitados (o botão no banner já cobre este caso, mas também exibimos aqui no painel expandido) */}
@@ -1047,12 +1043,12 @@ export function ActionPlanTab({
                                   <Button
                                     size="sm"
                                     className="w-full mt-2 bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                                    disabled={submitForValidationMutation.isPending}
                                     onClick={() => {
-                                      setSubmitValidationActionId(action.id);
-                                      setSubmitValidationModalOpen(true);
+                                      submitForValidationMutation.mutate({ actionId: action.id });
                                     }}
                                   >
-                                    <Check className="w-3 h-3 mr-1" /> Reenviar para Validação
+                                    {submitForValidationMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Check className="w-3 h-3 mr-1" />} Reenviar para Validação
                                   </Button>
                                 )}
 
@@ -1612,49 +1608,7 @@ export function ActionPlanTab({
         </DialogContent>
       </Dialog>
 
-      {/* Modal: Enviar para Validação */}
-      <Dialog open={submitValidationModalOpen} onOpenChange={(open) => {
-        setSubmitValidationModalOpen(open);
-        if (!open) { setSubmitValidationObs(''); setSubmitValidationActionId(null); }
-      }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enviar para Validação</DialogTitle>
-            <DialogDescription>
-              Ao confirmar, os consultores serão notificados que esta ação está pronta para validação.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Observação (opcional)</label>
-              <Textarea
-                value={submitValidationObs}
-                onChange={(e) => setSubmitValidationObs(e.target.value)}
-                placeholder="Descreva o que foi feito, evidencias coletadas ou qualquer informação relevante para o validador..."
-                rows={3}
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSubmitValidationModalOpen(false)}>Cancelar</Button>
-            <Button
-              className="bg-violet-600 hover:bg-violet-700 text-white"
-              disabled={submitForValidationMutation.isPending}
-              onClick={() => {
-                if (!submitValidationActionId) return;
-                submitForValidationMutation.mutate({
-                  actionId: submitValidationActionId,
-                  observations: submitValidationObs || undefined,
-                });
-              }}
-            >
-              {submitForValidationMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-              Confirmar Envio
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }
