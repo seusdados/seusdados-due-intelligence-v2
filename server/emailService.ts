@@ -2,6 +2,10 @@ import { withCircuitBreaker, withRetryAndBackoff } from "./_core/resilience";
 import { logger } from "./_core/logger";
 import { Resend } from 'resend';
 import { ENV } from "./_core/env";
+import { getAppBaseUrl } from "./appUrl";
+
+// URL da logo para e-mails (servida pelo próprio app)
+const getLogoUrl = () => `${getAppBaseUrl()}/logo-email.png`;
 
 // Inicializar cliente Resend
 const resend = ENV.resendApiKey ? new Resend(ENV.resendApiKey) : null;
@@ -75,7 +79,7 @@ export function generateAssessmentEmailTemplate(data: AssessmentEmailData): { ht
           <!-- Header com gradiente -->
           <tr>
             <td style="background-color: #1e293b; background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e3a5f 100%); padding: 40px 40px 30px 40px; text-align: center;">
-              <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663108549549/aXhenVrNQUAmSuqn.png" alt="Seusdados" style="height: 50px; margin-bottom: 20px;" />
+              <img src="${getLogoUrl()}" alt="Seusdados" style="max-width: 200px; height: auto; margin-bottom: 20px;" />
               <p style="color: #d4a853; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px 0; font-weight: 500;">
                 ${assessmentTypeLabel.toUpperCase()}
               </p>
@@ -355,7 +359,7 @@ export function generateUserInviteEmailTemplate(data: UserInviteEmailData): { ht
           <tr>
             <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 300;">Convite para a plataforma</h1>
-              <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 28px; font-weight: 600;">Seusdados Due Diligence</h2>
+              <img src="${getLogoUrl()}" alt="Seusdados" style="max-width: 200px; height: auto; margin-top: 12px;" />
             </td>
           </tr>
           <tr>
@@ -489,7 +493,7 @@ export async function sendWelcomeUserEmail(data: {
           <!-- Cabeçalho com gradiente -->          <tr>
             <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 300;">Bem-vindo(a) à plataforma</h1>
-              <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 28px; font-weight: 600;">Seusdados</h2>
+              <img src="${getLogoUrl()}" alt="Seusdados" style="max-width: 200px; height: auto; margin-top: 12px;" />
             </td>
           </tr>
           <!-- Conteúdo -->          <tr>
@@ -737,7 +741,7 @@ export async function sendResponsibleAssignmentEmail(data: {
           <tr>
             <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 300;">Nova Responsabilidade Atribuída</h1>
-              <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; font-weight: 600;">Seusdados</h2>
+              <img src="${getLogoUrl()}" alt="Seusdados" style="max-width: 200px; height: auto; margin-top: 12px;" />
             </td>
           </tr>
           <tr>
@@ -1015,7 +1019,7 @@ function generateCompletionRespondentTemplate(data: InterviewCompletionEmailData
           <tr>
             <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 300;">Entrevista Concluída</h1>
-              <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; font-weight: 600;">Seusdados</h2>
+              <img src="${getLogoUrl()}" alt="Seusdados" style="max-width: 200px; height: auto; margin-top: 12px;" />
             </td>
           </tr>
           <tr>
@@ -1075,7 +1079,7 @@ function generateCompletionConsultantTemplate(data: InterviewCompletionEmailData
           <tr>
             <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 300;">Entrevista Finalizada</h1>
-              <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; font-weight: 600;">Seusdados</h2>
+              <img src="${getLogoUrl()}" alt="Seusdados" style="max-width: 200px; height: auto; margin-top: 12px;" />
             </td>
           </tr>
           <tr>
@@ -1362,7 +1366,7 @@ export async function sendPasswordResetEmail(data: {
           <tr>
             <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 300;">Redefinição de Senha</h1>
-              <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 28px; font-weight: 600;">Seusdados</h2>
+              <img src="${getLogoUrl()}" alt="Seusdados" style="max-width: 200px; height: auto; margin-top: 12px;" />
             </td>
           </tr>
           <!-- Conteúdo -->
