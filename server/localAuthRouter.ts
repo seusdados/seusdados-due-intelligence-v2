@@ -12,6 +12,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { getDb } from "./db";
 import { sql } from "drizzle-orm";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { getAppBaseUrl } from "./appUrl";
+import { sendPasswordResetEmail } from "./emailService";
 
 export const localAuthRouter = router({
   /**
@@ -315,5 +317,211 @@ export const localAuthRouter = router({
         code: "FORBIDDEN",
         message: "O cadastro de novos usuários é realizado exclusivamente pela equipe administrativa. Entre em contato com o administrador.",
       });
+    }),
+
+  /**
+   * Solicitar redefinição de senha (envia e-mail com link)
+   */
+  requestPasswordReset: publicProcedure
+    .input(z.object({
+      email: z.string().email("E-mail inválido"),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      
+      // Buscar usuário pelo e-mail
+      const result = await db.execute(sql`
+        SELECT id, name, email, "isActive", password_hash as "passwordHash"
+        FROM users 
+        WHERE LOWER(email) = LOWER(${input.email})
+        LIMIT 1
+      `);
+      
+      const users = result.rows as any[];
+      
+      // Sempre retornar sucesso para não revelar se o e-mail existe (segurança)
+      if (!users || users.length === 0) {
+        return {
+          success: true,
+          message: "Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.",
+        };
+      }
+      
+      const user = users[0];
+      
+      // Verificar se o usuário está ativo
+      if (!user.isActive) {
+        return {
+          success: false,
+          message: "Usuário inativo. Entre em contato com o administrador.",
+          inactive: true,
+        };
+      }
+      
+      // Gerar token de redefinição (48 caracteres aleatórios)
+      const resetToken = Array.from({ length: 48 }, () =>
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.charAt(
+          Math.floor(Math.random() * 62)
+        )
+      ).join('');
+      
+      // Token expira em 1 hora
+      const resetTokenExpiresAt = new Date();
+      resetTokenExpiresAt.setHours(resetTokenExpiresAt.getHours() + 1);
+      
+      // Salvar token no banco
+      await db.execute(sql`
+        UPDATE users 
+        SET reset_token = ${resetToken},
+            reset_token_expires_at = ${resetTokenExpiresAt.toISOString()}
+        WHERE id = ${user.id}
+      `);
+      
+      // Enviar e-mail com link de redefinição
+      const baseUrl = getAppBaseUrl();
+      const resetUrl = `${baseUrl}/redefinir-senha/${resetToken}`;
+      
+      await sendPasswordResetEmail({
+        userName: user.name || 'Usuário',
+        userEmail: user.email,
+        resetUrl,
+      });
+      
+      return {
+        success: true,
+        message: "Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.",
+      };
+    }),
+
+  /**
+   * Validar token de redefinição de senha (usado pela página /redefinir-senha/:token)
+   */
+  validateResetToken: publicProcedure
+    .input(z.object({
+      token: z.string().min(1, "Token é obrigatório"),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      
+      const result = await db.execute(sql`
+        SELECT id, name, email, "isActive", reset_token_expires_at as "resetTokenExpiresAt"
+        FROM users 
+        WHERE reset_token = ${input.token}
+        LIMIT 1
+      `);
+      
+      const users = result.rows as any[];
+      
+      if (!users || users.length === 0) {
+        return { valid: false, reason: 'not_found' as const };
+      }
+      
+      const user = users[0];
+      
+      // Verificar se o usuário está ativo
+      if (!user.isActive) {
+        return { valid: false, reason: 'inactive' as const };
+      }
+      
+      // Verificar se o token expirou
+      if (user.resetTokenExpiresAt && new Date() > new Date(user.resetTokenExpiresAt)) {
+        return { valid: false, reason: 'expired' as const };
+      }
+      
+      return {
+        valid: true,
+        userName: user.name || '',
+        userEmail: user.email || '',
+      };
+    }),
+
+  /**
+   * Redefinir senha usando token de redefinição
+   */
+  resetPassword: publicProcedure
+    .input(z.object({
+      token: z.string().min(1, "Token é obrigatório"),
+      newPassword: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      
+      // Buscar usuário pelo token
+      const result = await db.execute(sql`
+        SELECT id, name, email, "openId", "isActive", role, "organizationId",
+               reset_token_expires_at as "resetTokenExpiresAt"
+        FROM users 
+        WHERE reset_token = ${input.token}
+        LIMIT 1
+      `);
+      
+      const users = result.rows as any[];
+      
+      if (!users || users.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Link de redefinição inválido ou já utilizado. Solicite um novo link.",
+        });
+      }
+      
+      const user = users[0];
+      
+      // Verificar se o usuário está ativo
+      if (!user.isActive) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Sua conta está inativa. Entre em contato com o administrador.",
+        });
+      }
+      
+      // Verificar se o token expirou
+      if (user.resetTokenExpiresAt && new Date() > new Date(user.resetTokenExpiresAt)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Este link de redefinição expirou. Solicite um novo link.",
+        });
+      }
+      
+      // Definir a nova senha e limpar o token
+      const newPasswordHash = await hashPassword(input.newPassword);
+      
+      // Se o openId começa com manual_ ou quick_, atualizar para local_
+      const openId = user.openId as string;
+      const newOpenId = (openId?.startsWith('manual_') || openId?.startsWith('quick_'))
+        ? `local_${user.id}_${Date.now()}`
+        : openId;
+      
+      await db.execute(sql`
+        UPDATE users 
+        SET password_hash = ${newPasswordHash},
+            "loginMethod" = 'local',
+            must_change_password = false,
+            reset_token = NULL,
+            reset_token_expires_at = NULL,
+            setup_token = NULL,
+            setup_token_expires_at = NULL,
+            "openId" = ${newOpenId},
+            "lastSignedIn" = NOW()
+        WHERE id = ${user.id}
+      `);
+      
+      // Criar sessão automaticamente após redefinir senha
+      const sessionToken = await sdk.createSessionToken(newOpenId, {
+        name: user.name || user.email || "Usuário",
+      });
+      
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          organizationId: user.organizationId,
+        },
+      };
     }),
 });

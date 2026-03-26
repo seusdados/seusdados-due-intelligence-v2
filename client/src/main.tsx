@@ -29,6 +29,8 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
     '/convite',
     '/avaliacao',
     '/definir-senha',
+    '/esqueceu-senha',
+    '/redefinir-senha',
     '/direitos-titular',
     '/dpa-approval',
     '/entrevista',

@@ -1580,8 +1580,10 @@ export const users = pgTable("users", {
 		mustChangePassword: boolean("must_change_password").default(false),
 		passwordHash: varchar("password_hash", { length: 255 }),
 			clientRoles: json().$type<('sponsor' | 'comite' | 'lider_processo' | 'gestor_area')[]>().default([]).notNull(), // Múltiplos papéis de cliente
-			setupToken: varchar("setup_token", { length: 100 }),
-			setupTokenExpiresAt: timestamp("setup_token_expires_at", { mode: 'string' }),
+				setupToken: varchar("setup_token", { length: 100 }),
+				setupTokenExpiresAt: timestamp("setup_token_expires_at", { mode: 'string' }),
+				resetToken: varchar("reset_token", { length: 100 }),
+				resetTokenExpiresAt: timestamp("reset_token_expires_at", { mode: 'string' }),
 },
 (table) => [
 	uniqueIndex("users_openId_unique").on(table.openId),

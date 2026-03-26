@@ -157,8 +157,18 @@ export default function Login() {
               </Button>
             </form>
 
+            {/* Esqueceu a senha */}
+            <div className="mt-4 text-center">
+              <a 
+                href="/esqueceu-senha" 
+                className="text-white/60 text-sm hover:text-white/80 underline underline-offset-2"
+              >
+                Esqueceu a senha?
+              </a>
+            </div>
+
             {/* Informação para primeiro acesso */}
-            <div className="mt-6 text-center">
+            <div className="mt-3 text-center">
               <p className="text-white/40 text-xs">
                 Primeiro acesso? Verifique seu e-mail para o link de definição de senha.
               </p>

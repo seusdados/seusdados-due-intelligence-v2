@@ -1334,3 +1334,107 @@ export async function sendActionPlanResponsibleEmail(data: ActionPlanResponsible
     return { success: false, message: 'Erro ao enviar e-mail' };
   }
 }
+
+
+/**
+ * Envia e-mail de redefinição de senha
+ */
+export async function sendPasswordResetEmail(data: {
+  userName: string;
+  userEmail: string;
+  resetUrl: string;
+}): Promise<{ success: boolean; message: string }> {
+  if (!resend) {
+    logger.warn('Resend não configurado - e-mail de redefinição não enviado', { email: data.userEmail });
+    return { success: false, message: 'Serviço de e-mail não configurado' };
+  }
+
+  const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"></head>
+<body style="margin: 0; padding: 0; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+          <!-- Cabeçalho com gradiente -->
+          <tr>
+            <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 300;">Redefinição de Senha</h1>
+              <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 28px; font-weight: 600;">Seusdados</h2>
+            </td>
+          </tr>
+          <!-- Conteúdo -->
+          <tr>
+            <td style="padding: 40px;">
+              <p style="margin: 0 0 16px; color: #111827; font-size: 16px;">Olá, <strong>${data.userName}</strong>!</p>
+              <p style="margin: 0 0 24px; color: #374151; font-size: 14px; line-height: 1.6;">
+                Recebemos uma solicitação para redefinir a senha da sua conta na plataforma Seusdados.
+                Clique no botão abaixo para criar uma nova senha.
+              </p>
+
+              <!-- Alerta de expiração -->
+              <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px; margin-bottom: 24px; border-left: 4px solid #f59e0b;">
+                <p style="margin: 0; color: #92400e; font-size: 13px;">
+                  <strong>Atenção:</strong> Este link é válido por <strong>1 hora</strong>. Após esse período, será necessário solicitar uma nova redefinição.
+                </p>
+              </div>
+
+              <!-- Botão de acesso -->
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${data.resetUrl}" 
+                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
+                  Redefinir Minha Senha
+                </a>
+              </div>
+
+              <p style="margin: 0 0 8px; color: #6b7280; font-size: 12px;">
+                Se o botão não funcionar, copie e cole o link abaixo no seu navegador:
+              </p>
+              <p style="margin: 0 0 24px; color: #6B3FD9; font-size: 12px; word-break: break-all;">
+                ${data.resetUrl}
+              </p>
+
+              <!-- Aviso de segurança -->
+              <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                <p style="margin: 0; color: #6b7280; font-size: 12px; line-height: 1.5;">
+                  Se você não solicitou esta redefinição, ignore este e-mail. Sua senha atual permanecerá inalterada.
+                </p>
+              </div>
+
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+              
+              <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
+                Seusdados Consultoria em Gestão de Dados Ltda. | CNPJ 33.899.116/0001-63<br/>
+                www.seusdados.com | Responsabilidade técnica: Marcelo Fattori
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const result = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: data.userEmail,
+      subject: 'Redefinição de Senha - Plataforma Seusdados',
+      html,
+    });
+
+    if (result.error) {
+      logger.error('Erro ao enviar e-mail de redefinição de senha', { error: result.error, email: data.userEmail });
+      return { success: false, message: result.error.message };
+    }
+
+    logger.info('E-mail de redefinição de senha enviado', { to: data.userEmail, messageId: result.data?.id });
+    return { success: true, message: 'E-mail de redefinição enviado' };
+  } catch (error) {
+    logger.error('Erro ao enviar e-mail de redefinição de senha', { error, email: data.userEmail });
+    return { success: false, message: 'Erro ao enviar e-mail' };
+  }
+}
