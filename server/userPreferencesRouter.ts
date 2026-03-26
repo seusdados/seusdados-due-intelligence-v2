@@ -28,7 +28,7 @@ const defaultPreferences = {
   showAutoSelectToast: 1,
   showManualSelectToast: 1,
   showClearSelectToast: 1,
-  theme: 'system' as const,
+  theme: 'light' as const,
   language: 'pt-BR',
 };
 
@@ -53,7 +53,7 @@ export const userPreferencesRouter = router({
         showAutoSelectToast: true,
         showManualSelectToast: true,
         showClearSelectToast: true,
-        theme: 'system' as const,
+        theme: 'light' as const,
         language: 'pt-BR',
       };
     }
@@ -151,7 +151,7 @@ export const userPreferencesRouter = router({
         showAutoSelectToast: true,
         showManualSelectToast: true,
         showClearSelectToast: true,
-        theme: 'system' as const,
+        theme: 'light' as const,
         language: 'pt-BR',
       }
     };

@@ -2496,7 +2496,7 @@ export const userPreferences = pgTable("user_preferences", {
   showClearSelectToast: boolean().default(true).notNull(),
   
   // Preferências de interface
-  theme: text().default('system').notNull(),
+  theme: text().default('light').notNull(),
   language: varchar({ length: 10 }).default('pt-BR').notNull(),
   
   createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
