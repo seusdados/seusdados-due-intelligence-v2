@@ -1837,24 +1837,7 @@ export const assessmentsRouter = router({
         })
         .where(eq(assessmentActionPlan.id, input.actionId));
 
-      // Notificar todos os consultores e admin_global por e-mail
-      try {
-        const { sendGenericEmail } = await import('./emailService');
-        const { rows: consultorRows } = await db.execute(
-          sql`SELECT id, name, email FROM users WHERE role IN ('consultor', 'admin_global') AND email IS NOT NULL`
-        ) as any;
-        const baseUrl = getAppBaseUrl();
-        const actionUrl = `${baseUrl}/plano-acao/maturidade?assessmentId=${action.assessmentId}&validacao=1`;
-        for (const c of (consultorRows || [])) {
-          await sendGenericEmail({
-            to: c.email,
-            subject: `Nova ação aguardando validação: ${action.title || 'Ação do Plano'}`,
-            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Ação:</strong> ${action.title || 'Sem título'}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${actionUrl}">Acessar painel de validação</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
-          }).catch(err => console.error('Erro ao notificar consultor:', err));
-        }
-      } catch (err) {
-        console.error('Erro ao enviar notificações:', err);
-      }
+      // Notificação de validação desativada conforme solicitação (reduzir ruído para equipe interna)
 
       return { success: true };
     }),
@@ -2254,21 +2237,7 @@ export const assessmentsRouter = router({
         INSERT INTO action_plan_history ("actionPlanId", "changedById", "changeType", "previousValue", "newValue", notes, "createdAt")
         VALUES (${input.actionId}, ${ctx.user.id}, 'envio_validacao', ${action.status}, ${newStatus}, ${input.observations || (newStatus === 'aguardando_nova_validacao' ? 'Ação reenviada para validação após ajustes' : 'Ação enviada para validação')}, ${now})
       `);
-      // Notificar consultores
-      try {
-        const { sendGenericEmail } = await import('./emailService');
-        const { rows: consultorRows } = await db.execute(
-          sql`SELECT id, name, email FROM users WHERE role IN ('consultor', 'admin_global') AND email IS NOT NULL`
-        ) as any;
-        const baseUrl = getAppBaseUrl();
-        for (const c of (consultorRows || [])) {
-          await sendGenericEmail({
-            to: c.email,
-            subject: `Nova ação aguardando validação: ${action.title}`,
-            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Cliente:</strong> ${action.organizationName}</p><p><strong>Ação:</strong> ${action.title}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${baseUrl}/painel-global">Acessar Central Global</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
-          }).catch(() => {});
-        }
-      } catch (_) {}
+      // Notificação de validação desativada conforme solicitação (reduzir ruído para equipe interna)
       return { success: true };
     }),
 
@@ -2595,18 +2564,7 @@ export const assessmentsRouter = router({
         INSERT INTO action_plan_history ("actionPlanId", "changedById", "changeType", "previousValue", "newValue", notes, "createdAt")
         VALUES (${input.actionId}, ${ctx.user.id}, 'envio_validacao', ${action.status}, ${newStatus}, ${input.observations || (newStatus === 'aguardando_nova_validacao' ? 'Ação reenviada para validação após ajustes' : 'Ação enviada para validação')}, ${now})
       `);
-      try {
-        const { sendGenericEmail } = await import('./emailService');
-        const { rows: consultorRows } = await db.execute(sql`SELECT id, name, email FROM users WHERE role IN ('consultor', 'admin_global') AND email IS NOT NULL`) as any;
-        const baseUrl = getAppBaseUrl();
-        for (const c of (consultorRows || [])) {
-          await sendGenericEmail({
-            to: c.email,
-            subject: `Nova ação aguardando validação: ${action.title}`,
-            html: `<p>Olá, ${c.name || 'Consultor'},</p><p>Uma nova ação foi enviada para validação por <strong>${ctx.user.name || ctx.user.email}</strong>.</p><p><strong>Cliente:</strong> ${action.organizationName || action.organizationLegalName || 'Organização'}</p><p><strong>Ação:</strong> ${action.title}</p>${input.observations ? `<p><strong>Observações:</strong> ${input.observations}</p>` : ''}<p><a href="${baseUrl}/painel-global">Acessar Central Global</a></p><br><p>Seusdados Consultoria em Gestão de Dados Limitada</p>`,
-          }).catch(() => {});
-        }
-      } catch (_) {}
+      // Notificação de validação desativada conforme solicitação (reduzir ruído para equipe interna)
       return { success: true };
     }),
 
