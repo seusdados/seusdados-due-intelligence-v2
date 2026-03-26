@@ -2331,7 +2331,7 @@ ID da Avaliação: ${input.assessmentId}`,
           assessmentTitle: `Avaliação #${action.assessmentId}`,
           organizationName: org?.name || 'Organização',
           assignedByName: ctx.user.name || ctx.user.email || 'Seusdados',
-          platformUrl: `${baseUrl}/avaliacoes/${action.assessmentId}`,
+          platformUrl: `${baseUrl}/avaliacoes/${action.assessmentId}/consultor?tab=plano-de-acao&actionId=${input.actionPlanId}`,
         });
       } catch (err) {
         console.error('Erro ao enviar notificação de responsável:', err);
@@ -2582,7 +2582,7 @@ ID da Avaliação: ${input.assessmentId}`,
           assessmentTitle: `Avaliação #${action.assessmentId}`,
           organizationName: org?.name || 'Organização',
           assignedByName: ctx.user.name || ctx.user.email || 'Seusdados',
-          platformUrl: `${baseUrl}/avaliacoes/${action.assessmentId}`,
+          platformUrl: `${baseUrl}/avaliacoes/${action.assessmentId}/consultor?tab=plano-de-acao&actionId=${input.actionPlanId}`,
         });
       } catch (err) {
         console.error('Erro ao enviar notificação de delegação:', err);
