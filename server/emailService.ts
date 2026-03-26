@@ -74,7 +74,7 @@ export function generateAssessmentEmailTemplate(data: AssessmentEmailData): { ht
           
           <!-- Header com gradiente -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e3a5f 100%); padding: 40px 40px 30px 40px; text-align: center;">
+            <td style="background-color: #1e293b; background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e3a5f 100%); padding: 40px 40px 30px 40px; text-align: center;">
               <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663108549549/aXhenVrNQUAmSuqn.png" alt="Seusdados" style="height: 50px; margin-bottom: 20px;" />
               <p style="color: #d4a853; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px 0; font-weight: 500;">
                 ${assessmentTypeLabel.toUpperCase()}
@@ -105,7 +105,7 @@ export function generateAssessmentEmailTemplate(data: AssessmentEmailData): { ht
                 <tr>
                   <td align="center" style="padding: 20px 0;">
                     <a href="${data.assessmentUrl}" 
-                       style="display: inline-block; background: linear-gradient(135deg, #d4a853 0%, #c9973f 100%); color: #1e293b; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">
+                       style="display: inline-block; background-color: #d4a853; background: linear-gradient(135deg, #d4a853 0%, #c9973f 100%); color: #1e293b; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; mso-padding-alt: 16px 40px;">
                       Iniciar Avaliação
                     </a>
                   </td>
@@ -353,7 +353,7 @@ export function generateUserInviteEmailTemplate(data: UserInviteEmailData): { ht
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
           <tr>
-            <td style="background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
+            <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 300;">Convite para a plataforma</h1>
               <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 28px; font-weight: 600;">Seusdados Due Diligence</h2>
             </td>
@@ -380,7 +380,7 @@ export function generateUserInviteEmailTemplate(data: UserInviteEmailData): { ht
 
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${data.inviteLink}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
                   Aceitar Convite e Acessar
                 </a>
               </div>
@@ -487,7 +487,7 @@ export async function sendWelcomeUserEmail(data: {
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
           <!-- Cabeçalho com gradiente -->          <tr>
-            <td style="background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
+            <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 300;">Bem-vindo(a) à plataforma</h1>
               <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 28px; font-weight: 600;">Seusdados</h2>
             </td>
@@ -515,7 +515,7 @@ export async function sendWelcomeUserEmail(data: {
               <!-- Botão de acesso -->
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${data.loginUrl}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
                   Acessar a Plataforma
                 </a>
               </div>
@@ -735,7 +735,7 @@ export async function sendResponsibleAssignmentEmail(data: {
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
           <tr>
-            <td style="background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
+            <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 300;">Nova Responsabilidade Atribuída</h1>
               <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; font-weight: 600;">Seusdados</h2>
             </td>
@@ -764,7 +764,7 @@ export async function sendResponsibleAssignmentEmail(data: {
 
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${data.platformUrl}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
                   Acessar a Plataforma
                 </a>
               </div>
@@ -1013,7 +1013,7 @@ function generateCompletionRespondentTemplate(data: InterviewCompletionEmailData
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
           <tr>
-            <td style="background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
+            <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 300;">Entrevista Concluída</h1>
               <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; font-weight: 600;">Seusdados</h2>
             </td>
@@ -1073,7 +1073,7 @@ function generateCompletionConsultantTemplate(data: InterviewCompletionEmailData
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
           <tr>
-            <td style="background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
+            <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 300;">Entrevista Finalizada</h1>
               <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; font-weight: 600;">Seusdados</h2>
             </td>
@@ -1106,7 +1106,7 @@ function generateCompletionConsultantTemplate(data: InterviewCompletionEmailData
               ${data.platformUrl ? `
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${data.platformUrl}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
                   Revisar Documentos
                 </a>
               </div>
@@ -1252,7 +1252,7 @@ export async function sendActionPlanResponsibleEmail(data: ActionPlanResponsible
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
           <tr>
-            <td style="background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
+            <td style="background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 300;">Plano de Ação</h1>
               <h2 style="margin: 8px 0 0; color: #ffffff; font-size: 24px; font-weight: 600;">Nova Responsabilidade Atribuída</h2>
             </td>
@@ -1287,7 +1287,7 @@ export async function sendActionPlanResponsibleEmail(data: ActionPlanResponsible
 
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${data.platformUrl}" 
-                   style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
                   Acessar a Plataforma
                 </a>
               </div>
