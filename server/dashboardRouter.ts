@@ -1,4 +1,5 @@
 import { protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "./db";
 import { sql } from "drizzle-orm";
@@ -566,6 +567,11 @@ export const dashboardRouter = router({
       const userId = ctx.user.id;
       const isAdmin = ['admin_global', 'consultor'].includes(userRole);
       const database = await getDb();
+
+      // Garantir que não-admins só vejam dados da própria organização
+      if (!isAdmin && ctx.user.organizationId !== input.organizationId) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso não autorizado a esta organização.' });
+      }
 
       // Avaliações
       const { rows: assessmentRows } = await database.execute(sql`

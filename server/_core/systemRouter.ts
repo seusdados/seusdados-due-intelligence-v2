@@ -62,18 +62,18 @@ export const systemRouter = router({
       
       try {
         // Estatísticas de avaliações de conformidade
-        const orgFilter = orgId ? sql`AND organization_id = ${orgId}` : sql``;
+        const orgFilter = orgId ? sql`AND "organizationId" = ${orgId}` : sql``;
         
         const { rows: complianceResult } = await db.execute(sql`
           SELECT COUNT(*) as count FROM compliance_assessments WHERE 1=1 ${orgFilter}
         `);
-        const complianceAssessments = Number((complianceResult as any)?.count || 0);
+        const complianceAssessments = Number((complianceResult as any[])[0]?.count || 0);
         
         // Avaliações de terceiros
         const { rows: thirdPartyResult } = await db.execute(sql`
           SELECT COUNT(*) as count FROM third_party_assessments WHERE 1=1 ${orgFilter}
         `);
-        const thirdPartyAssessments = Number((thirdPartyResult as any)?.count || 0);
+        const thirdPartyAssessments = Number((thirdPartyResult as any[])[0]?.count || 0);
         
         // Avaliações concluídas
         const { rows: completedResult } = await db.execute(sql`
@@ -81,33 +81,33 @@ export const systemRouter = router({
             (SELECT COUNT(*) FROM compliance_assessments WHERE status = 'concluida' ${orgFilter}) +
             (SELECT COUNT(*) FROM third_party_assessments WHERE status = 'concluida' ${orgFilter}) as count
         `);
-        const completedAssessments = Number((completedResult as any)?.count || 0);
+        const completedAssessments = Number((completedResult as any[])[0]?.count || 0);
         
         // Ações pendentes
         const { rows: pendingActionsResult } = await db.execute(sql`
           SELECT COUNT(*) as count FROM action_plans WHERE status IN ('pendente', 'em_andamento') ${orgFilter}
         `);
-        const pendingActions = Number((pendingActionsResult as any)?.count || 0);
+        const pendingActions = Number((pendingActionsResult as any[])[0]?.count || 0);
         
         // Ações atrasadas
         const { rows: overdueResult } = await db.execute(sql`
           SELECT COUNT(*) as count FROM action_plans 
           WHERE status IN ('pendente', 'em_andamento') 
-          AND due_date < NOW() ${orgFilter}
+          AND "dueDate" < NOW() ${orgFilter}
         `);
-        const overdueActions = Number((overdueResult as any)?.count || 0);
+        const overdueActions = Number((overdueResult as any[])[0]?.count || 0);
         
         // Organizações ativas
         const { rows: orgsResult } = await db.execute(sql`
-          SELECT COUNT(*) as count FROM organizations WHERE is_active = 1
+          SELECT COUNT(*) as count FROM organizations WHERE is_active = true
         `);
-        const activeOrganizations = Number((orgsResult as any)?.count || 0);
+        const activeOrganizations = Number((orgsResult as any[])[0]?.count || 0);
         
         // Tickets abertos
         const { rows: ticketsResult } = await db.execute(sql`
           SELECT COUNT(*) as count FROM tickets WHERE status IN ('aberto', 'em_andamento') ${orgFilter}
         `);
-        const openTickets = Number((ticketsResult as any)?.count || 0);
+        const openTickets = Number((ticketsResult as any[])[0]?.count || 0);
         
         return {
           complianceAssessments,
@@ -159,7 +159,7 @@ export const systemRouter = router({
           WHERE "organizationId" = ${orgId} 
           AND status IN ('novo', 'em_analise')
         `);
-        const unreadTickets = Number((ticketsResult as any)?.count || 0);
+        const unreadTickets = Number((ticketsResult as any[])[0]?.count || 0);
         
         // Contratos vencendo nos próximos 30 dias (tabela usa organization_id)
         const { rows: contractsResult } = await db.execute(sql`
@@ -170,7 +170,7 @@ export const systemRouter = router({
           AND end_date <= NOW() + INTERVAL '30 DAY'
           AND end_date >= NOW()
         `);
-        const expiringContracts = Number((contractsResult as any)?.count || 0);
+        const expiringContracts = Number((contractsResult as any[])[0]?.count || 0);
         
         // Entrevistas de mapeamento pendentes (tabela usa organizationId)
         const { rows: interviewsResult } = await db.execute(sql`
@@ -178,7 +178,7 @@ export const systemRouter = router({
           WHERE "organizationId" = ${orgId}
           AND status = 'pending'
         `);
-        const pendingInterviews = Number((interviewsResult as any)?.count || 0);
+        const pendingInterviews = Number((interviewsResult as any[])[0]?.count || 0);
         
         // Due Diligence pendentes - tabela não existe ainda, retornar 0
         const pendingDueDiligence = 0;
