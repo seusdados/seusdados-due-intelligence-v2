@@ -290,6 +290,8 @@ export default function ActionValidationPage() {
   const { user } = useAuth();
 
   const actionId = params?.id ? parseInt(params.id, 10) : null;
+  const searchParams = new URLSearchParams(window.location.search);
+  const sourceTable = searchParams.get('source') || 'action_plans';
 
   const [approveNotes, setApproveNotes] = useState("");
   const [rejectReason, setRejectReason] = useState("");
@@ -302,7 +304,7 @@ export default function ActionValidationPage() {
   const canValidate = ["admin_global", "consultor"].includes(user?.role || "");
 
   const { data: action, isLoading, refetch } = trpc.assessments.getActionDetails.useQuery(
-    { actionId: actionId! },
+    { actionId: actionId!, sourceTable },
     { enabled: !!actionId && canValidate }
   );
 

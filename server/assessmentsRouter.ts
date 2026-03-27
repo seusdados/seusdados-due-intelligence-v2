@@ -2073,7 +2073,7 @@ export const assessmentsRouter = router({
       if (!['admin_global', 'consultor'].includes(ctx.user.role)) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito à Equipe Interna' });
       }
-      // Buscar ações da tabela action_plans (dados reais de todos os módulos)
+      // Buscar ações de AMBAS as tabelas: action_plans (conformidade/terceiros) + ua_action_plan (maturidade)
       const { rows: rows } = await db.execute(sql`
         SELECT 
           ap.id,
@@ -2084,8 +2084,8 @@ export const assessmentsRouter = router({
           ap.priority,
           ap.status,
           ap."dueDate",
-          ap."responsibleId" as responsibleUserId,
-          COALESCE(ap."responsibleName", u.name) as responsibleName,
+          ap."responsibleId" as "responsibleUserId",
+          COALESCE(ap."responsibleName", u.name) as "responsibleName",
           ap."organizationId",
           ap."createdAt",
           ap."updatedAt",
@@ -2094,13 +2094,44 @@ export const assessmentsRouter = router({
           ap."submittedForValidationAt",
           ap."validationRejectionReason",
           ap.observations,
-          org."tradeName" as organizationName,
-          COALESCE(ua."assessmentCode", CONCAT('AC#', ap."assessmentId")) as assessmentCode
+          org."tradeName" as "organizationName",
+          COALESCE(ua."assessmentCode", CONCAT('AC#', ap."assessmentId")) as "assessmentCode",
+          'action_plans' as "sourceTable"
         FROM action_plans ap
         LEFT JOIN organizations org ON ap."organizationId" = org.id
         LEFT JOIN users u ON ap."responsibleId" = u.id
         LEFT JOIN ua_assessments ua ON ap."assessmentId" = ua.id
-        ORDER BY ap."updatedAt" DESC
+
+        UNION ALL
+
+        SELECT 
+          uap.id,
+          uap."assessmentId",
+          'maturidade' as "assessmentType",
+          uap.title,
+          uap.description,
+          uap.priority,
+          uap.status,
+          uap."dueDate",
+          uap."responsibleUserId" as "responsibleUserId",
+          COALESCE(uap."responsibleName", u2.name) as "responsibleName",
+          ua2."organizationId",
+          uap."createdAt",
+          uap."updatedAt",
+          uap."validatorId",
+          uap."validatorName",
+          uap."submittedForValidationAt",
+          uap."validationRejectionReason",
+          uap.observations,
+          org2."tradeName" as "organizationName",
+          ua2."assessmentCode" as "assessmentCode",
+          'ua_action_plan' as "sourceTable"
+        FROM ua_action_plan uap
+        LEFT JOIN ua_assessments ua2 ON uap."assessmentId" = ua2.id
+        LEFT JOIN organizations org2 ON ua2."organizationId" = org2.id
+        LEFT JOIN users u2 ON uap."responsibleUserId" = u2.id
+
+        ORDER BY "updatedAt" DESC
       `) as any;
       let allActions: any[] = Array.isArray(rows) ? rows : [];
       let filtered = allActions;
@@ -2140,7 +2171,11 @@ export const assessmentsRouter = router({
       if (!['admin_global', 'consultor'].includes(ctx.user.role)) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito à Equipe Interna' });
       }
-      const { rows: rows } = await db.execute(sql`SELECT status, "dueDate" FROM action_plans`) as any;
+      const { rows: rows } = await db.execute(sql`
+        SELECT status, "dueDate" FROM action_plans
+        UNION ALL
+        SELECT status, "dueDate" FROM ua_action_plan
+      `) as any;
       const allActions: any[] = Array.isArray(rows) ? rows : [];
       const now = new Date();
       const stats: Record<string, number> = {
@@ -2169,7 +2204,12 @@ export const assessmentsRouter = router({
       }
       const { rows: rows } = await db.execute(sql`
         SELECT DISTINCT org.id, org."tradeName" as name
-        FROM action_plans ap
+        FROM (
+          SELECT "organizationId" FROM action_plans
+          UNION ALL
+          SELECT ua."organizationId" FROM ua_action_plan uap
+          JOIN ua_assessments ua ON uap."assessmentId" = ua.id
+        ) ap
         INNER JOIN organizations org ON ap."organizationId" = org.id
         ORDER BY org."tradeName"
       `) as any;
@@ -2390,25 +2430,48 @@ export const assessmentsRouter = router({
    * Buscar detalhes completos de uma ação (action_plans) para o consultor
    */
   getActionDetails: protectedProcedure
-    .input(z.object({ actionId: z.number() }))
+    .input(z.object({ actionId: z.number(), sourceTable: z.string().optional().default('action_plans') }))
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
       if (!['admin_global', 'consultor'].includes(ctx.user.role)) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito à Equipe Interna' });
       }
-      const { rows: rows } = await db.execute(sql`
-        SELECT ap.*,
-               u.name as responsibleUserName, u.email as responsibleEmail,
-               org."tradeName" as organizationName,
-               COALESCE(ua."assessmentCode", CONCAT('AC#', ap."assessmentId")) as assessmentCode
-        FROM action_plans ap
-        LEFT JOIN users u ON ap."responsibleId" = u.id
-        LEFT JOIN organizations org ON ap."organizationId" = org.id
-        LEFT JOIN ua_assessments ua ON ap."assessmentId" = ua.id
-        WHERE ap.id = ${input.actionId}
-      `) as any;
-      const action = Array.isArray(rows) ? rows[0] : null;
+      let action: any = null;
+      if (input.sourceTable === 'ua_action_plan') {
+        // Buscar da tabela ua_action_plan (avaliações de maturidade)
+        const { rows: rows } = await db.execute(sql`
+          SELECT uap.*,
+                 uap."responsibleUserId" as "responsibleId",
+                 u.name as "responsibleUserName", u.email as "responsibleEmail",
+                 org."tradeName" as "organizationName",
+                 ua."assessmentCode" as "assessmentCode",
+                 ua."organizationId" as "organizationId",
+                 'ua_action_plan' as "sourceTable",
+                 'maturidade' as "assessmentType"
+          FROM ua_action_plan uap
+          LEFT JOIN users u ON uap."responsibleUserId" = u.id
+          LEFT JOIN ua_assessments ua ON uap."assessmentId" = ua.id
+          LEFT JOIN organizations org ON ua."organizationId" = org.id
+          WHERE uap.id = ${input.actionId}
+        `) as any;
+        action = Array.isArray(rows) ? rows[0] : null;
+      } else {
+        // Buscar da tabela action_plans (conformidade/terceiros)
+        const { rows: rows } = await db.execute(sql`
+          SELECT ap.*,
+                 u.name as "responsibleUserName", u.email as "responsibleEmail",
+                 org."tradeName" as "organizationName",
+                 COALESCE(ua."assessmentCode", CONCAT('AC#', ap."assessmentId")) as "assessmentCode",
+                 'action_plans' as "sourceTable"
+          FROM action_plans ap
+          LEFT JOIN users u ON ap."responsibleId" = u.id
+          LEFT JOIN organizations org ON ap."organizationId" = org.id
+          LEFT JOIN ua_assessments ua ON ap."assessmentId" = ua.id
+          WHERE ap.id = ${input.actionId}
+        `) as any;
+        action = Array.isArray(rows) ? rows[0] : null;
+      }
       if (!action) return null;
       // Buscar evidências (JOIN com ged_documents e documents)
       const { rows: evidRows } = await db.execute(sql`
@@ -2541,6 +2604,7 @@ export const assessmentsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB indisponível' });
       const action = await getActionPlanById(input.actionId);
+      const tableName = action?.sourceTable === 'ua_action_plan' ? 'ua_action_plan' : 'action_plans';
       if (!action) throw new TRPCError({ code: 'NOT_FOUND', message: 'Ação não encontrada' });
       assertResponsibleOrInternal(ctx.user as any, action);
       if (!action.responsibleId) {
@@ -2552,7 +2616,7 @@ export const assessmentsRouter = router({
       const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
       const newStatus = action.status === 'ajustes_solicitados' ? 'aguardando_nova_validacao' : 'aguardando_validacao';
       await db.execute(sql`
-        UPDATE action_plans SET
+        UPDATE ${sql.raw(tableName)} SET
           status = ${newStatus},
           "submittedForValidationAt" = ${now},
           observations = COALESCE(${input.observations || null}, observations),
@@ -2577,6 +2641,7 @@ export const assessmentsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas consultores podem assumir validações' });
       }
       const action = await getActionPlanById(input.actionId);
+      const tableName = action?.sourceTable === 'ua_action_plan' ? 'ua_action_plan' : 'action_plans';
       if (!action) throw new TRPCError({ code: 'NOT_FOUND', message: 'Ação não encontrada' });
       if (!ACTION_PLAN_VALIDATION_AWAITING_STATUSES.includes(action.status as any)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Esta ação não está aguardando validação' });
@@ -2587,7 +2652,7 @@ export const assessmentsRouter = router({
       const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
       const validatorName = ctx.user.name || ctx.user.email || 'Consultor';
       await db.execute(sql`
-        UPDATE action_plans SET
+        UPDATE ${sql.raw(tableName)} SET
           status = 'em_validacao',
           "validatorId" = ${ctx.user.id},
           "validatorName" = ${validatorName},
@@ -2613,6 +2678,7 @@ export const assessmentsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas consultores podem aprovar validações' });
       }
       const action = await getActionPlanById(input.actionId);
+      const tableName = action?.sourceTable === 'ua_action_plan' ? 'ua_action_plan' : 'action_plans';
       if (!action) throw new TRPCError({ code: 'NOT_FOUND', message: 'Ação não encontrada' });
       if (!ACTION_PLAN_VALIDATION_OPEN_STATUSES.includes(action.status as any)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Esta ação não está em processo de validação' });
@@ -2623,7 +2689,7 @@ export const assessmentsRouter = router({
       const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
       const validatorName = ctx.user.name || ctx.user.email || 'Consultor';
       await db.execute(sql`
-        UPDATE action_plans SET
+        UPDATE ${sql.raw(tableName)} SET
           status = 'concluida',
           "validatorId" = ${ctx.user.id},
           "validatorName" = ${validatorName},
@@ -2663,6 +2729,7 @@ export const assessmentsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas consultores podem recusar validações' });
       }
       const action = await getActionPlanById(input.actionId);
+      const tableName = action?.sourceTable === 'ua_action_plan' ? 'ua_action_plan' : 'action_plans';
       if (!action) throw new TRPCError({ code: 'NOT_FOUND', message: 'Ação não encontrada' });
       if (!ACTION_PLAN_VALIDATION_OPEN_STATUSES.includes(action.status as any)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Esta ação não está em processo de validação' });
@@ -2673,7 +2740,7 @@ export const assessmentsRouter = router({
       const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
       const validatorName = ctx.user.name || ctx.user.email || 'Consultor';
       await db.execute(sql`
-        UPDATE action_plans SET
+        UPDATE ${sql.raw(tableName)} SET
           status = 'ajustes_solicitados',
           "validatorId" = ${ctx.user.id},
           "validatorName" = ${validatorName},
@@ -2700,45 +2767,7 @@ export const assessmentsRouter = router({
       return { success: true };
     }),
 
-  getActionDetails: protectedProcedure
-    .input(z.object({ actionId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return null;
-      if (!['admin_global', 'consultor'].includes(ctx.user.role)) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito à Equipe Interna' });
-      }
-      const action = await getActionPlanById(input.actionId);
-      if (!action) return null;
-      const { rows: evidRows } = await db.execute(sql`
-        SELECT 
-          e.id, e."actionPlanId", e."documentId", e.description, e."addedById", e."createdAt",
-          COALESCE(gd.name, d.name) as "documentName",
-          COALESCE(gd."fileUrl", d."fileUrl") as "fileUrl",
-          COALESCE(gd."mimeType", d."mimeType") as "mimeType",
-          COALESCE(gd."fileSize", d."fileSize") as "fileSize",
-          COALESCE(gd."fileName", gd.name, d.name) as "fileName",
-          u2.name as "addedByName"
-        FROM action_plan_evidence e
-        LEFT JOIN ged_documents gd ON e."documentId" = gd.id
-        LEFT JOIN documents d ON e."documentId" = d.id
-        LEFT JOIN users u2 ON e."addedById" = u2.id
-        WHERE e."actionPlanId" = ${input.actionId}
-        ORDER BY e."createdAt" DESC
-      `) as any;
-      const { rows: histRows } = await db.execute(sql`
-        SELECT h.*, u.name as "changedByName"
-        FROM action_plan_history h
-        LEFT JOIN users u ON h."changedById" = u.id
-        WHERE h."actionPlanId" = ${input.actionId}
-        ORDER BY h."createdAt" ASC
-      `) as any;
-      return {
-        ...action,
-        evidences: Array.isArray(evidRows) ? evidRows : [],
-        history: Array.isArray(histRows) ? histRows : [],
-      };
-    }),
+
 
   transferActionValidation: protectedProcedure
     .input(z.object({
@@ -2753,6 +2782,7 @@ export const assessmentsRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas consultores podem transferir validações' });
       }
       const action = await getActionPlanById(input.actionId);
+      const tableName = action?.sourceTable === 'ua_action_plan' ? 'ua_action_plan' : 'action_plans';
       if (!action) throw new TRPCError({ code: 'NOT_FOUND', message: 'Ação não encontrada' });
       if (!ACTION_PLAN_VALIDATION_OPEN_STATUSES.includes(action.status as any)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Esta ação não está em processo de validação' });
@@ -2769,7 +2799,7 @@ export const assessmentsRouter = router({
       const previousValidatorName = action.validatorName || ctx.user.name || 'Consultor anterior';
       const transferredByName = ctx.user.name || ctx.user.email || 'Consultor';
       await db.execute(sql`
-        UPDATE action_plans SET
+        UPDATE ${sql.raw(tableName)} SET
           "validatorId" = ${newValidator.id},
           "validatorName" = ${newValidator.name},
           "updatedAt" = ${now}

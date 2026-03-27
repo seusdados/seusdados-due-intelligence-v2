@@ -28,6 +28,7 @@ export type ActionPlanRecord = {
   title?: string | null;
   description?: string | null;
   assessmentId?: number | null;
+  sourceTable?: string | null;
 };
 
 export function isInternalActionPlanRole(role?: string | null): boolean {
@@ -96,23 +97,48 @@ export function assertUserCanAccessActionPlan(
   }
 }
 
+/**
+ * Busca uma ação pelo ID, primeiro em action_plans, depois em ua_action_plan.
+ * Retorna o registro com o campo sourceTable indicando a tabela de origem.
+ */
 export async function getActionPlanById(actionId: number): Promise<any | null> {
   const db = await getDb();
   if (!db) {
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB indisponível" });
   }
 
-  const { rows: rows } = await db.execute(sql`
-    SELECT ap.*, u.name as responsibleUserName, u.email as responsibleEmail,
-           org."tradeName" as organizationName, org.name as organizationLegalName
+  // Primeiro buscar em action_plans
+  const { rows: rows1 } = await db.execute(sql`
+    SELECT ap.*, u.name as "responsibleUserName", u.email as "responsibleEmail",
+           org."tradeName" as "organizationName", org.name as "organizationLegalName",
+           'action_plans' as "sourceTable"
     FROM action_plans ap
     LEFT JOIN users u ON ap."responsibleId" = u.id
     LEFT JOIN organizations org ON ap."organizationId" = org.id
     WHERE ap.id = ${actionId}
     LIMIT 1
   `) as any;
+  const fromActionPlans = Array.isArray(rows1) ? rows1[0] ?? null : null;
+  if (fromActionPlans) return fromActionPlans;
 
-  return Array.isArray(rows) ? rows[0] ?? null : null;
+  // Se não encontrou, buscar em ua_action_plan
+  const { rows: rows2 } = await db.execute(sql`
+    SELECT uap.*,
+           uap."responsibleUserId" as "responsibleId",
+           u.name as "responsibleUserName", u.email as "responsibleEmail",
+           org."tradeName" as "organizationName", org.name as "organizationLegalName",
+           ua."organizationId" as "organizationId",
+           ua."assessmentCode" as "assessmentCode",
+           'ua_action_plan' as "sourceTable",
+           'maturidade' as "assessmentType"
+    FROM ua_action_plan uap
+    LEFT JOIN users u ON uap."responsibleUserId" = u.id
+    LEFT JOIN ua_assessments ua ON uap."assessmentId" = ua.id
+    LEFT JOIN organizations org ON ua."organizationId" = org.id
+    WHERE uap.id = ${actionId}
+    LIMIT 1
+  `) as any;
+  return Array.isArray(rows2) ? rows2[0] ?? null : null;
 }
 
 export async function getActionPlanEvidenceById(evidenceId: number): Promise<any | null> {

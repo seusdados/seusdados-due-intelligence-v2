@@ -625,7 +625,8 @@ export default function GlobalActionPanel() {
   };
 
   const handleOpenAction = (action: any) => {
-    navigate(`/plano-acao/validacao/${action.id}`);
+    const source = action.sourceTable || 'action_plans';
+    navigate(`/plano-acao/validacao/${action.id}?source=${source}`);
   };
 
   if (!isInternal) {
@@ -867,7 +868,7 @@ export default function GlobalActionPanel() {
                 </thead>
                 <tbody>
                   {items.map((action: any) => (
-                    <ActionRow key={action.id} action={action} onOpen={handleOpenAction} />
+                    <ActionRow key={`${action.sourceTable || 'ap'}-${action.id}`} action={action} onOpen={handleOpenAction} />
                   ))}
                 </tbody>
               </table>
