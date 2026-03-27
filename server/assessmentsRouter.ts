@@ -87,10 +87,32 @@ export const assessmentsRouter = router({
 
       const orgId = input?.organizationId || ctx.user.organizationId;
       const isInternal = ['admin_global', 'consultor', 'sponsor'].includes(ctx.user.role);
+      const isClientRole = ['comite', 'lider_processo', 'gestor_area'].includes(ctx.user.role);
 
       // Internos veem todas (ou filtradas por org se especificado)
       if (isInternal && !orgId) {
         return db.select().from(unifiedAssessments);
+      }
+
+      // Perfis de cliente: apenas avaliações onde o usuário tem domínio atribuído
+      if (isClientRole) {
+        const assignments = await db
+          .select({ assessmentId: assessmentAssignments.assessmentId })
+          .from(assessmentAssignments)
+          .where(eq(assessmentAssignments.assignedToUserId, ctx.user.id));
+
+        if (assignments.length === 0) return [];
+
+        const linkedIds = [...new Set(assignments.map(a => a.assessmentId))];
+        return db
+          .select()
+          .from(unifiedAssessments)
+          .where(
+            and(
+              eq(unifiedAssessments.organizationId, orgId || 0),
+              inArray(unifiedAssessments.id, linkedIds)
+            )
+          );
       }
 
       return db

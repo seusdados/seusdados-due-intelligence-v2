@@ -40,7 +40,8 @@ import {
   clauseAuditLog,
   actionPlanEvidence,
   contractAnalysisClauses,
-  actionPlanHistory
+  actionPlanHistory,
+  unifiedAssessments
 } from "../drizzle/schema";
 
 // Type definitions using InferSelectModel and InferInsertModel
@@ -870,9 +871,10 @@ export async function getOrganizationStats(organizationId: number) {
   const db = await getDb();
   if (!db) return null;
   
+  // Avaliações unificadas (tabela principal: ua_assessments)
   const [complianceCount] = await db.select({ count: sql<number>`count(*)` })
-    .from(complianceAssessments)
-    .where(eq(complianceAssessments.organizationId, organizationId));
+    .from(unifiedAssessments)
+    .where(eq(unifiedAssessments.organizationId, organizationId));
   
   const [thirdPartyCount] = await db.select({ count: sql<number>`count(*)` })
     .from(thirdPartyAssessments)

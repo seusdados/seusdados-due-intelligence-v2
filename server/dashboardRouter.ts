@@ -573,15 +573,31 @@ export const dashboardRouter = router({
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso não autorizado a esta organização.' });
       }
 
-      // Avaliações
-      const { rows: assessmentRows } = await database.execute(sql`
-        SELECT 
-          COUNT(*) as total,
-          SUM(CASE WHEN status = 'em_andamento' THEN 1 ELSE 0 END) as "emAndamento",
-          SUM(CASE WHEN status = 'concluida' THEN 1 ELSE 0 END) as concluidas
-        FROM compliance_assessments
-        WHERE "organizationId" = ${input.organizationId}
-      `);
+      // Avaliações — tabela principal é ua_assessments (unifiedAssessments)
+      // Clientes veem apenas avaliações onde têm domínio atribuído (via ua_assignments)
+      const isClientRole = ['comite', 'lider_processo', 'gestor_area'].includes(userRole);
+      const { rows: assessmentRows } = isClientRole
+        ? await database.execute(sql`
+          SELECT 
+            COUNT(DISTINCT ua.id) as total,
+            SUM(CASE WHEN ua.status = 'em_andamento' THEN 1 ELSE 0 END) as "emAndamento",
+            SUM(CASE WHEN ua.status IN ('concluida', 'finalizada', 'completed') THEN 1 ELSE 0 END) as concluidas
+          FROM ua_assessments ua
+          WHERE ua."organizationId" = ${input.organizationId}
+            AND EXISTS (
+              SELECT 1 FROM ua_assignments uaa
+              WHERE uaa."assessmentId" = ua.id
+                AND uaa."assignedToUserId" = ${userId}
+            )
+        `)
+        : await database.execute(sql`
+          SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN status = 'em_andamento' THEN 1 ELSE 0 END) as "emAndamento",
+            SUM(CASE WHEN status IN ('concluida', 'finalizada', 'completed') THEN 1 ELSE 0 END) as concluidas
+          FROM ua_assessments
+          WHERE "organizationId" = ${input.organizationId}
+        `);
 
       // Terceiros
       const { rows: thirdPartyRows } = await database.execute(sql`

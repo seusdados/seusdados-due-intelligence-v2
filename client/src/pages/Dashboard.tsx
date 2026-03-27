@@ -487,7 +487,7 @@ export default function Dashboard() {
             <StatCard
               icon={ClipboardCheck}
               iconGradient="emerald"
-              value={isLoading ? '...' : String((dashSummary?.avaliacoes?.total || orgStatsData?.complianceAssessments || 0) + (orgStatsData?.thirdPartyAssessments || 0)).padStart(2, '0')}
+              value={isLoading ? '...' : String(dashSummary?.avaliacoes?.total ?? orgStatsData?.complianceAssessments ?? 0).padStart(2, '0')}
               label="Avaliações"
               onClick={() => handleNavigate('/avaliacoes')}
             />
