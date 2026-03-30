@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import crypto from 'crypto';
 
+// Necessário para certificados self-signed do DigitalOcean managed DB
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const { Pool } = pg;
 
 const NAME = 'Lucas Santos';
@@ -16,7 +19,7 @@ async function main() {
     process.exit(1);
   }
 
-  const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false } });
+  const pool = new Pool({ connectionString });
 
   // Verificar se já existe
   const existing = await pool.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [EMAIL]);
