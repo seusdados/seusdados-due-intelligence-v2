@@ -28,9 +28,16 @@ export function getAllowedOrigins(): string[] {
     origins.push(...envOrigins);
   }
   
-  // Add frontend URL if specified
+  // Add frontend URL if specified (strip trailing slash — browser sends Origin without it)
   if (process.env.FRONTEND_URL) {
-    origins.push(process.env.FRONTEND_URL);
+    const frontendUrl = process.env.FRONTEND_URL.replace(/\/$/, "");
+    origins.push(frontendUrl);
+  }
+  
+  // Add public app URL if specified
+  if (process.env.PUBLIC_APP_URL) {
+    const publicUrl = process.env.PUBLIC_APP_URL.replace(/\/$/, "");
+    origins.push(publicUrl);
   }
   
   return origins;
