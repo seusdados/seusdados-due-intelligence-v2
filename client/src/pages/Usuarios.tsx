@@ -528,7 +528,7 @@ export default function Usuarios() {
                               <><UserX className="h-3 w-3 mr-1" /> Inativo</>
                             )}
                           </Badge>
-                          {!user.passwordHash && (user.openId?.startsWith('manual_') || user.openId?.startsWith('quick_')) && (
+                          {(user.openId?.startsWith('manual_') || user.openId?.startsWith('quick_')) && (
                             <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
                               <AlertTriangle className="h-3 w-3 mr-1" />
                               Aguardando 1º login
@@ -570,7 +570,7 @@ export default function Usuarios() {
                                 Vincular a {selectedOrganization.name?.substring(0, 20)}{(selectedOrganization.name?.length || 0) > 20 ? '...' : ''}
                               </DropdownMenuItem>
                             )}
-                            {!user.passwordHash && (user.openId?.startsWith('manual_') || user.openId?.startsWith('quick_')) && user.email && (
+                            {(user.openId?.startsWith('manual_') || user.openId?.startsWith('quick_')) && user.email && (
                               <>
                                 <DropdownMenuItem onClick={() => {
                                   const inviteUrl = getInviteLoginUrl(user.email!);

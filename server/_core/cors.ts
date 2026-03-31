@@ -13,7 +13,7 @@ const BASE_ALLOWED_ORIGINS = [
   "http://localhost:3000",      // Local development
   "http://localhost:5173",      // Vite dev server
   "https://seusdados-due-diligence.manus.space", // Production domain (manus.space)
-  "https://dll.seusdados.com",  // Production domain (custom)
+  "https://hub.seusdados.com/",  // Production domain (custom)
 ];
 
 /**

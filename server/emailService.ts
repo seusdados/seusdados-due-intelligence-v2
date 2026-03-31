@@ -26,7 +26,7 @@ function getLogoAttachment() {
 const resend = ENV.resendApiKey ? new Resend(ENV.resendApiKey) : null;
 
 // Domínio verificado para envio (deve estar verificado no Resend)
-const FROM_EMAIL = 'Seusdados <noreply@dll.seusdados.com>';
+const FROM_EMAIL = 'Seusdados <noreply@hub.seusdados.com>';
 
 /**
  * Interface unificada para dados de e-mail de avaliação
@@ -123,10 +123,16 @@ export function generateAssessmentEmailTemplate(data: AssessmentEmailData): { ht
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="padding: 20px 0;">
-                    <a href="${data.assessmentUrl}" 
-                       style="display: inline-block; background-color: #d4a853; background: linear-gradient(135deg, #d4a853 0%, #c9973f 100%); color: #1e293b; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; mso-padding-alt: 16px 40px;">
-                      Iniciar Avaliação
-                    </a>
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+                      <tr>
+                        <td style="background-color: #d4a853; border-radius: 8px; text-align: center;">
+                          <a href="${data.assessmentUrl}" 
+                             style="display: inline-block; background: linear-gradient(135deg, #d4a853 0%, #c9973f 100%); color: #1e293b; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; mso-padding-alt: 16px 40px;">
+                            Iniciar Avaliação
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
@@ -396,12 +402,22 @@ export function generateUserInviteEmailTemplate(data: UserInviteEmailData): { ht
                 Para aceitar o convite e configurar seu acesso, clique no botão abaixo:
               </p>
 
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${data.inviteLink}" 
-                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
-                  Aceitar Convite e Acessar
-                </a>
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 32px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #6B3FD9; border-radius: 8px; text-align: center;">
+                          <a href="${data.inviteLink}" 
+                             style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
+                            Aceitar Convite e Acessar
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
               <p style="margin: 16px 0 0; color: #6b7280; font-size: 12px; text-align: center;">
                 Caso o botão não funcione, copie e cole o link abaixo no seu navegador:
@@ -532,12 +548,22 @@ export async function sendWelcomeUserEmail(data: {
               </p>
 
               <!-- Botão de acesso -->
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${data.loginUrl}" 
-                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
-                  Acessar a Plataforma
-                </a>
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 32px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #6B3FD9; border-radius: 8px; text-align: center;">
+                          <a href="${data.loginUrl}" 
+                             style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
+                            Acessar a Plataforma
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
               <p style="margin: 0 0 8px; color: #6b7280; font-size: 12px;">
                 Se o botão não funcionar, copie e cole o link abaixo no seu navegador:
@@ -782,12 +808,22 @@ export async function sendResponsibleAssignmentEmail(data: {
                 </p>
               </div>
 
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${data.platformUrl}" 
-                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
-                  Acessar a Plataforma
-                </a>
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 32px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #6B3FD9; border-radius: 8px; text-align: center;">
+                          <a href="${data.platformUrl}" 
+                             style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
+                            Acessar a Plataforma
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
               <p style="margin: 0 0 8px; color: #6b7280; font-size: 12px;">
                 Se o botão não funcionar, copie e cole o link abaixo no seu navegador:
@@ -1125,12 +1161,22 @@ function generateCompletionConsultantTemplate(data: InterviewCompletionEmailData
               </div>
 
               ${data.platformUrl ? `
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${data.platformUrl}" 
-                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
-                  Revisar Documentos
-                </a>
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 32px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #6B3FD9; border-radius: 8px; text-align: center;">
+                          <a href="${data.platformUrl}" 
+                             style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
+                            Revisar Documentos
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
               ` : ''}
 
               <div style="background-color: #FFF7ED; border-radius: 8px; padding: 16px; margin-bottom: 24px; border-left: 4px solid #F59E0B;">
@@ -1308,12 +1354,22 @@ export async function sendActionPlanResponsibleEmail(data: ActionPlanResponsible
                 </p>
               </div>
 
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${data.platformUrl}" 
-                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
-                  Acessar a Plataforma
-                </a>
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 32px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #6B3FD9; border-radius: 8px; text-align: center;">
+                          <a href="${data.platformUrl}" 
+                             style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
+                            Acessar a Plataforma
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
               <p style="margin: 0 0 8px; color: #6b7280; font-size: 12px;">
                 Se o botão não funcionar, copie e cole o link abaixo no seu navegador:
@@ -1405,12 +1461,22 @@ export async function sendPasswordResetEmail(data: {
               </div>
 
               <!-- Botão de acesso -->
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${data.resetUrl}" 
-                   style="display: inline-block; background-color: #6B3FD9; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
-                  Redefinir Minha Senha
-                </a>
-              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="center" style="padding: 32px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color: #6B3FD9; border-radius: 8px; text-align: center;">
+                          <a href="${data.resetUrl}" 
+                             style="display: inline-block; background: linear-gradient(135deg, #6B3FD9, #00A8E8); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; mso-padding-alt: 14px 40px;">
+                            Redefinir Minha Senha
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
               <p style="margin: 0 0 8px; color: #6b7280; font-size: 12px;">
                 Se o botão não funcionar, copie e cole o link abaixo no seu navegador:

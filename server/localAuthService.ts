@@ -71,9 +71,9 @@ export async function validateLocalCredentials(
   }
   
   // Atualizar último login e limpar indicadores de primeiro acesso
-  const needsOpenIdUpdate = user.openId?.startsWith('manual_');
+  const needsOpenIdUpdate = user.openId?.startsWith('manual_') || user.openId?.startsWith('quick_');
   if (needsOpenIdUpdate) {
-    // Gerar novo openId sem prefixo 'manual_' para indicar que o primeiro login foi realizado
+    // Gerar novo openId sem prefixo 'manual_'/'quick_' para indicar que o primeiro login foi realizado
     const newOpenId = `local_${user.id}_${Date.now()}`;
     await db.execute(sql`
       UPDATE users 

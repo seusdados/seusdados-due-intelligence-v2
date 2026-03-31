@@ -111,7 +111,7 @@ export function OrganizationSelectorCompact() {
                 {organizations?.map((org) => (
                   <CommandItem
                     key={org.id}
-                    value={org.name}
+                    value={`${org.name}__${org.id}`}
                     onSelect={() => {
                       setSelectedOrganization({
                         id: org.id,

@@ -76,7 +76,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "https://seusdados-due-diligence.manus.space",
-  "https://dll.seusdados.com",
+  "https://hub.seusdados.com/",
   "https://due-intelligence-2zorf.ondigitalocean.app",
   "https://sea-turtle-app-l53fc.ondigitalocean.app",
 ];
