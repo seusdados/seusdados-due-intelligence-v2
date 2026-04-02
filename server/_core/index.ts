@@ -233,6 +233,12 @@ async function startServer() {
   
   // ========== ROUTES ==========
   
+  // ========== HEALTH CHECK ==========
+  // Responde imediatamente para o DigitalOcean App Platform
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+  
   // Auth rate limiting
   app.use("/api/oauth", authLimiter);
   app.use("/api/auth", authLimiter);
@@ -355,31 +361,40 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${port}/ (PORT=${process.env.PORT || 'not set'})`);
     
-    // Iniciar scheduler de verificação de SLA
+    // Iniciar schedulers em produção (erros não devem derrubar o servidor)
     if (process.env.NODE_ENV === 'production') {
-      startSLAScheduler();
-      console.log('SLA Scheduler iniciado');
+      try {
+        startSLAScheduler();
+        console.log('SLA Scheduler iniciado');
+      } catch (e: any) { console.error('Falha ao iniciar SLA Scheduler:', e.message); }
       
-      // Iniciar cron job de verificação de prazos do plano de ação
-      initializeActionPlanCronJob();
-      console.log('Action Plan Cron Job iniciado');
+      try {
+        initializeActionPlanCronJob();
+        console.log('Action Plan Cron Job iniciado');
+      } catch (e: any) { console.error('Falha ao iniciar Action Plan Cron:', e.message); }
       
-      // Iniciar serviço de notificações automáticas de prazos por severidade
-      startDeadlineNotificationService();
-      console.log('Deadline Notification Service iniciado');
+      try {
+        startDeadlineNotificationService();
+        console.log('Deadline Notification Service iniciado');
+      } catch (e: any) { console.error('Falha ao iniciar Deadline Notification:', e.message); }
 
-      // Iniciar cron job de revisão periódica (se ENABLE_REVIEW_CRON=true)
-      initializeReviewCron();
-      console.log('Review Cron Job verificado');
+      try {
+        initializeReviewCron();
+        console.log('Review Cron Job verificado');
+      } catch (e: any) { console.error('Falha ao iniciar Review Cron:', e.message); }
 
-      // Iniciar verificação diária de ações vencidas do CPPD
-      initializeCppdOverdueJob();
-      console.log('CPPD Overdue Job iniciado');
+      try {
+        initializeCppdOverdueJob();
+        console.log('CPPD Overdue Job iniciado');
+      } catch (e: any) { console.error('Falha ao iniciar CPPD Overdue Job:', e.message); }
     }
   });
 }
 
-startServer().catch(console.error);
+startServer().catch((err) => {
+  console.error('FATAL: Server failed to start:', err);
+  process.exit(1);
+});
