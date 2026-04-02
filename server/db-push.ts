@@ -5,15 +5,17 @@
  */
 import { execSync } from "child_process";
 
-const TIMEOUT_MS = 30_000; // 30 segundos máximo
+const TIMEOUT_MS = 20_000; // 20 segundos máximo
 
 try {
   console.log("[db-push] Iniciando drizzle-kit push --force...");
-  execSync("npx drizzle-kit push --force", {
+  console.log("[db-push] DATABASE_URL definida:", !!process.env.DATABASE_URL);
+  const startTime = Date.now();
+  execSync("node_modules/.bin/drizzle-kit push --force", {
     stdio: "inherit",
     timeout: TIMEOUT_MS,
   });
-  console.log("[db-push] Schema sincronizado com sucesso.");
+  console.log(`[db-push] Schema sincronizado com sucesso em ${Date.now() - startTime}ms.`);
 } catch (err: any) {
   console.error("[db-push] Falha ao sincronizar schema (servidor vai iniciar mesmo assim):", err.message || err);
 }

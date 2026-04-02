@@ -3,8 +3,12 @@ import fs from "fs";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
 import path from "path";
+import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
+
+// Robust __dirname fallback for ESM (import.meta.dirname requires Node >= 20.11)
+const __esmDirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -26,7 +30,7 @@ export async function setupVite(app: Express, server: Server) {
 
     try {
       const clientTemplate = path.resolve(
-        import.meta.dirname,
+        __esmDirname,
         "../..",
         "client",
         "index.html"
@@ -49,8 +53,8 @@ export async function setupVite(app: Express, server: Server) {
 
 function getDistPath() {
   return process.env.NODE_ENV === "development"
-    ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-    : path.resolve(import.meta.dirname, "public");
+    ? path.resolve(__esmDirname, "../..", "dist", "public")
+    : path.resolve(__esmDirname, "public");
 }
 
 // Serve static assets early (before CORS checks) so CSS/JS aren't blocked

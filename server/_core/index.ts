@@ -178,6 +178,11 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
+  // ========== EARLY HEALTH CHECK (before all middleware) ==========
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // ========== SECURITY MIDDLEWARES ==========
   
   // Trust proxy for rate limiting behind reverse proxy
@@ -232,12 +237,6 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   
   // ========== ROUTES ==========
-  
-  // ========== HEALTH CHECK ==========
-  // Responde imediatamente para o DigitalOcean App Platform
-  app.get("/api/health", (_req, res) => {
-    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
-  });
   
   // Auth rate limiting
   app.use("/api/oauth", authLimiter);
@@ -355,14 +354,21 @@ async function startServer() {
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  
+  // In production, use PORT directly without probing (avoids creating temp servers)
+  const port = process.env.NODE_ENV === "production"
+    ? preferredPort
+    : await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  console.log(`[startup] Binding server to 0.0.0.0:${port} (NODE_ENV=${process.env.NODE_ENV || 'not set'})...`);
+
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${port}/ (PORT=${process.env.PORT || 'not set'})`);
+    console.log(`[startup] Health check available at http://0.0.0.0:${port}/api/health`);
     
     // Iniciar schedulers em produção (erros não devem derrubar o servidor)
     if (process.env.NODE_ENV === 'production') {
