@@ -1,3 +1,4 @@
+console.log(`[boot] Process starting (pid=${process.pid}, node=${process.version}, PORT=${process.env.PORT}, NODE_ENV=${process.env.NODE_ENV})`);
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
