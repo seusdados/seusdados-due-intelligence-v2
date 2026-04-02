@@ -186,9 +186,17 @@ function OrganizationCard({
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-              {org.name?.charAt(0)?.toUpperCase() || 'O'}
-            </div>
+            {org.logoUrl ? (
+              <img 
+                src={org.logoUrl} 
+                alt={org.name} 
+                className="w-12 h-12 rounded-xl object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                {org.name?.charAt(0)?.toUpperCase() || 'O'}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-card-foreground truncate">{org.name}</h3>
               <p className="text-sm text-muted-foreground font-light truncate">
@@ -969,7 +977,7 @@ export default function CadastrosDashboard() {
                   <p className="text-white/70 label-executive">Centro de Controle</p>
                   <h1 className="heading-2 text-white">Gestão de Cadastros</h1>
                   <p className="text-white/80 mt-1 font-light">
-                    Gerencie organizações, usuários e convites em um único lugar.
+                    Gerencie organizações e usuários em um único lugar.
                   </p>
                 </div>
               </div>
@@ -999,20 +1007,15 @@ export default function CadastrosDashboard() {
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Atualizar
                 </Button>
-                <Button 
-                  className=""
-                  onClick={() => {
-                    if (activeTab === 'organizations') setShowNewOrgModal(true);
-                    else if (activeTab === 'users') setShowNewInviteModal(true);
-                    else if (activeTab === 'invites') setShowNewInviteModal(true);
-                    else setShowNewOrgModal(true);
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {activeTab === 'organizations' ? 'Nova Organização' : 
-                   activeTab === 'users' ? 'Convidar Usuário' : 
-                   activeTab === 'invites' ? 'Novo Convite' : 'Novo Cadastro'}
-                </Button>
+                {activeTab === 'organizations' && (
+                  <Button 
+                    className=""
+                    onClick={() => setShowNewOrgModal(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nova Organização
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -1027,9 +1030,11 @@ export default function CadastrosDashboard() {
             <div className="cursor-pointer" onClick={() => setActiveTab('users')}>
               <StatCard icon={Users} iconGradient="emerald" value={stats.totalUsers} label="Usuários" subtitle={`${stats.activeUsers} ativos`} trend={{ value: '+8%', positive: true }} />
             </div>
+            {/* DESATIVADO: Convites gerenciados internamente
             <div className="cursor-pointer" onClick={() => setActiveTab('invites')}>
               <StatCard icon={Mail} iconGradient="amber" value={stats.pendingInvites} label="Convites Pendentes" subtitle="Aguardando aceite" />
             </div>
+            */}
             <div className="cursor-pointer" onClick={() => setActiveTab('users')}>
               <StatCard icon={UserCheck} iconGradient="blue" value={stats.consultores} label="Consultores" subtitle={`${stats.clientes} clientes`} />
             </div>
@@ -1053,10 +1058,12 @@ export default function CadastrosDashboard() {
                   <Users className="w-4 h-4" />
                   Usuários
                 </TabsTrigger>
+                {/* DESATIVADO: Convites gerenciados internamente via /cadastros
                 <TabsTrigger value="invites" className="gap-2">
                   <Mail className="w-4 h-4" />
                   Convites
                 </TabsTrigger>
+                */}
               </TabsList>
               
               {activeTab !== 'overview' && (
@@ -1115,15 +1122,11 @@ export default function CadastrosDashboard() {
                   size="sm"
                   onClick={() => {
                     if (activeTab === 'organizations') setShowNewOrgModal(true);
-                    else if (activeTab === 'users') setShowNewInviteModal(true);
-                    else if (activeTab === 'invites') setShowNewInviteModal(true);
-                    else setShowNewOrgModal(true);
                   }}
+                  className={activeTab !== 'organizations' ? 'hidden' : ''}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  {activeTab === 'organizations' ? 'Nova Organização' : 
-                   activeTab === 'users' ? 'Convidar Usuário' : 
-                   activeTab === 'invites' ? 'Novo Convite' : 'Novo Cadastro'}
+                  Nova Organização
                 </Button>
               </div>
             </div>
@@ -1170,7 +1173,7 @@ export default function CadastrosDashboard() {
                   </CardContent>
                 </Card>
                 
-                {/* Gráfico de Status de Convites */}
+                {/* DESATIVADO: Gráfico de convites - gerenciado internamente
                 <Card className="shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -1201,6 +1204,7 @@ export default function CadastrosDashboard() {
                     )}
                   </CardContent>
                 </Card>
+                */}
               </div>
               
               {/* Resumo Rápido */}
@@ -1212,7 +1216,7 @@ export default function CadastrosDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-violet-50 dark:bg-violet-950/30 rounded-xl">
                       <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{stats.totalOrgs}</p>
                       <p className="text-sm text-violet-600/70 dark:text-violet-400/70">Organizações</p>
@@ -1221,6 +1225,11 @@ export default function CadastrosDashboard() {
                       <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.totalUsers}</p>
                       <p className="text-sm text-emerald-600/70 dark:text-emerald-400/70">Usuários</p>
                     </div>
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.consultores}</p>
+                      <p className="text-sm text-blue-600/70 dark:text-blue-400/70">Consultores</p>
+                    </div>
+                    {/* DESATIVADO: Convites
                     <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-xl">
                       <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pendingInvites}</p>
                       <p className="text-sm text-amber-600/70 dark:text-amber-400/70">Convites Pendentes</p>
@@ -1229,6 +1238,7 @@ export default function CadastrosDashboard() {
                       <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.acceptedInvites}</p>
                       <p className="text-sm text-blue-600/70 dark:text-blue-400/70">Convites Aceitos</p>
                     </div>
+                    */}
                   </div>
                 </CardContent>
               </Card>
@@ -1278,11 +1288,7 @@ export default function CadastrosDashboard() {
                   <CardContent className="flex flex-col items-center justify-center py-16">
                     <Users className="w-16 h-16 text-muted-foreground/50 mb-4" />
                     <h3 className="text-lg font-semibold text-card-foreground">Nenhum usuário encontrado</h3>
-                    <p className="text-muted-foreground mt-1">Envie um convite para adicionar usuários.</p>
-                    <Button className="mt-4" onClick={() => setShowNewInviteModal(true)}>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Convidar Usuário
-                    </Button>
+                    <p className="text-muted-foreground mt-1">Os acessos são liberados pela equipe interna.</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -1301,7 +1307,7 @@ export default function CadastrosDashboard() {
               )}
             </TabsContent>
             
-            {/* Aba Convites */}
+            {/* DESATIVADO: Aba Convites - gerenciados internamente
             <TabsContent value="invites" className="space-y-6">
               {invitesLoading ? (
                 <div className="flex items-center justify-center h-64">
@@ -1333,6 +1339,7 @@ export default function CadastrosDashboard() {
                 </div>
               )}
             </TabsContent>
+            */}
           </Tabs>
         </div>
         
@@ -1660,7 +1667,7 @@ export default function CadastrosDashboard() {
           </DialogContent>
         </Dialog>
         
-        {/* Modal Novo Convite */}
+        {/* DESATIVADO: Modal Novo Convite - gerenciado internamente
         <Dialog open={showNewInviteModal} onOpenChange={setShowNewInviteModal}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -1737,6 +1744,7 @@ export default function CadastrosDashboard() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        */}
         
         {/* Modal Editar Usuário */}
         <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>

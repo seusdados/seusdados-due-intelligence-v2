@@ -166,8 +166,8 @@ export async function createDefaultFoldersForOrganization(
       color: template.color,
       sortOrder: template.sortOrder,
       createdById,
-    }) as any;
-    const folderId = extractInsertId(folder);
+    }).returning({ id: gedFolders.id });
+    const folderId = folder.id;
     
     folderMap.set(template.path, folderId);
   }
@@ -215,8 +215,8 @@ export async function createDefaultSeusdadosFolders(createdById: number): Promis
       color: template.color,
       sortOrder: template.sortOrder,
       createdById,
-    }) as any;
-    const folderId = extractInsertId(folder);
+    }).returning({ id: gedFolders.id });
+    const folderId = folder.id;
     
     folderMap.set(template.path, folderId);
   }

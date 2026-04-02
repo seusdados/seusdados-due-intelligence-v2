@@ -506,20 +506,25 @@ export function NavMain() {
                     <ChevronDown className="w-4 h-4 hidden md:block" style={{ color: 'var(--text-muted)' }} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-default)' }}>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{user.name}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
-                    {selectedOrganization && (
-                      <p className="text-xs mt-1 truncate" style={{ color: 'var(--brand-accent)' }}>
-                        {selectedOrganization.name}
-                      </p>
-                    )}
+                <DropdownMenuContent align="end" className="w-64">
+                  <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-default)' }}>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 shrink-0">
+                        <AvatarFallback className={`${profileColors[user.role] || 'bg-gray-500'} text-white text-sm font-semibold`}>
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{user.name}</span>
+                        <span className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</span>
+                        {selectedOrganization && (
+                          <span className="text-xs font-medium truncate mt-0.5" style={{ color: 'var(--brand-accent)' }}>
+                            {selectedOrganization.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <DropdownMenuItem onClick={() => setLocation('/perfil')}>
-                    <User className="w-4 h-4 mr-2" />
-                    Meu Perfil
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setLocation('/configuracoes')}>
                     <Settings className="w-4 h-4 mr-2" />
                     Configurações
