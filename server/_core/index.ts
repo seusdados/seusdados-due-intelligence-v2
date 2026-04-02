@@ -1,4 +1,3 @@
-console.log(`[boot] Process starting (pid=${process.pid}, node=${process.version}, PORT=${process.env.PORT}, NODE_ENV=${process.env.NODE_ENV})`);
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
@@ -365,11 +364,8 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  console.log(`[startup] Binding server to 0.0.0.0:${port} (NODE_ENV=${process.env.NODE_ENV || 'not set'})...`);
-
-  server.listen(port, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${port}/ (PORT=${process.env.PORT || 'not set'})`);
-    console.log(`[startup] Health check available at http://0.0.0.0:${port}/api/health`);
+  server.listen(port, () => {
+    console.log(`Server running on port ${port}`);
     
     // Iniciar schedulers em produção (erros não devem derrubar o servidor)
     if (process.env.NODE_ENV === 'production') {
@@ -401,7 +397,4 @@ async function startServer() {
   });
 }
 
-startServer().catch((err) => {
-  console.error('FATAL: Server failed to start:', err);
-  process.exit(1);
-});
+startServer().catch(console.error);
