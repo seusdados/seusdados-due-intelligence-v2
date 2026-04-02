@@ -487,6 +487,11 @@ export default function GED() {
     },
   });
   
+  // Detecta se estamos dentro da pasta Evidências (ou subpastas dela)
+  const isInsideEvidencias = useMemo(() => {
+    return breadcrumbs.some(f => f.name === "Evidências");
+  }, [breadcrumbs]);
+
   // Handlers
   const handleFolderClick = useCallback((folder: GedFolder) => {
     setCurrentFolderId(folder.id);
@@ -746,8 +751,8 @@ export default function GED() {
                 className="bg-white/10 border-white/20 text-white hover:bg-white/20"
               />
               
-              {/* Botões de ação */}
-              {canEdit && (
+              {/* Botões de ação - ocultos dentro de Evidências (área somente leitura) */}
+              {canEdit && !isInsideEvidencias && (
                 <>
                   {(isAdmin || currentFolderId) && (
                     <Button 
@@ -862,6 +867,27 @@ export default function GED() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Banner de área somente leitura (Evidências) */}
+      {isInsideEvidencias && (
+        <Card className="border-0 shadow-sm bg-amber-50 border-amber-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-100">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-semibold text-amber-700">
+                  Área de visualização — Evidências automáticas
+                </span>
+                <p className="text-amber-600 text-sm mt-0.5">
+                  Os arquivos nesta pasta são gerados automaticamente pelas avaliações. Para upload manual e criação de pastas, utilize a tela inicial do GED.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* Painel de Filtros Avançados */}
       {showFilters && (
@@ -1061,14 +1087,14 @@ export default function GED() {
                         <div
                           key={folder.id}
                           className={`relative flex flex-col p-4 rounded-xl border cursor-pointer hover:shadow-md hover:border-purple-200 transition-all group ${
-                            dragOverFolderId === folder.id 
+                            !isInsideEvidencias && dragOverFolderId === folder.id 
                               ? 'ring-2 ring-purple-500 ring-offset-2 bg-purple-50' 
                               : 'border-gray-200 bg-white'
                           }`}
                           onClick={() => handleFolderClick(folder)}
-                          onDragOver={(e) => handleDragOver(e, folder.id)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => handleDrop(e, folder.id)}
+                          onDragOver={isInsideEvidencias ? undefined : (e) => handleDragOver(e, folder.id)}
+                          onDragLeave={isInsideEvidencias ? undefined : handleDragLeave}
+                          onDrop={isInsideEvidencias ? undefined : (e) => handleDrop(e, folder.id)}
                         >
                           <div className="flex items-start justify-between mb-3">
                             <div 
@@ -1080,7 +1106,7 @@ export default function GED() {
                                 style={{ color: folder.color || "#6b7280" }}
                               />
                             </div>
-                            {canEdit && !folder.isSystemFolder && (
+                            {canEdit && !folder.isSystemFolder && !isInsideEvidencias && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button 
@@ -1141,8 +1167,12 @@ export default function GED() {
                     <Card className="py-8">
                       <CardContent className="text-center">
                         <FileText className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                        <p className="text-gray-500">Nenhum documento nesta pasta</p>
-                        {canEdit && (
+                        <p className="text-gray-500">
+                          {isInsideEvidencias
+                            ? "Nenhuma evidência automática nesta pasta"
+                            : "Nenhum documento nesta pasta"}
+                        </p>
+                        {canEdit && !isInsideEvidencias && (
                           <Button 
                             variant="outline" 
                             className="mt-4"
@@ -1173,10 +1203,10 @@ export default function GED() {
                             return (
                               <TableRow 
                                 key={doc.id}
-                                draggable={canEdit}
+                                draggable={canEdit && !isInsideEvidencias}
                                 onDragStart={(e) => handleDragStart(e, 'document', doc.id, doc.name)}
                                 onDragEnd={handleDragEnd}
-                                className={`${canEdit ? 'cursor-grab active:cursor-grabbing' : ''} ${
+                                className={`${canEdit && !isInsideEvidencias ? 'cursor-grab active:cursor-grabbing' : ''} ${
                                   draggedItem?.id === doc.id ? 'opacity-50' : ''
                                 }`}
                               >
@@ -1284,7 +1314,7 @@ export default function GED() {
                                           </DropdownMenuItem>
                                         </>
                                       )}
-                                      {canEdit && (
+                                      {canEdit && !isInsideEvidencias && (
                                         <>
                                           <DropdownMenuSeparator />
                                           <DropdownMenuItem

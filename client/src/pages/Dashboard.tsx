@@ -35,10 +35,12 @@ import {
   CircleDot,
   Scale,
   CheckSquare,
+  ArrowRight,
+  ExternalLink,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { SmartDPOButton } from "@/components/SmartDPOButton";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 
 /* =============================================
    CONSTANTES DE MAPEAMENTO
@@ -125,6 +127,7 @@ export default function Dashboard() {
   const { selectedOrganization } = useOrganization();
   const [, setLocation] = useLocation();
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | null>(null);
 
   const handleNavigate = (path: string) => {
     setNavigatingTo(path);
@@ -207,22 +210,30 @@ export default function Dashboard() {
 
     const agendaItems = agenda?.items || [];
     const deadlineItems = urgentDeadlines?.items || [];
+    const pastItems = agenda?.itemsPast || [];
 
-    const eventDays = new Map<number, { type: string; count: number }>();
+    const eventDays = new Map<number, { type: string; count: number; items: any[] }>();
     
-    [...agendaItems, ...deadlineItems].forEach((item: any) => {
+    [...agendaItems, ...deadlineItems, ...pastItems].forEach((item: any) => {
       const d = new Date(item.date || item.dueDate);
       if (d.getMonth() === month && d.getFullYear() === year) {
         const day = d.getDate();
         const existing = eventDays.get(day);
-        const severity = item.severity || 'normal';
-        if (!existing || (severity === 'vencido' || severity === 'critico')) {
-          eventDays.set(day, { type: severity, count: (existing?.count || 0) + 1 });
-        }
+        const diasRestantes = item.diasRestantes != null ? Number(item.diasRestantes) : Math.ceil((d.getTime() - now.getTime()) / 86400000);
+        const severity = diasRestantes < 0 ? 'vencido' : diasRestantes <= 3 ? 'critico' : diasRestantes <= 7 ? 'atencao' : 'normal';
+        const prevItems = existing?.items || [];
+        // Keep the worst severity
+        const prevSeverityRank = { vencido: 3, critico: 2, atencao: 1, normal: 0 }[existing?.type || 'normal'] || 0;
+        const newSeverityRank = { vencido: 3, critico: 2, atencao: 1, normal: 0 }[severity] || 0;
+        eventDays.set(day, {
+          type: newSeverityRank > prevSeverityRank ? severity : (existing?.type || severity),
+          count: (existing?.count || 0) + 1,
+          items: [...prevItems, { ...item, severity }],
+        });
       }
     });
 
-    const days: Array<{ day: number | null; isToday: boolean; event?: { type: string; count: number } }> = [];
+    const days: Array<{ day: number | null; isToday: boolean; event?: { type: string; count: number; items: any[] } }> = [];
     for (let i = 0; i < firstDay; i++) {
       days.push({ day: null, isToday: false });
     }
@@ -231,6 +242,69 @@ export default function Dashboard() {
     }
     return days;
   }, [agenda, urgentDeadlines]);
+
+  // Pendências consolidadas para lista
+  const pendingItems = useMemo(() => {
+    const agendaItems = agenda?.items || [];
+    const deadlineItems = urgentDeadlines?.items || [];
+    const pastItems = agenda?.itemsPast || [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const all = [...agendaItems, ...deadlineItems, ...pastItems].map((item: any) => {
+      const d = new Date(item.date || item.dueDate);
+      const diasRestantes = item.diasRestantes != null ? Number(item.diasRestantes) : Math.ceil((d.getTime() - now.getTime()) / 86400000);
+      const severity = diasRestantes < 0 ? 'vencido' : diasRestantes === 0 ? 'critico' : diasRestantes <= 3 ? 'critico' : diasRestantes <= 7 ? 'atencao' : 'normal';
+      return { ...item, severity, diasRestantes, dateObj: d };
+    });
+
+    // Deduplicate by id+type
+    const seen = new Set<string>();
+    const unique = all.filter((item) => {
+      const key = `${item.id}-${item.type || item.source}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return unique.sort((a, b) => a.diasRestantes - b.diasRestantes);
+  }, [agenda, urgentDeadlines]);
+
+  // Items for the selected calendar day
+  const selectedDayItems = useMemo(() => {
+    if (selectedCalendarDay === null) return null;
+    const dayData = calendarDays.find(d => d.day === selectedCalendarDay);
+    return dayData?.event?.items || [];
+  }, [selectedCalendarDay, calendarDays]);
+
+  // Summary counts
+  const pendingSummary = useMemo(() => {
+    const vencidos = pendingItems.filter(i => i.severity === 'vencido').length;
+    const criticos = pendingItems.filter(i => i.severity === 'critico').length;
+    const atencao = pendingItems.filter(i => i.severity === 'atencao').length;
+    const noPrazo = pendingItems.filter(i => i.severity === 'normal').length;
+    return { vencidos, criticos, atencao, noPrazo, total: pendingItems.length };
+  }, [pendingItems]);
+
+  // Helper to get route for a pending item
+  const getItemRoute = useCallback((item: any): string => {
+    const source = item.source || item.type || '';
+    if (source === 'plano_acao' || source === 'prazo_acao') return '/prazos';
+    if (source === 'ticket' || source === 'prazo_ticket') return '/meudpo';
+    if (source === 'incidente' || source === 'prazo_incidente') return '/incidentes';
+    if (source === 'reuniao') return '/governanca';
+    return '/prazos';
+  }, []);
+
+  // Source label
+  const getSourceLabel = useCallback((item: any): string => {
+    const source = item.source || item.type || '';
+    if (source === 'plano_acao' || source === 'prazo_acao') return 'Plano de Ação';
+    if (source === 'ticket' || source === 'prazo_ticket') return 'Chamado';
+    if (source === 'incidente' || source === 'prazo_incidente') return 'Incidente';
+    if (source === 'reuniao') return 'Reunião';
+    return 'Pendência';
+  }, []);
 
   /* =============================================
      MÓDULOS
@@ -607,62 +681,195 @@ export default function Dashboard() {
             )}
           </InfoCard>
 
-          {/* Agenda / Mini Calendário */}
+          {/* Agenda de Pendências */}
           <InfoCard
             icon={CalendarDays}
             iconGradient="blue"
-            title="Agenda"
+            title="Agenda de Pendências"
             subtitle={new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            headerAction={
+              pendingSummary.total > 0 ? (
+                <Badge variant="outline" className={`text-[0.6875rem] font-medium ${
+                  pendingSummary.vencidos > 0 ? 'bg-red-50 text-red-700 border-red-200' :
+                  pendingSummary.criticos > 0 ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                  'bg-green-50 text-green-700 border-green-200'
+                }`}>
+                  {pendingSummary.total} {pendingSummary.total === 1 ? 'pendência' : 'pendências'}
+                </Badge>
+              ) : undefined
+            }
           >
-            {loadingAgenda ? (
+            {loadingAgenda || loadingDeadlines ? (
               <Skeleton className="h-48 w-full" />
             ) : (
               <>
-                {/* Mini calendário */}
-                <div className="grid grid-cols-7 gap-1 mb-4">
-                  {['D', 'S', 'T', 'Q'].map((d, i) => (
-                    <div key={i} className="text-center text-[0.6875rem] font-medium text-muted-foreground py-1">{d}</div>
+                {/* Summary badges */}
+                {pendingSummary.total > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {pendingSummary.vencidos > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-red-100 text-red-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        {pendingSummary.vencidos} vencida{pendingSummary.vencidos > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {pendingSummary.criticos > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-orange-100 text-orange-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                        {pendingSummary.criticos} crítica{pendingSummary.criticos > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {pendingSummary.atencao > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-amber-100 text-amber-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        {pendingSummary.atencao} atenção
+                      </span>
+                    )}
+                    {pendingSummary.noPrazo > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-green-100 text-green-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        {pendingSummary.noPrazo} no prazo
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Mini calendário compacto */}
+                <div className="grid grid-cols-7 gap-0.5 mb-3">
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
+                    <div key={i} className="text-center text-[0.625rem] font-semibold text-muted-foreground/60 py-0.5 uppercase">{d}</div>
                   ))}
-                  {calendarDays.map((d, i) => (
-                    <div
-                      key={i}
-                      className={`text-center text-[0.6875rem] py-1.5 rounded-md relative
-                        ${!d.day ? '' : d.isToday ? 'bg-violet-600 text-white font-bold' : 'text-card-foreground/70'}
-                        ${d.event?.type === 'vencido' ? 'ring-2 ring-red-400' : ''}
-                        ${d.event?.type === 'critico' ? 'ring-2 ring-orange-400' : ''}
-                        ${d.event?.type === 'atencao' ? 'ring-2 ring-amber-300' : ''}
-                        ${d.event && d.event.type === 'normal' ? 'ring-1 ring-blue-300' : ''}
-                      `}
-                    >
-                      {d.day || ''}
-                      {d.event && (
-                        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full
-                          ${d.event.type === 'vencido' ? 'bg-red-500' : d.event.type === 'critico' ? 'bg-orange-500' : d.event.type === 'atencao' ? 'bg-amber-500' : 'bg-blue-500'}
-                        `} />
-                      )}
-                    </div>
-                  ))}
+                  {calendarDays.map((d, i) => {
+                    const isSelected = selectedCalendarDay === d.day;
+                    const dotColor = d.event?.type === 'vencido' ? 'bg-red-500' : 
+                                     d.event?.type === 'critico' ? 'bg-orange-500' : 
+                                     d.event?.type === 'atencao' ? 'bg-amber-400' : 'bg-emerald-500';
+                    return (
+                      <button
+                        key={i}
+                        disabled={!d.day}
+                        onClick={() => d.day && setSelectedCalendarDay(isSelected ? null : d.day)}
+                        className={`text-center text-[0.6875rem] py-1 rounded-md relative transition-all
+                          ${!d.day ? 'cursor-default' : 'cursor-pointer hover:bg-muted/60'}
+                          ${d.isToday 
+                            ? 'bg-violet-600 text-white font-bold ring-2 ring-violet-300 ring-offset-1' 
+                            : isSelected 
+                              ? 'bg-violet-100 text-violet-700 font-semibold' 
+                              : 'text-card-foreground/70'
+                          }
+                        `}
+                      >
+                        {d.day || ''}
+                        {d.event && (
+                          <div className={`absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${dotColor} ${
+                            d.event.type === 'vencido' ? 'animate-pulse' : ''
+                          }`} />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* Próximos eventos */}
-                {agenda?.items && agenda.items.length > 0 ? (
-                  <div className="space-y-2 border-t border-border/50 pt-3">
-                    <p className="text-[0.6875rem] font-medium text-muted-foreground mb-2">Próximos eventos</p>
-                    {agenda.items.slice(0, 3).map((evt: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2 text-[0.8125rem]">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                        <span className="truncate flex-1 font-light">{evt.title}</span>
-                        <span className="text-[0.6875rem] text-muted-foreground shrink-0">
-                          {new Date(evt.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                        </span>
-                      </div>
-                    ))}
+                {/* Legenda compacta */}
+                <div className="flex items-center gap-3 mb-3 px-1">
+                  <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-red-500" /><span className="text-[0.625rem] text-muted-foreground">Vencido</span></div>
+                  <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-orange-500" /><span className="text-[0.625rem] text-muted-foreground">Crítico</span></div>
+                  <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" /><span className="text-[0.625rem] text-muted-foreground">Atenção</span></div>
+                  <div className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /><span className="text-[0.625rem] text-muted-foreground">Ok</span></div>
+                </div>
+
+                {/* Selected Day items */}
+                {selectedDayItems && selectedDayItems.length > 0 && (
+                  <div className="border border-violet-200 bg-violet-50/50 rounded-lg p-2.5 mb-3">
+                    <p className="text-[0.6875rem] font-semibold text-violet-700 mb-2">
+                      📅 Dia {selectedCalendarDay} — {selectedDayItems.length} {selectedDayItems.length === 1 ? 'evento' : 'eventos'}
+                    </p>
+                    <div className="space-y-1.5">
+                      {selectedDayItems.map((item: any, idx: number) => {
+                        const sev = severityConfig[item.severity] || severityConfig.normal;
+                        return (
+                          <div key={idx} className={`flex items-center gap-2 p-1.5 rounded text-[0.75rem] border ${sev.bg}`}>
+                            <span className={`font-medium ${sev.color} shrink-0`}>{sev.label}</span>
+                            <span className="truncate flex-1">{item.title}</span>
+                            <button
+                              onClick={() => handleNavigate(getItemRoute(item))}
+                              className="text-violet-600 hover:text-violet-800 shrink-0"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-3 text-muted-foreground border-t border-border/50">
-                    <p className="text-[0.75rem] font-medium">Sem eventos</p>
-                    <p className="text-[0.6875rem] font-light opacity-70 mt-0.5">Nenhum evento agendado para este mês</p>
+                )}
+
+                {selectedCalendarDay !== null && selectedDayItems && selectedDayItems.length === 0 && (
+                  <div className="border border-border/50 bg-muted/30 rounded-lg p-2.5 mb-3 text-center">
+                    <p className="text-[0.75rem] text-muted-foreground">Nenhum evento no dia {selectedCalendarDay}</p>
                   </div>
+                )}
+
+                {/* Lista de Pendências */}
+                <div className="border-t border-border/50 pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[0.6875rem] font-semibold text-muted-foreground uppercase tracking-wide">📌 Próximos Prazos</p>
+                  </div>
+
+                  {pendingItems.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {pendingItems.slice(0, 5).map((item: any, idx: number) => {
+                        const sev = severityConfig[item.severity] || severityConfig.normal;
+                        const diasLabel = item.diasRestantes < 0 
+                          ? `venceu há ${Math.abs(item.diasRestantes)}d` 
+                          : item.diasRestantes === 0 
+                            ? 'vence hoje' 
+                            : item.diasRestantes === 1 
+                              ? 'vence amanhã' 
+                              : `vence em ${item.diasRestantes}d`;
+                        
+                        return (
+                          <div 
+                            key={idx} 
+                            className={`flex items-center gap-2 p-2 rounded-lg border transition-colors hover:shadow-sm cursor-pointer ${sev.bg}`}
+                            onClick={() => handleNavigate(getItemRoute(item))}
+                          >
+                            <div className={`w-1.5 h-8 rounded-full shrink-0 ${
+                              item.severity === 'vencido' ? 'bg-red-500' : 
+                              item.severity === 'critico' ? 'bg-orange-500' : 
+                              item.severity === 'atencao' ? 'bg-amber-400' : 'bg-emerald-500'
+                            }`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[0.8125rem] font-medium truncate">{item.title}</p>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[0.6875rem] font-medium ${sev.color}`}>{diasLabel}</span>
+                                <span className="text-[0.625rem] text-muted-foreground">• {getSourceLabel(item)}</span>
+                              </div>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400 mb-1.5" />
+                      <p className="text-[0.8125rem] font-medium text-emerald-700">Tudo em dia!</p>
+                      <p className="text-[0.6875rem] text-muted-foreground mt-0.5">Você não possui pendências neste período</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Botão de ação */}
+                {pendingItems.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-3 text-[0.75rem] text-violet-700 border-violet-200 hover:bg-violet-50"
+                    onClick={() => handleNavigate('/prazos')}
+                  >
+                    Ver todos os prazos
+                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                  </Button>
                 )}
               </>
             )}
@@ -682,26 +889,29 @@ export default function Dashboard() {
           className="min-h-0"
         >
           {loadingSLA ? (
-            <div className="grid grid-cols-5 gap-4">
-              {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
             </div>
           ) : !slaSummary || (slaSummary as any).total === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <Headphones className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              <p className="text-[0.875rem] font-medium">Sem chamados registrados</p>
-              <p className="text-[0.75rem] font-light opacity-70 mt-1">Os indicadores de atendimento aparecerão quando houver chamados</p>
+            <div className="flex items-center gap-4 py-3 px-4 rounded-lg bg-muted/30 border border-border/50">
+              <Headphones className="h-10 w-10 text-muted-foreground/30 shrink-0" />
+              <div>
+                <p className="text-[0.8125rem] font-medium text-muted-foreground">Sem chamados registrados</p>
+                <p className="text-[0.75rem] font-light text-muted-foreground/70 mt-0.5">Os indicadores aparecerão quando houver chamados abertos</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 ml-auto" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {[
-                { value: (slaSummary as any).total || 0, label: 'Total', bg: 'bg-slate-50', color: 'text-slate-700' },
-                { value: (slaSummary as any).abertos || 0, label: 'Abertos', bg: 'bg-blue-50', color: 'text-blue-700' },
-                { value: (slaSummary as any).resolvidos || 0, label: 'Resolvidos', bg: 'bg-green-50', color: 'text-green-700' },
-                { value: (slaSummary as any).violados || 0, label: 'SLA Violado', bg: 'bg-red-50', color: 'text-red-700' },
-                { value: `${(slaSummary as any).tempoMedioResolucaoHoras || '\u2014'}h`, label: 'Tempo Médio', bg: 'bg-violet-50', color: 'text-violet-700' },
+                { value: (slaSummary as any).total || 0, label: 'Total', bg: 'bg-slate-50 dark:bg-slate-900/30', color: 'text-slate-700 dark:text-slate-300' },
+                { value: (slaSummary as any).abertos || 0, label: 'Abertos', bg: 'bg-blue-50 dark:bg-blue-900/30', color: 'text-blue-700 dark:text-blue-300' },
+                { value: (slaSummary as any).resolvidos || 0, label: 'Resolvidos', bg: 'bg-green-50 dark:bg-green-900/30', color: 'text-green-700 dark:text-green-300' },
+                { value: (slaSummary as any).violados || 0, label: 'SLA Violado', bg: 'bg-red-50 dark:bg-red-900/30', color: 'text-red-700 dark:text-red-300' },
+                { value: `${(slaSummary as any).tempoMedioResolucaoHoras || '\u2014'}h`, label: 'Tempo Médio', bg: 'bg-violet-50 dark:bg-violet-900/30', color: 'text-violet-700 dark:text-violet-300' },
               ].map((item, idx) => (
                 <div key={idx} className={`text-center p-3 rounded-lg ${item.bg}`}>
-                  <p className={`text-[1.75rem] font-light ${item.color}`}>{item.value}</p>
+                  <p className={`text-[1.5rem] font-semibold ${item.color}`}>{item.value}</p>
                   <p className="text-[0.6875rem] font-medium text-muted-foreground mt-1">{item.label}</p>
                 </div>
               ))}
