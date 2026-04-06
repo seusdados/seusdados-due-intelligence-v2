@@ -455,6 +455,17 @@ export async function getComplianceAssessmentsByOrganization(organizationId: num
     .orderBy(desc(complianceAssessments.createdAt));
 }
 
+export async function getComplianceAssessmentsByUserLink(organizationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(complianceAssessments)
+    .where(and(
+      eq(complianceAssessments.organizationId, organizationId),
+      eq(complianceAssessments.createdById, userId)
+    ))
+    .orderBy(desc(complianceAssessments.createdAt));
+}
+
 export async function updateComplianceAssessment(id: number, data: Partial<InsertComplianceAssessment>) {
   const db = await getDb();
   if (!db) return;

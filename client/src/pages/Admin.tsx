@@ -401,7 +401,7 @@ export default function Admin() {
                                 {(u as any).clientRoles.map((cr: string) => {
                                   const clientRoleLabels: Record<string, { label: string; color: string }> = {
                                     'sponsor': { label: 'Sponsor', color: 'bg-blue-100 text-blue-800' },
-                                    'sponsor': { label: 'DPO Interno', color: 'bg-purple-100 text-purple-800' },
+                                    'dpo_interno': { label: 'DPO Interno', color: 'bg-purple-100 text-purple-800' },
                                     'comite': { label: 'Comitê', color: 'bg-orange-100 text-orange-800' },
                                     'lider_processo': { label: 'Líder de Processo', color: 'bg-green-100 text-green-800' },
                                     'gestor_area': { label: 'Gestor de Área', color: 'bg-indigo-100 text-indigo-800' },

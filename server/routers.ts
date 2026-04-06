@@ -1150,12 +1150,13 @@ const complianceRouter = router({
       
       // Notificar Sponsor da organização
       try {
-        const sponsorUsers = await db.select().from(users).where(
+        const dbInstance = await db.getDb();
+        const sponsorUsers = dbInstance ? await dbInstance.select().from(users).where(
           and(
             eq(users.organizationId, input.organizationId),
             eq(users.role, 'sponsor')
           )
-        );
+        ) : [];
         
         // Enviar notificação para cada Sponsor
         for (const sponsor of sponsorUsers) {
