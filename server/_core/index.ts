@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import { exec } from "child_process";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 // OAuth disabled – import kept for stub
 import { registerOAuthRoutes } from "./oauth";
@@ -367,6 +368,20 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on port ${port}`);
     
+    // Run drizzle-kit push in background (non-blocking) so health checks pass immediately
+    if (process.env.DATABASE_URL) {
+      console.log('Running drizzle-kit push in background...');
+      exec('npx drizzle-kit push --force', { timeout: 120_000 }, (err, stdout, stderr) => {
+        if (err) {
+          console.error('drizzle-kit push failed (non-fatal):', err.message);
+        } else {
+          console.log('drizzle-kit push completed successfully');
+        }
+        if (stdout) console.log(stdout);
+        if (stderr) console.error(stderr);
+      });
+    }
+
     // Iniciar schedulers em produção (erros não devem derrubar o servidor)
     if (process.env.NODE_ENV === 'production') {
       try {
