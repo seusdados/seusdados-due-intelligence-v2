@@ -412,15 +412,16 @@ ls -la dist/
 | 1 | `drizzle-kit push` bloqueante no start | 🔴 Crítico | ✅ Fixado | b80b9da |
 | 2 | Port probing criando servidores temporários | 🟠 Alto | ✅ Fixado | b80b9da |
 | 3 | Schedulers sem try-catch derrubando servidor | 🟠 Alto | ✅ Fixado | b80b9da |
-| 4 | `getComplianceAssessmentsByUserLink` undefined | 🟡 Médio | ✅ Fixado | e23fba4 |
-| 5 | `db.select()` undefined em routers.ts | 🟡 Médio | ✅ Fixado | e23fba4 |
-| 6 | Chave duplicada `'sponsor'` em Admin.tsx | 🟢 Baixo | ✅ Fixado | e23fba4 |
-| 7 | Sem endpoint `/api/health` dedicado | 🟡 Médio | ✅ Fixado | b80b9da |
-| 8 | DB cross-region (NYC3 ↔ ATL1) | 🟡 Médio | ⏳ Pendente | Infra |
-| 9 | `NODE_ENV` não definido como env var DO | 🟢 Baixo | ⏳ Pendente | Config |
-| 10 | Health check path não configurado para `/api/health` | 🟢 Baixo | ⏳ Pendente | Config |
-| 11 | Liveness check não configurado | 🟢 Baixo | ⏳ Pendente | Config |
-| 12 | Deploys de 06/Abr cancelados (nunca testados) | 🔴 Crítico | ⏳ Precisa redeploy | — |
+| 4 | Vite + plugins carregados em produção (6 imports desnecessários) | 🔴 Crítico | ✅ Fixado | (pendente) |
+| 5 | `getComplianceAssessmentsByUserLink` undefined | 🟡 Médio | ✅ Fixado | e23fba4 |
+| 6 | `db.select()` undefined em routers.ts | 🟡 Médio | ✅ Fixado | e23fba4 |
+| 7 | Chave duplicada `'sponsor'` em Admin.tsx | 🟢 Baixo | ✅ Fixado | e23fba4 |
+| 8 | Sem endpoint `/api/health` dedicado | 🟡 Médio | ✅ Fixado | b80b9da |
+| 9 | DB cross-region (NYC3 ↔ ATL1) | 🟡 Médio | ⏳ Pendente | Infra |
+| 10 | `NODE_ENV` não definido como env var DO | 🟢 Baixo | ⏳ Pendente | Config |
+| 11 | Health check path não configurado para `/api/health` | 🟢 Baixo | ⏳ Pendente | Config |
+| 12 | Liveness check não configurado | 🟢 Baixo | ⏳ Pendente | Config |
+| 13 | Deploys de 06/Abr cancelados (nunca testados) | 🔴 Crítico | ⏳ Precisa redeploy | — |
 
 ---
 

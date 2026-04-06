@@ -9,7 +9,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerDpaApprovalPublicRoutes } from "../dpaApprovalPublicRoutes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
-import { serveStatic, serveStaticAssets, setupVite } from "./vite";
+import { serveStatic, serveStaticAssets } from "./static";
 import multer from "multer";
 import { storagePut } from "../storage";
 import { startSLAScheduler } from "../slaScheduler";
@@ -348,8 +348,8 @@ async function startServer() {
       },
     });
   });// development mode uses Vite, production mode uses static files
-  if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
+  if (process.env.NODE_ENV === "development") {    const viteMod = "./vite";
+    const { setupVite } = await import(/* @vite-ignore */ viteMod);    await setupVite(app, server);
   } else {
     serveStatic(app);
   }
